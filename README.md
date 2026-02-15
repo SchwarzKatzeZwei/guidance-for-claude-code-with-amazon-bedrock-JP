@@ -144,14 +144,14 @@ Claude Code は、性能と可用性を最適化するために Amazon Bedrock �
 
 認証ツールは主要プラットフォームをすべてサポートします。
 
-| プラットフォーム | アーキテクチャ | ビルド方式 | インストール |
-| --- | --- | --- | --- |
-| Windows | x64 | AWS CodeBuild（Nuitka） | install.bat |
-| macOS | ARM64（Apple Silicon） | ネイティブ（PyInstaller） | install.sh |
-| macOS | Intel（x86_64） | クロスコンパイル（PyInstaller） | install.sh |
-| macOS | Universal（両対応） | Universal2（PyInstaller） | install.sh |
-| Linux | x86_64 | Docker（PyInstaller） | install.sh |
-| Linux | ARM64 | Docker（PyInstaller） | install.sh |
+| プラットフォーム | アーキテクチャ         | ビルド方式                      | インストール |
+| ---------------- | ---------------------- | ------------------------------- | ------------ |
+| Windows          | x64                    | AWS CodeBuild（Nuitka）         | install.bat  |
+| macOS            | ARM64（Apple Silicon） | ネイティブ（PyInstaller）       | install.sh   |
+| macOS            | Intel（x86_64）        | クロスコンパイル（PyInstaller） | install.sh   |
+| macOS            | Universal（両対応）    | Universal2（PyInstaller）       | install.sh   |
+| Linux            | x86_64                 | Docker（PyInstaller）           | install.sh   |
+| Linux            | ARM64                  | Docker（PyInstaller）           | install.sh   |
 
 **ビルドシステム:**
 
@@ -165,10 +165,10 @@ Claude Code は、性能と可用性を最適化するために Amazon Bedrock �
 
 ### 対応パーティション
 
-| パーティション | リージョン | 想定用途 |
-|---|---|---|
-| **AWS Commercial**（`aws`） | Bedrock が利用可能なすべてのリージョン | 一般的な商用ワークロード |
-| **AWS GovCloud (US)**（`aws-us-gov`） | us-gov-west-1, us-gov-east-1 | 米国政府機関、請負業者、規制対象ワークロード |
+| パーティション                        | リージョン                             | 想定用途                                     |
+| ------------------------------------- | -------------------------------------- | -------------------------------------------- |
+| **AWS Commercial**（`aws`）           | Bedrock が利用可能なすべてのリージョン | 一般的な商用ワークロード                     |
+| **AWS GovCloud (US)**（`aws-us-gov`） | us-gov-west-1, us-gov-east-1           | 米国政府機関、請負業者、規制対象ワークロード |
 
 ### 仕組み
 
@@ -250,11 +250,11 @@ aws iam get-role \
 
 パッケージをビルドした後、ユーザーへの共有方法は 3 つあります。
 
-| 方法 | 適したケース | 認証 |
-| --- | --- | --- |
-| **手動共有** | 規模を問わず | なし |
-| **事前署名付き S3 URL** | 自動配布 | なし |
-| **ランディングページ** | セルフサービスポータル | IdP（Okta/Azure/Auth0/Cognito） |
+| 方法                    | 適したケース           | 認証                            |
+| ----------------------- | ---------------------- | ------------------------------- |
+| **手動共有**            | 規模を問わず           | なし                            |
+| **事前署名付き S3 URL** | 自動配布               | なし                            |
+| **ランディングページ**  | セルフサービスポータル | IdP（Okta/Azure/Auth0/Cognito） |
 
 **手動共有:** `dist/` フォルダを zip 化し、メールや社内ファイル共有で配布します。追加インフラは不要です。
 
