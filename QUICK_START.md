@@ -1,279 +1,280 @@
-# Quick Start Guide
+# クイックスタートガイド
 
-Complete deployment walkthrough for IT administrators deploying Claude Code with Amazon Bedrock.
+IT 管理者が Amazon Bedrock を用いて Claude Code を導入するための、完全なデプロイ手順書です。
 
-**Time Required:** 2-3 hours for initial deployment
-**Skill Level:** AWS administrator with IAM/CloudFormation experience
+**所要時間:** 初回デプロイ 2～3 時間  
+**必要スキル:** IAM / CloudFormation の経験がある AWS 管理者
 
 ---
 
-## Prerequisites
+## 前提条件
 
-### Software Requirements
+### ソフトウェア要件
 
-- Python 3.10-3.13
-- Poetry (dependency management)
+- Python 3.10～3.13
+- Poetry（依存関係管理）
 - AWS CLI v2
 - Git
 
-### AWS Requirements
+### AWS 要件
 
-- AWS account with appropriate IAM permissions to create:
-  - CloudFormation stacks
-  - IAM OIDC Providers or Cognito Identity Pools
-  - IAM roles and policies
-  - (Optional) Amazon Elastic Container Service (Amazon ECS) tasks and Amazon CloudWatch dashboards
-  - (Optional) Amazon Athena, AWS Glue, AWS Lambda, and Amazon Data Firehose resources
-  - (Optional) AWS CodeBuild
-- Amazon Bedrock activated in target regions
+以下を作成できる適切な IAM 権限を持つ AWS アカウント：
 
-### OIDC Provider Requirements
+- CloudFormation スタック
+- IAM OIDC プロバイダー または Cognito Identity Pool
+- IAM ロールおよびポリシー
+- （任意）Amazon Elastic Container Service（Amazon ECS）タスクおよび Amazon CloudWatch ダッシュボード
+- （任意）Amazon Athena、AWS Glue、AWS Lambda、Amazon Data Firehose リソース
+- （任意）AWS CodeBuild
+- 対象リージョンで Amazon Bedrock が有効化されていること
 
-- Existing OIDC identity provider (Okta, Azure AD, Auth0, etc.)
-- Ability to create OIDC applications
-- Redirect URI support for `http://localhost:8400/callback`
+### OIDC プロバイダー要件
 
-### Supported AWS Regions
+- 既存の OIDC ID プロバイダー（Okta、Azure AD、Auth0 など）
+- OIDC アプリケーションを作成できること
+- `http://localhost:8400/callback` へのリダイレクト URI をサポートしていること
 
-The guidance can be deployed in any AWS region that supports:
+### 対応 AWS リージョン
 
-- IAM OIDC Providers or Amazon Cognito Identity Pools
+本ガイダンスは、次をサポートする任意の AWS リージョンにデプロイできます。
+
+- IAM OIDC プロバイダー または Amazon Cognito Identity Pool
 - Amazon Bedrock
-- (Optional) Amazon Elastic Container Service (Amazon ECS) tasks and Amazon CloudWatch dashboards
-- (Optional) Amazon Athena, AWS Glue, AWS Lambda, and Amazon Data Firehose resources
-- (Optional) AWS CodeBuild
+- （任意）Amazon Elastic Container Service（Amazon ECS）タスクおよび Amazon CloudWatch ダッシュボード
+- （任意）Amazon Athena、AWS Glue、AWS Lambda、Amazon Data Firehose リソース
+- （任意）AWS CodeBuild
 
-### Cross-Region Inference
+### クロスリージョン推論
 
-Claude Code uses Amazon Bedrock's cross-region inference for optimal performance and availability. During setup, you can:
+Claude Code は、性能と可用性を最適化するために Amazon Bedrock のクロスリージョン推論を使用します。セットアップ時に次を選択できます。
 
-- Select your preferred Claude model (Opus, Sonnet, Haiku)
-- Choose a cross-region profile (US, Europe, APAC) for optimal regional routing
-- Select a specific source region within your profile for model inference
+- 使用したい Claude モデル（Opus / Sonnet / Haiku）
+- 最適なリージョンルーティングのためのクロスリージョンプロファイル（US / Europe / APAC）
+- そのプロファイル内で、モデル推論に用いる特定のソースリージョン
 
-This automatically routes requests across multiple AWS regions to ensure the best response times and highest availability. Modern Claude models (3.7+) require cross-region inference for access.
+これにより、最良の応答時間と高い可用性を確保するために、複数の AWS リージョンにまたがってリクエストが自動的にルーティングされます。最新の Claude モデル（3.7 以降）では、アクセスのためにクロスリージョン推論が必要です。
 
 ---
 
-## Deployment Steps
+## デプロイ手順
 
-### Step 1: Clone Repository and Install Dependencies
+### 手順 1: リポジトリのクローンと依存関係のインストール
 
 ```bash
-# Clone the repository
+# リポジトリをクローン
 git clone https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 cd guidance-for-claude-code-with-amazon-bedrock/source
 
-# Install dependencies
+# 依存関係をインストール
 poetry install
 ```
 
-### Step 2: Initialize Configuration
+### 手順 2: 設定の初期化
 
-Run the interactive setup wizard:
+対話型セットアップウィザードを実行します。
 
 ```bash
 poetry run ccwb init
 ```
 
-The wizard will guide you through:
+ウィザードでは次を案内します。
 
-- OIDC provider configuration (domain, client ID)
-- AWS region selection for infrastructure
-- Amazon Bedrock cross-region inference configuration
-- Credential storage method (keyring or session files)
-- Optional monitoring setup with VPC configuration
+- OIDC プロバイダー設定（ドメイン、クライアント ID）
+- インフラを構築する AWS リージョンの選択
+- Amazon Bedrock のクロスリージョン推論設定
+- 認証情報の保存方法（keyring またはセッションファイル）
+- （任意）VPC 設定を含む監視（モニタリング）設定
 
-#### Understanding Profiles (v2.0+)
+#### プロファイルについて（v2.0+）
 
-**What are profiles?** Profiles let you manage multiple deployments from one machine (different AWS accounts, regions, or organizations).
+**プロファイルとは？**  
+プロファイルにより、1 台の端末から複数のデプロイ（異なる AWS アカウント、リージョン、組織など）を管理できます。
 
-**Common use cases:**
-- Production vs development accounts
-- US vs EU regional deployments
-- Multiple customer/tenant deployments
+**よくある利用例:**
+- 本番アカウントと開発アカウント
+- US と EU のリージョン別デプロイ
+- 複数の顧客／テナント向けデプロイ
 
-**Profile commands:**
-- `ccwb context list` - See all profiles
-- `ccwb context use <name>` - Switch between profiles
-- `ccwb context show` - View active profile details
+**プロファイル関連コマンド:**
+- `ccwb context list` - すべてのプロファイルを表示
+- `ccwb context use <name>` - プロファイルを切り替え
+- `ccwb context show` - 現在アクティブなプロファイルの詳細を表示
 
-See [CLI Reference](assets/docs/CLI_REFERENCE.md) for complete command list.
+コマンド一覧の全体は [CLI Reference](assets/docs/CLI_REFERENCE.md) を参照してください。
 
-**Upgrading from v1.x:** Profile configuration automatically migrates from `source/.ccwb-config/` to `~/.ccwb/` on first run. Your profile names and active profile are preserved. A timestamped backup is created automatically.
+**v1.x からのアップグレード:**  
+初回実行時に、プロファイル設定は `source/.ccwb-config/` から `~/.ccwb/` に自動移行されます。プロファイル名およびアクティブなプロファイルは保持されます。タイムスタンプ付きバックアップも自動作成されます。
 
-### Step 3: Deploy Infrastructure
+### 手順 3: インフラのデプロイ
 
-Deploy the AWS CloudFormation stacks:
+AWS CloudFormation スタックをデプロイします。
 
 ```bash
 poetry run ccwb deploy
 ```
 
-This creates the following AWS resources:
+これにより、次の AWS リソースが作成されます。
 
-**Authentication Infrastructure:**
+**認証インフラ:**
 
-- IAM OIDC Provider or Amazon Cognito Identity Pool for OIDC federation
-- IAM trust relationship for federated access
-- IAM role with policies for:
-  - Bedrock model invocation in specified regions
-  - CloudWatch metrics (if monitoring enabled)
+- OIDC フェデレーション用の IAM OIDC プロバイダー または Amazon Cognito Identity Pool
+- フェデレーテッドアクセスのための IAM 信頼関係
+- 次の権限を付与するポリシーを持つ IAM ロール：
+  - 指定リージョンにおける Bedrock モデル呼び出し
+  - （モニタリング有効時）CloudWatch メトリクス
 
-**Optional Monitoring Infrastructure:**
+**（任意）モニタリング用インフラ:**
 
-- VPC and networking resources (or integration with existing VPC)
-- ECS Fargate cluster running OpenTelemetry collector
-- Application Load Balancer for OTLP ingestion
-- CloudWatch Log Groups and Metrics
-- CloudWatch Dashboard with comprehensive usage analytics
-- DynamoDB table for metrics aggregation and storage
-- Lambda functions for custom dashboard widgets
-- Kinesis Data Firehose for streaming metrics to S3 (if analytics enabled)
-- Amazon Athena for SQL analytics on collected metrics (if analytics enabled)
-- S3 bucket for long-term metrics storage (if analytics enabled)
+- VPC およびネットワークリソース（または既存 VPC との統合）
+- OpenTelemetry Collector を実行する ECS Fargate クラスター
+- OTLP 取り込み用 Application Load Balancer
+- CloudWatch Log Group およびメトリクス
+- 利用状況分析を網羅した CloudWatch ダッシュボード
+- メトリクス集計・保存用 DynamoDB テーブル
+- カスタムダッシュボードウィジェット用 Lambda 関数
+- （分析有効時）メトリクスを S3 にストリーミングする Kinesis Data Firehose
+- （分析有効時）収集メトリクスに対する SQL 分析用 Amazon Athena
+- （分析有効時）長期保管用の S3 バケット
 
-### Step 4: Create Distribution Package
+### 手順 4: 配布パッケージの作成
 
-Build the package for end users:
+エンドユーザー向けのパッケージをビルドします。
 
 ```bash
-# Build all platforms (starts Windows build in background)
+# 全プラットフォーム向けにビルド（Windows ビルドはバックグラウンドで開始）
 poetry run ccwb package --target-platform all
 
-# Check Windows build status (optional)
+# Windows ビルド状況を確認（任意）
 poetry run ccwb builds
 
-# When ready, create distribution URL (optional)
+# 準備ができたら配布用 URL を作成（任意）
 poetry run ccwb distribute
 ```
 
-**Package Workflow:**
+**パッケージ作成ワークフロー:**
 
-1. **Local builds**: macOS/Linux executables are built locally using PyInstaller
-2. **Windows builds**: Trigger AWS CodeBuild for Windows executables (20+ minutes) - requires enabling CodeBuild during `init`
-3. **Check status**: Monitor build progress with `poetry run ccwb builds`
-4. **Create distribution**: Use `distribute` to upload and generate presigned URLs
+1. **ローカルビルド**: macOS/Linux の実行ファイルは PyInstaller によりローカルでビルド
+2. **Windows ビルド**: Windows 実行ファイルは AWS CodeBuild を起動して生成（20 分以上）— `init` 時に CodeBuild を有効化している必要があります
+3. **状況確認**: `poetry run ccwb builds` で進捗を監視
+4. **配布作成**: `distribute` でアップロードし、事前署名 URL を生成
 
-> **Note**: Windows builds are optional and require CodeBuild to be enabled during the `init` process. If not enabled, the package command will skip Windows builds and continue with other platforms.
+> **注**: Windows ビルドは任意で、`init` プロセス中に CodeBuild を有効化している必要があります。有効化していない場合、package コマンドは Windows ビルドをスキップし、他プラットフォームの処理を続行します。
 
-The `dist/` folder will contain:
+`dist/` フォルダには次が含まれます。
 
-- `credential-process-macos-arm64` - Authentication executable for macOS ARM64
-- `credential-process-macos-intel` - Authentication executable for macOS Intel (if built)
-- `credential-process-windows.exe` - Authentication executable for Windows
-- `credential-process-linux` - Authentication executable for Linux (if built on Linux)
-- `config.json` - Embedded configuration
-- `install.sh` - Installation script for Unix systems
-- `install.bat` - Installation script for Windows
-- `README.md` - User instructions
-- `.claude/settings.json` - Claude Code telemetry settings (if monitoring enabled)
-- `otel-helper-*` - OTEL helper executables for each platform (if monitoring enabled)
+- `credential-process-macos-arm64` - macOS ARM64 向け認証実行ファイル
+- `credential-process-macos-intel` - macOS Intel 向け認証実行ファイル（ビルドした場合）
+- `credential-process-windows.exe` - Windows 向け認証実行ファイル
+- `credential-process-linux` - Linux 向け認証実行ファイル（Linux 上でビルドした場合）
+- `config.json` - 埋め込み設定
+- `install.sh` - Unix 系 OS 向けインストールスクリプト
+- `install.bat` - Windows 向けインストールスクリプト
+- `README.md` - ユーザー向け手順
+- `.claude/settings.json` - Claude Code のテレメトリ設定（モニタリング有効時）
+- `otel-helper-*` - 各プラットフォーム向け OTEL ヘルパー実行ファイル（モニタリング有効時）
 
-The package builder:
+パッケージビルダーの特長：
 
-- Automatically builds binaries for both macOS and Linux by default
-- Uses Docker for cross-platform Linux builds when running on macOS
-- Includes the OTEL helper for extracting user attributes from JWT tokens
-- Creates a unified installer that auto-detects the user's platform
+- 既定で macOS と Linux の両方のバイナリを自動ビルド
+- macOS 上で実行する場合、Docker を用いて Linux のクロスプラットフォームビルドを実施
+- JWT トークンからユーザー属性を抽出するための OTEL ヘルパーを同梱
+- ユーザーのプラットフォームを自動判別する統合インストーラーを作成
 
-### Step 5: Test the Setup
+### 手順 5: セットアップのテスト
 
-Verify everything works correctly:
+正しく動作することを確認します。
 
 ```bash
 poetry run ccwb test
 ```
 
-This will:
+このコマンドは次を実行します。
 
-- Simulate the end-user installation process
-- Test OIDC authentication
-- Verify AWS credential retrieval
-- Check Amazon Bedrock access
-- (Optional) Test actual API calls with `--api` flag
+- エンドユーザーのインストール手順をシミュレーション
+- OIDC 認証をテスト
+- AWS 認証情報の取得を検証
+- Amazon Bedrock へのアクセスを確認
+- （任意）`--api` フラグで実際の API 呼び出しをテスト
 
-### Step 6: Distribute Packages to Users
+### 手順 6: パッケージをユーザーへ配布
 
-You have three options for sharing packages with users. The distribution method is configured during `ccwb init` (Step 2).
+ユーザーに配布する方法は 3 つあります。配布方式は `ccwb init`（手順 2）中に設定します。
 
-#### Option 1: Manual Sharing
+#### オプション 1: 手動共有
 
-No additional infrastructure required. Share the built packages directly:
+追加インフラは不要です。ビルドしたパッケージを直接共有します。
 
 ```bash
-# Navigate to dist directory
+# dist ディレクトリへ移動
 cd dist
 
-# Create a zip file of all packages
+# すべてのパッケージを zip 化
 zip -r claude-code-packages.zip .
 
-# Share via email or internal file sharing
-# Users extract and run install.sh (Unix) or install.bat (Windows)
+# メールや社内ファイル共有で配布
+# ユーザーは展開後、install.sh（Unix）または install.bat（Windows）を実行
 ```
 
-**Best for:** Any size team, no automation required
+**適したケース:** 規模を問わず（自動化不要）
 
-#### Option 2: Presigned S3 URLs
+#### オプション 2: 事前署名付き S3 URL
 
-Automated distribution via time-limited S3 URLs:
+期限付きの S3 URL による自動配布：
 
 ```bash
 poetry run ccwb distribute
 ```
 
-Generates presigned URLs (default 48-hour expiry) that you share with users via email or messaging.
+（既定で 48 時間の）事前署名 URL を生成し、メールやメッセージでユーザーに共有します。
 
-**Best for:** Automated distribution without authentication requirements
+**適したケース:** 認証不要で自動配布したい場合  
+**セットアップ:** `ccwb init`（手順 2）で配布種別として「presigned-s3」を選択
 
-**Setup:** Select "presigned-s3" distribution type during `ccwb init` (Step 2)
+#### オプション 3: 認証付きランディングページ
 
-#### Option 3: Authenticated Landing Page
-
-Self-service portal with IdP authentication:
+IdP 認証（SSO）付きのセルフサービスポータル：
 
 ```bash
-# Deploy landing page infrastructure (if not done during Step 3)
+# ランディングページ用インフラをデプロイ（手順 3 で未実施の場合）
 poetry run ccwb deploy distribution
 
-# Upload packages to landing page
+# パッケージをランディングページへアップロード
 poetry run ccwb distribute
 ```
 
-Users visit your landing page URL, authenticate with SSO, and download packages for their platform.
+ユーザーはランディングページ URL にアクセスし、SSO で認証して、自分のプラットフォーム向けパッケージをダウンロードします。
 
-**Best for:** Self-service portal with compliance and audit requirements
+**適したケース:** コンプライアンス／監査要件があるセルフサービスポータル  
+**セットアップ:** `ccwb init`（手順 2）で「landing-page」を選択し、その後配布用インフラをデプロイ
 
-**Setup:** Select "landing-page" distribution type during `ccwb init` (Step 2), then deploy distribution infrastructure
-
-See [Distribution Comparison](assets/docs/distribution/comparison.md) for detailed feature comparison and setup guides.
-
----
-
-## Platform Builds
-
-### Build Requirements
-
-- **Windows**: AWS CodeBuild with Nuitka (automated)
-- **macOS**: PyInstaller with architecture-specific builds
-  - ARM64: Native build on Apple Silicon Macs
-  - Intel: Optional - requires x86_64 Python environment on ARM Macs
-  - Universal: Requires both architectures' Python libraries
-- **Linux**: Docker with PyInstaller (for building on non-Linux hosts)
-
-### Optional: Intel Mac Builds
-
-Intel Mac builds require an x86_64 Python environment on Apple Silicon Macs.
-
-See [CLI Reference - Intel Mac Build Setup](assets/docs/CLI_REFERENCE.md#intel-mac-build-setup-optional) for setup instructions.
-
-If not configured, the package command will skip Intel builds and continue with other platforms.
+詳細な機能比較と手順は [Distribution Comparison](assets/docs/distribution/comparison.md) を参照してください。
 
 ---
 
-## Cleanup
+## プラットフォーム別ビルド
 
-You are responsible for the costs of AWS services while running this guidance. If you decide that you no longer need the guidance, please ensure that infrastructure resources are removed.
+### ビルド要件
+
+- **Windows**: Nuitka を用いた AWS CodeBuild（自動）
+- **macOS**: PyInstaller によるアーキテクチャ別ビルド
+  - ARM64: Apple Silicon Mac 上でネイティブビルド
+  - Intel: 任意 — ARM Mac 上で x86_64 の Python 環境が必要
+  - Universal: 両アーキテクチャの Python ライブラリが必要
+- **Linux**: Docker + PyInstaller（非 Linux ホストでビルドする場合）
+
+### （任意）Intel Mac 向けビルド
+
+Intel Mac 向けビルドには、Apple Silicon Mac 上で x86_64 の Python 環境が必要です。
+
+手順は [CLI Reference - Intel Mac Build Setup](assets/docs/CLI_REFERENCE.md#intel-mac-build-setup-optional) を参照してください。
+
+未設定の場合、package コマンドは Intel 向けビルドをスキップし、他プラットフォームの処理を続行します。
+
+---
+
+## クリーンアップ
+
+本ガイダンスを稼働させている間に発生する AWS サービスの費用は利用者の負担となります。不要になった場合は、インフラリソースが確実に削除されるようにしてください。
 
 ```bash
 poetry run ccwb destroy
@@ -281,39 +282,39 @@ poetry run ccwb destroy
 
 ---
 
-## Troubleshooting
+## トラブルシューティング
 
-### Authentication Issues
+### 認証の問題
 
-Force re-authentication:
+再認証を強制します。
 
 ```bash
 ~/claude-code-with-bedrock/credential-process --clear-cache
 ```
 
-### Build Failures
+### ビルド失敗
 
-Check Windows build status:
+Windows ビルド状況を確認します。
 
 ```bash
 poetry run ccwb builds
 ```
 
-### Stack Deployment Issues
+### スタックのデプロイ問題
 
-View stack status:
+スタックの状態を表示します。
 
 ```bash
 poetry run ccwb status
 ```
 
-For detailed troubleshooting, see [Deployment Guide](assets/docs/DEPLOYMENT.md).
+詳細は [Deployment Guide](assets/docs/DEPLOYMENT.md) を参照してください。
 
 ---
 
-## Next Steps
+## 次のステップ
 
-- [Architecture Deep Dive](assets/docs/ARCHITECTURE.md) - Technical architecture details
-- [Enable Monitoring](assets/docs/MONITORING.md) - Setup OpenTelemetry monitoring
-- [Setup Analytics](assets/docs/ANALYTICS.md) - Configure S3 data lake and Athena queries
-- [CLI Reference](assets/docs/CLI_REFERENCE.md) - Complete command reference
+- [Architecture Deep Dive](assets/docs/ARCHITECTURE.md) - 技術アーキテクチャの詳細
+- [Enable Monitoring](assets/docs/MONITORING.md) - OpenTelemetry モニタリングの設定
+- [Setup Analytics](assets/docs/ANALYTICS.md) - S3 データレイクと Athena クエリの設定
+- [CLI Reference](assets/docs/CLI_REFERENCE.md) - コマンドリファレンス全体

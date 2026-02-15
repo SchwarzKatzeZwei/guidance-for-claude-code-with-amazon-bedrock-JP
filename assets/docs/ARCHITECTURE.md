@@ -1,86 +1,76 @@
-# Technical Architecture
+# 技術アーキテクチャ
 
-This document provides technical details about the Claude Code authentication system architecture, design decisions, and integration patterns.
+本ドキュメントでは、Claude Code の認証システムアーキテクチャ、設計判断、統合パターンの技術詳細を説明します。
 
-> **Note**: For deployment instructions, prerequisites, and operational guides, see the [main README](../../README.md).
+> **注**: デプロイ手順、前提条件、運用ガイドについては、[main README](../../README.md) を参照してください。
 
-## System Overview
+## システム概要
 
-The Claude Code authentication system enables secure, scalable access to Amazon Bedrock by federating enterprise identity providers through AWS Cognito. The architecture follows zero-trust principles with complete audit trails.
+Claude Code の認証システムは、AWS Cognito を介してエンタープライズの ID プロバイダーをフェデレーションし、Amazon Bedrock への安全かつスケーラブルなアクセスを実現します。本アーキテクチャは、完全な監査証跡を備えたゼロトラスト原則に従います。
 
-## Component Architecture
+## コンポーネントアーキテクチャ
 
-### Authentication Components
+### 認証コンポーネント
 
-The core authentication component is the credential process located in `source/credential_provider/`. This implements a complete OAuth2/OIDC client with PKCE flow for secure authentication without client secrets. When packaged for distribution, PyInstaller compiles this into a standalone executable that end users can run without needing Python installed. The credential process supports multiple identity providers including Okta, Azure AD, Auth0, and Cognito User Pools through a flexible provider registry system. Once authenticated, credentials are cached either in the operating system's secure keyring or in session files, depending on the organization's preference. The implementation follows the AWS CLI credential process protocol, making it transparent to any AWS SDK or tool.
+中核となる認証コンポーネントは `source/credential_provider/` にある credential process です。これは OAuth2/OIDC クライアントを完全実装しており、クライアントシークレットを不要にする PKCE フローを用いて安全な認証を行います。配布向けにパッケージ化する際は、PyInstaller によりエンドユーザーが Python をインストールしていなくても実行できるスタンドアロン実行ファイルとしてコンパイルされます。
 
-The management CLI in `source/claude_code_with_bedrock/` provides IT administrators with tools to deploy and manage the infrastructure. Built on the Cleo framework, it offers an intuitive command-line interface for initialization, deployment, and package generation. This component is used only during setup and is not distributed to end users.
+credential process は、柔軟なプロバイダー登録（registry）システムにより Okta、Azure AD、Auth0、Cognito User Pools を含む複数の ID プロバイダーをサポートします。認証後、認証情報は組織の方針に応じて、OS のセキュアなキーチェーン／キーレジストリ（keyring）またはセッションファイルのいずれかにキャッシュされます。実装は AWS CLI の credential process プロトコルに準拠しているため、どの AWS SDK／ツールからも透過的に利用できます。
 
-### AWS Infrastructure Components
+`source/claude_code_with_bedrock/` にある管理用 CLI は、IT 管理者がインフラをデプロイ・管理するためのツールを提供します。Cleo フレームワーク上に構築されており、初期化、デプロイ、パッケージ生成のための直感的なコマンドラインインターフェースを提供します。このコンポーネントはセットアップ時にのみ使用され、エンドユーザーには配布されません。
 
-The authentication infrastructure supports two federation methods. With Direct IAM Federation, an IAM OIDC Provider creates the trust relationship between the organization's identity provider and AWS, allowing direct token exchange via STS. With Cognito Identity Pool, Amazon Cognito acts as an intermediary that federates OIDC tokens into AWS credentials. Both methods use IAM roles that grant permissions specifically for Amazon Bedrock model invocation in configured regions. Every API call includes session tags containing the user's email and subject claim, ensuring complete attribution in CloudTrail logs.
+### AWS インフラコンポーネント
 
-#### IAM Permissions
+認証インフラは 2 つのフェデレーション方式をサポートします。Direct IAM Federation では、IAM OIDC Provider が組織の ID プロバイダーと AWS の信頼関係（trust relationship）を構成し、STS を介した直接のトークン交換を可能にします。Cognito Identity Pool 方式では、Amazon Cognito が仲介者として機能し、OIDC トークンを AWS 認証情報へフェデレートします。いずれの方式でも、設定されたリージョンにおける Amazon Bedrock のモデル呼び出しに特化した権限を付与する IAM ロールを使用します。
 
-The IAM role assigned to authenticated users grants the following Amazon Bedrock permissions:
+すべての API 呼び出しには、ユーザーのメールアドレスおよび subject クレームを含むセッションタグが付与され、CloudTrail ログ上で完全な帰属（attribution）を保証します。
 
-- `bedrock:InvokeModel` - Invoke foundation models for text generation
-- `bedrock:InvokeModelWithResponseStream` - Invoke models with streaming responses
-- `bedrock:ListFoundationModels` - List available foundation models
-- `bedrock:GetFoundationModel` - Get details about specific models
-- `bedrock:GetFoundationModelAvailability` - Check model availability in regions
-- `bedrock:ListInferenceProfiles` - List available cross-region inference profiles
-- `bedrock:GetInferenceProfile` - Get details about specific inference profiles
+#### IAM 権限
 
-These permissions are scoped to the configured regions and enable users to discover and invoke models through cross-region inference profiles, ensuring optimal performance and availability.
+認証済みユーザーに割り当てられる IAM ロールは、次の Amazon Bedrock 権限を付与します。
 
-#### IAM Permissions
+- `bedrock:InvokeModel` - テキスト生成のための基盤モデル呼び出し
+- `bedrock:InvokeModelWithResponseStream` - ストリーミング応答でのモデル呼び出し
+- `bedrock:ListFoundationModels` - 利用可能な基盤モデル一覧の取得
+- `bedrock:GetFoundationModel` - 特定モデルの詳細取得
+- `bedrock:GetFoundationModelAvailability` - リージョン内でのモデル可用性の確認
+- `bedrock:ListInferenceProfiles` - 利用可能なクロスリージョン推論プロファイル一覧の取得
+- `bedrock:GetInferenceProfile` - 特定推論プロファイルの詳細取得
 
-The IAM role assigned to authenticated users grants the following Amazon Bedrock permissions:
+これらの権限は設定済みリージョンにスコープされており、ユーザーがクロスリージョン推論プロファイルを通じてモデルを発見・呼び出しできるようにすることで、最適な性能と可用性を確保します。
 
-- `bedrock:InvokeModel` - Invoke foundation models for text generation
-- `bedrock:InvokeModelWithResponseStream` - Invoke models with streaming responses
-- `bedrock:ListFoundationModels` - List available foundation models
-- `bedrock:GetFoundationModel` - Get details about specific models
-- `bedrock:GetFoundationModelAvailability` - Check model availability in regions
-- `bedrock:ListInferenceProfiles` - List available cross-region inference profiles
-- `bedrock:GetInferenceProfile` - Get details about specific inference profiles
+モニタリングを有効化すると、利用状況メトリクスを収集・分析するための追加インフラがデプロイされます。パブリックサブネットを持つ VPC 上に、OpenTelemetry collector を実行する ECS Fargate クラスターを配置します。Application Load Balancer が Claude Code クライアントからのメトリクス取り込みエンドポイントを提供します。collector はメトリクスを処理して Embedded Metric Format で CloudWatch Logs に転送し、リアルタイムダッシュボードとアラートを可能にします。
 
-These permissions are scoped to the configured regions and enable users to discover and invoke models through cross-region inference profiles, ensuring optimal performance and availability.
+より詳細な分析が必要な組織向けには、（任意の）分析スタックが包括的な利用状況分析機能を提供します。Kinesis Data Firehose が CloudWatch Logs から S3 データレイクへメトリクスを継続的にストリーミングし、Lambda 関数がクエリ効率の高い Parquet 形式へ変換します。Amazon Athena によりこのデータに対して SQL 分析が可能になり、事前構成済みのパーティションプロジェクションにより Glue クローラーは不要です。このアーキテクチャは、列指向ストレージとライフサイクルポリシーによってコストを最小化しつつ、数か月分の履歴データにまたがるクエリを支えます。
 
-When monitoring is enabled, the solution deploys additional infrastructure to collect and analyze usage metrics. A VPC with public subnets hosts an ECS Fargate cluster running the OpenTelemetry collector. An Application Load Balancer provides the ingestion endpoint for metrics from Claude Code clients. The collector processes these metrics and forwards them to CloudWatch Logs in Embedded Metric Format, enabling real-time dashboards and alerting.
+## 認証フロー
 
-For organizations requiring detailed analytics, the optional analytics stack provides comprehensive usage analysis capabilities. Kinesis Data Firehose continuously streams metrics from CloudWatch Logs to an S3 data lake, with a Lambda function transforming the data into Parquet format for efficient querying. Amazon Athena enables SQL analytics on this data, with pre-configured partition projection eliminating the need for Glue crawlers. This architecture supports queries spanning months of historical data while keeping costs minimal through columnar storage and lifecycle policies.
+認証フローは、Claude Code が AWS CLI を通じて AWS 認証情報を要求するところから始まります。CLI は credential process 実行ファイルを呼び出し、クライアントシークレット不要の安全性を確保するため、PKCE（Proof Key for Code Exchange）付き OAuth2 フローを開始します。ブラウザウィンドウが自動で開き、ユーザーは組織の ID プロバイダーへ誘導されて認証を行います。
 
-## Authentication Flow
+認証が成功すると、ID プロバイダーはローカルのコールバックサーバーへ認可コード（authorization code）を付与してリダイレクトします。credential process はこのコードを OIDC トークンへ交換します。その後、次の 2 つの方式のいずれかで AWS 認証情報を取得します。
 
-The authentication flow begins when Claude Code requests AWS credentials through the AWS CLI. The CLI invokes our credential process executable, which initiates an OAuth2 flow with PKCE (Proof Key for Code Exchange) to ensure security without requiring client secrets. A browser window opens automatically, directing the user to their organization's identity provider for authentication.
+### 認証方式
 
-After successful authentication, the identity provider redirects back to the local callback server with an authorization code. The credential process exchanges this code for OIDC tokens. The system then uses one of two authentication methods to obtain AWS credentials:
-
-### Authentication Methods
-
-The system supports two authentication methods:
+本システムは次の 2 方式をサポートします。
 
 **Direct IAM Federation**
-- Uses IAM OIDC Provider with STS AssumeRoleWithWebIdentity
-- Direct federation from OIDC tokens to AWS credentials
-- Configurable session duration up to 12 hours
+- STS の AssumeRoleWithWebIdentity と IAM OIDC Provider を使用
+- OIDC トークンから AWS 認証情報へ直接フェデレーション
+- セッション有効期間は最大 12 時間まで設定可能
 
 **Cognito Identity Pool**
-- Uses Amazon Cognito Identity Pool as federation broker
-- Cognito manages the OIDC to AWS credential exchange
-- Configurable session duration up to 8 hours
+- フェデレーションブローカーとして Amazon Cognito Identity Pool を使用
+- Cognito が OIDC → AWS 認証情報交換を管理
+- セッション有効期間は最大 8 時間まで設定可能
 
-The authentication method is selected during initial configuration and both methods provide full CloudTrail attribution through session tags. These credentials include session tags containing the user's email and subject claim, ensuring every subsequent API call to Amazon Bedrock can be attributed to the specific user.
+認証方式は初期設定時に選択され、いずれもセッションタグを通じて CloudTrail で完全な帰属を提供します。これらの認証情報には、ユーザーのメールアドレスおよび subject クレームを含むセッションタグが付与されるため、以降の Amazon Bedrock への API 呼び出しはすべて特定ユーザーに紐づけられます。
 
-The temporary credentials are returned to Claude Code through the standard AWS CLI credential process protocol. The entire flow operates without any client secrets or long-lived credentials, following zero-trust security principles. Credentials are cached securely using either the operating system's keyring service or encrypted session files, preventing repeated authentication requests during the session lifetime.
+一時的認証情報は、標準の AWS CLI credential process プロトコルにより Claude Code へ返却されます。フロー全体はクライアントシークレットや長期認証情報を必要とせず、ゼロトラストのセキュリティ原則に沿って動作します。認証情報は OS の keyring サービス、または暗号化されたセッションファイルのいずれかにより安全にキャッシュされ、セッション有効期間中の再認証要求を抑制します。
 
-## AWS CLI Credential Process Protocol
+## AWS CLI Credential Process プロトコル
 
-The solution leverages the [AWS CLI external credential process](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sourcing-external.html), a feature that allows custom credential providers to integrate with AWS CLI. When the AWS CLI needs credentials for a profile configured with `credential_process`, it executes the specified program and expects JSON-formatted temporary credentials on stdout.
+本ソリューションは [AWS CLI external credential process](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sourcing-external.html) を活用します。これは、カスタム認証情報プロバイダーを AWS CLI に統合できる機能です。AWS CLI が `credential_process` を設定したプロファイルの認証情報を必要とする場合、指定されたプログラムを実行し、標準出力（stdout）に JSON 形式の一時的認証情報が出力されることを期待します。
 
-Our implementation returns credentials in the exact format required by the AWS CLI:
+本実装は、AWS CLI が要求する形式に厳密に一致する認証情報を返します。
 
 ```json
 {
@@ -92,47 +82,47 @@ Our implementation returns credentials in the exact format required by the AWS C
 }
 ```
 
-## Package Distribution Architecture
+## パッケージ配布アーキテクチャ
 
-The packaging and distribution system bridges the gap between IT administrators who deploy infrastructure and end users who need simple, foolproof installation. The `ccwb package` command creates a self-contained distribution that includes everything users need without requiring technical expertise.
+パッケージング／配布システムは、インフラをデプロイする IT 管理者と、簡単で確実なインストールを必要とするエンドユーザーのギャップを埋めます。`ccwb package` コマンドは、ユーザーが技術的詳細を理解しなくても利用できる自己完結型の配布物を作成します。
 
-During packaging, PyInstaller compiles the Python credential process into platform-specific executables. For macOS, it creates a universal binary supporting both Intel and Apple Silicon. For Linux, it uses Docker to ensure compatibility across distributions. These executables are completely standalone - users don't need Python, pip, or any other dependencies installed.
+パッケージング中に、PyInstaller が Python 製の credential process をプラットフォーム別の実行ファイルへコンパイルします。macOS では Intel と Apple Silicon の両方をサポートするユニバーサルバイナリを生成します。Linux では Docker を使用してディストリビューション間の互換性を確保します。これらの実行ファイルは完全にスタンドアロンであり、ユーザー側に Python、pip、その他の依存関係は不要です。
 
-The package embeds the configuration created during deployment, including the Cognito Identity Pool ID retrieved from CloudFormation outputs. This eliminates any manual configuration for end users. The installer script detects the user's platform, copies the appropriate binary, creates the AWS CLI profile configuration, and sets up the credential process integration.
+パッケージには、デプロイ時に作成された設定（CloudFormation 出力から取得した Cognito Identity Pool ID を含む）が埋め込まれます。これにより、エンドユーザーに手動設定を要求しません。インストーラスクリプトはユーザーのプラットフォームを判別し、適切なバイナリをコピーし、AWS CLI プロファイル設定を作成し、credential process 連携をセットアップします。
 
-For organizations with monitoring enabled, the package also includes the OTEL helper executable and Claude Code settings. This provides a complete solution from authentication through telemetry without requiring users to understand the underlying complexity.
+モニタリングが有効な組織では、OTEL helper 実行ファイルと Claude Code 設定もパッケージに同梱されます。これにより、ユーザーが内部の複雑性を理解しなくても、認証からテレメトリまでを一貫して提供できます。
 
-## Configuration Architecture
+## 設定アーキテクチャ
 
-### Configuration Hierarchy
+### 設定の階層
 
-1. **Administrator Configuration** (`.ccwb-config/config.json`)
+1. **管理者設定**（`.ccwb-config/config.json`）
 
-   - Created by `ccwb init` in the project directory
-   - Contains deployment parameters and provider settings
-   - Not distributed to end users
+   - プロジェクトディレクトリ内で `ccwb init` により作成
+   - デプロイパラメータおよびプロバイダー設定を含む
+   - エンドユーザーには配布しない
 
-2. **End User Configuration** (`~/claude-code-with-bedrock/config.json`)
+2. **エンドユーザー設定**（`~/claude-code-with-bedrock/config.json`）
 
-   - Embedded during package build
-   - Contains runtime authentication parameters
-   - Includes identity pool ID from deployed infrastructure
+   - パッケージビルド時に埋め込み
+   - 実行時の認証パラメータを含む
+   - デプロイ済みインフラから取得した identity pool ID を含む
 
-3. **Claude Code Settings** (`~/.claude/settings.json`)
-   - Generated during package build
-   - Contains OTEL endpoint and environment variables
-   - Includes path to OTEL helper executable
+3. **Claude Code 設定**（`~/.claude/settings.json`）
+   - パッケージビルド時に生成
+   - OTEL エンドポイントおよび環境変数を含む
+   - OTEL helper 実行ファイルへのパスを含む
 
-## Security Architecture
+## セキュリティアーキテクチャ
 
-The security architecture addresses several threat vectors inherent in enterprise authentication systems. Each design decision directly mitigates specific risks while maintaining usability.
+本セキュリティアーキテクチャは、エンタープライズ認証システムに内在する複数の脅威ベクトルに対処します。各設計判断は、ユーザビリティを保ちながら特定のリスクを直接的に低減します。
 
-Credential theft represents the most common attack vector in authentication systems. Traditional long-lived API keys create persistent risk - once stolen, they remain valid until manually revoked. Our architecture eliminates this risk by using only temporary credentials that expire automatically. These credentials typically last one hour, with a maximum configurable lifetime of eight hours. Even if credentials are somehow compromised, the attacker's window of opportunity is limited and closes automatically.
+認証情報の窃取は、認証システムにおける最も一般的な攻撃ベクトルです。従来の長期 API キーは永続的なリスクを生み、いったん漏えいすると手動で失効させるまで有効なままです。本アーキテクチャは、一時的認証情報のみを使用し、自動的に期限切れになることでこのリスクを排除します。これらの認証情報は通常 1 時間、最大で 8 時間まで設定可能です。仮に何らかの形で認証情報が漏えいしても、攻撃者の機会は限定され、自動的に閉じます。
 
-The OAuth2 authorization flow itself presents opportunities for interception attacks. An attacker who intercepts an authorization code could potentially exchange it for tokens. We implement PKCE (Proof Key for Code Exchange, RFC 7636) which generates a dynamic code verifier for each authentication request. This makes intercepted codes useless without the corresponding verifier. Additionally, a cryptographically random state parameter prevents cross-site request forgery attacks.
+OAuth2 の認可フロー自体にも、傍受攻撃の機会があります。攻撃者が認可コードを傍受できれば、トークンへ交換できる可能性があります。本システムは PKCE（Proof Key for Code Exchange、RFC 7636）を実装し、認証要求ごとに動的な code verifier を生成します。これにより、対応する verifier がなければ傍受したコードは無意味になります。加えて、暗号学的にランダムな state パラメータにより、CSRF（クロスサイトリクエストフォージェリ）攻撃を防止します。
 
-Token storage on end-user machines requires careful consideration. We provide two storage options: integration with the operating system's keyring service, which provides encrypted storage with OS-level access controls, or session files with restricted filesystem permissions. Both approaches prevent other users or processes from accessing stored credentials. The system automatically cleans up expired credentials to minimize the attack surface.
+エンドユーザー端末でのトークン保存は慎重な設計が必要です。本システムは 2 つの保存方式を提供します。OS レベルのアクセス制御付き暗号化ストレージを提供する keyring サービスとの統合、または制限されたファイルシステム権限で管理されるセッションファイルです。いずれも、他のユーザーやプロセスが保存された認証情報へアクセスすることを防ぎます。また、期限切れ認証情報を自動的にクリーンアップし、攻撃対象領域（attack surface）を最小化します。
 
-Privilege escalation attempts are contained through IAM policy design. The federated role grants only the minimum permissions required to invoke Bedrock models in specified regions. Session tags embedded in every credential set ensure that users cannot access resources beyond their authorization. These tags flow through to CloudTrail, creating an immutable audit trail.
+権限昇格の試みは、IAM ポリシー設計によって封じ込めます。フェデレートされたロールは、指定リージョンの Bedrock モデル呼び出しに必要な最小権限のみを付与します。各認証情報セットに埋め込まれるセッションタグにより、ユーザーは権限範囲外のリソースへアクセスできません。これらのタグは CloudTrail に流れ、改ざん困難な監査証跡を形成します。
 
-Every API call to Amazon Bedrock includes the user's subject identifier. This means that CloudTrail captures these tags with every request, providing complete attribution. Authentication events through Cognito are similarly logged, creating a comprehensive security audit trail from login through API usage.
+Amazon Bedrock へのすべての API 呼び出しには、ユーザーの subject 識別子が含まれます。そのため CloudTrail は各リクエストにこれらのタグを記録し、完全な帰属を提供します。Cognito を介した認証イベントも同様に記録され、ログインから API 利用までを通した包括的なセキュリティ監査証跡が得られます。

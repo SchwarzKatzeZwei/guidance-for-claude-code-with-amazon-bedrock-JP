@@ -1,77 +1,77 @@
-# Contributing to Claude Code Advanced Patterns
+# Claude Code Advanced Patterns へのコントリビューション
 
-Thank you for your interest in contributing to the Claude Code Advanced Patterns repository! This guide will help you get started with contributing to the project.
+Claude Code Advanced Patterns リポジトリへの貢献にご関心をお寄せいただき、ありがとうございます。本ガイドでは、本プロジェクトにコントリビュートするための始め方を説明します。
 
-## 🚀 Getting Started
+## 🚀 はじめに
 
-### Fork and Clone
+### Fork と Clone
 
-1. Fork the repository on GitHub: https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
-2. Clone your fork locally:
+1. GitHub 上でリポジトリを Fork します: https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock  
+2. Fork したリポジトリをローカルに clone します:
 ```bash
 git clone https://github.com/YOUR-USERNAME/guidance-for-claude-code-with-amazon-bedrock.git
 cd guidance-for-claude-code-with-amazon-bedrock
 ```
-3. Add the upstream remote:
+3. upstream リモートを追加します:
 ```bash
 git remote add upstream https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock.git
 ```
 
-### Development Setup
+### 開発環境のセットアップ
 
-1. Create a new branch for your feature or fix:
+1. 機能追加または修正用に新しいブランチを作成します:
 ```bash
 git checkout -b feature/your-feature-name
 ```
 
-2. Make your changes following the guidelines below
+2. 以下のガイドラインに従って変更を加えます
 
-3. Test your changes thoroughly
+3. 変更を十分にテストします
 
-4. Commit your changes with a clear message:
+4. 分かりやすいメッセージでコミットします:
 ```bash
 git commit -m "feat: Add new agent for database migrations"
 ```
 
-## 📝 Contribution Guidelines
+## 📝 コントリビューション ガイドライン
 
-### What We're Looking For
+### 求めている貢献内容
 
-We welcome contributions in the following areas:
+以下の領域での貢献を歓迎します。
 
-#### 1. New Agents
-- Specialized agents for specific development tasks
-- Improvements to existing agents
-- Agent documentation and examples
+#### 1. 新しいエージェント
+- 特定の開発タスクに特化したエージェント
+- 既存エージェントの改善
+- エージェントのドキュメントおよび例
 
-#### 2. Hook Configurations
-- New hook patterns for automation
-- Quality gate improvements
-- Integration with new tools
+#### 2. フック設定
+- 自動化のための新しいフックパターン
+- 品質ゲートの改善
+- 新しいツールとの統合
 
-#### 3. Workflow Templates
-- Complex workflow orchestrations
-- Industry-specific workflows
-- Performance optimizations
+#### 3. ワークフローテンプレート
+- 複雑なワークフローのオーケストレーション
+- 業界特化ワークフロー
+- パフォーマンス最適化
 
-#### 4. Command Templates
-- New slash commands
-- Enhanced argument handling
-- Command documentation
+#### 4. コマンドテンプレート
+- 新しいスラッシュコマンド
+- 引数処理の強化
+- コマンドのドキュメント
 
-#### 5. Documentation
-- Improvements to existing guides
-- New tutorials and examples
-- Translations
+#### 5. ドキュメント
+- 既存ガイドの改善
+- 新しいチュートリアルや例
+- 翻訳
 
-#### 6. Bug Fixes
-- Issue resolution
-- Performance improvements
-- Security enhancements
+#### 6. バグ修正
+- 不具合解消
+- パフォーマンス改善
+- セキュリティ強化
 
-### Code Standards
+### コード標準
 
-#### For Agents (`.md` files in `/agents/`)
+#### エージェント（`/agents/` 配下の `.md` ファイル）
 ```markdown
 ---
 name: agent-name
@@ -84,7 +84,7 @@ tools: [List, Of, Tools]
 # Agent documentation here
 ```
 
-#### For Hooks (`.json` files in `/hooks/`)
+#### フック（`/hooks/` 配下の `.json` ファイル）
 ```json
 {
   "name": "hook-name",
@@ -101,7 +101,7 @@ tools: [List, Of, Tools]
 }
 ```
 
-#### For Commands (`.md` files in `/commands/`)
+#### コマンド（`/commands/` 配下の `.md` ファイル）
 ```markdown
 ---
 name: command-name
@@ -112,165 +112,165 @@ argument-hint: [optional-args] [--flags]
 # Command implementation
 ```
 
-### Documentation Standards
+### ドキュメント標準
 
-- Use clear, concise language
-- Include practical examples
-- Follow existing formatting patterns
-- Test all code examples
-- Update related documentation when making changes
+- 明確で簡潔な言葉遣いにする
+- 実用的な例を含める
+- 既存のフォーマットパターンに従う
+- すべてのコード例をテストする
+- 変更に伴い関連ドキュメントも更新する
 
-## 🔄 Pull Request Process
+## 🔄 Pull Request（PR）手順
 
-1. **Update your branch** with the latest upstream changes:
+1. **upstream の最新変更を取り込み**、ブランチを更新します:
 ```bash
 git fetch upstream
 git rebase upstream/main
 ```
 
-2. **Push your branch** to your fork:
+2. **Fork 側に push** します:
 ```bash
 git push origin feature/your-feature-name
 ```
 
-3. **Create a Pull Request** on GitHub:
-   - Go to https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/tree/main/advanced-claude-code-patterns
-   - Click "New Pull Request"
-   - Select your fork and branch
-   - Fill out the PR template with:
-     - Clear description of changes
-     - Issue number (if applicable)
-     - Testing performed
-     - Documentation updates
+3. GitHub で **Pull Request を作成**します:
+   - https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/tree/main/advanced-claude-code-patterns に移動
+   - 「New Pull Request」をクリック
+   - Fork とブランチを選択
+   - PR テンプレートに以下を記入：
+     - 変更内容の明確な説明
+     - Issue 番号（該当する場合）
+     - 実施したテスト
+     - ドキュメント更新内容
 
-4. **PR Requirements**:
-   - Clear, descriptive title
-   - Detailed description of changes
-   - Links to related issues
-   - Tests pass (if applicable)
-   - Documentation updated
-   - No merge conflicts
+4. **PR 要件**:
+   - 明確で説明的なタイトル
+   - 変更点の詳細説明
+   - 関連 Issue へのリンク
+   - （該当する場合）テストが成功していること
+   - ドキュメントが更新されていること
+   - マージ競合がないこと
 
-### PR Title Format
-Use conventional commit format:
-- `feat:` New feature
-- `fix:` Bug fix
-- `docs:` Documentation changes
-- `style:` Code style changes
-- `refactor:` Code refactoring
-- `test:` Test additions/changes
-- `chore:` Maintenance tasks
+### PR タイトル形式
+Conventional Commits 形式を使用してください。
+- `feat:` 新機能
+- `fix:` バグ修正
+- `docs:` ドキュメント変更
+- `style:` コードスタイル変更
+- `refactor:` リファクタリング
+- `test:` テスト追加／変更
+- `chore:` 保守作業
 
-Examples:
+例:
 - `feat: Add PostgreSQL migration agent`
 - `fix: Correct model selection in security-reviewer agent`
 - `docs: Improve TDD workflow guide examples`
 
-## 🧪 Testing
+## 🧪 テスト
 
-Before submitting your PR, ensure:
+PR 提出前に、以下を満たしていることを確認してください。
 
-1. **Syntax Validation**:
-   - Markdown files are properly formatted
-   - YAML files are valid
-   - JSON files are valid
+1. **構文検証**:
+   - Markdown が適切に整形されている
+   - YAML が妥当である
+   - JSON が妥当である
 
-2. **Functionality Testing**:
-   - Agents work as expected
-   - Hooks trigger correctly
-   - Workflows complete successfully
-   - Commands accept arguments properly
+2. **機能テスト**:
+   - エージェントが期待どおりに動作する
+   - フックが正しく発火する
+   - ワークフローが正常に完了する
+   - コマンドが引数を正しく受け付ける
 
-3. **Documentation**:
-   - All new features are documented
-   - Examples work as shown
-   - Links are not broken
+3. **ドキュメント**:
+   - 新機能がすべて文書化されている
+   - 例が記載どおりに動作する
+   - リンク切れがない
 
-## 🎯 Areas of Focus
+## 🎯 注力領域
 
-### High Priority Contributions
+### 優先度の高い貢献
 
-1. **Enterprise Patterns**
-   - Multi-team workflows
-   - Compliance automation
-   - Audit trails
+1. **エンタープライズパターン**
+   - 複数チームのワークフロー
+   - コンプライアンス自動化
+   - 監査証跡
 
-2. **Performance Optimizations**
-   - Faster agent execution
-   - Reduced token usage
-   - Caching strategies
+2. **パフォーマンス最適化**
+   - エージェント実行の高速化
+   - トークン使用量の削減
+   - キャッシュ戦略
 
-3. **Security Enhancements**
-   - Security scanning agents
-   - Vulnerability detection hooks
-   - Secure coding workflows
+3. **セキュリティ強化**
+   - セキュリティスキャン用エージェント
+   - 脆弱性検出フック
+   - セキュアコーディング ワークフロー
 
-4. **Integration Patterns**
-   - New MCP server integrations
-   - Third-party tool connections
-   - API integrations
+4. **統合パターン**
+   - 新しい MCP サーバー統合
+   - サードパーティツール接続
+   - API 統合
 
-### Community Requests
+### コミュニティからの要望
 
-Check our [GitHub Issues](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/issues) for:
-- Feature requests labeled `help wanted`
-- Bug reports labeled `good first issue`
-- Documentation needs labeled `documentation`
+次のラベルを目印に [GitHub Issues](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/issues) を確認してください。
+- `help wanted` の機能要望
+- `good first issue` のバグ報告
+- `documentation` のドキュメント要望
 
-## 💬 Communication
+## 💬 コミュニケーション
 
-### Questions and Discussions
+### 質問・議論
 
-- Open a [GitHub Discussion](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/discussions) for:
-  - General questions
-  - Feature ideas
-  - Best practices
-  - Community showcase
+次の目的で [GitHub Discussion](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/discussions) を立ててください。
+- 一般的な質問
+- 機能アイデア
+- ベストプラクティス
+- コミュニティでの成果紹介
 
-### Reporting Issues
+### Issue 報告
 
-When reporting issues, please include:
-- Clear description of the problem
-- Steps to reproduce
-- Expected behavior
-- Actual behavior
-- Claude Code version
-- Operating system
+Issue を報告する際は、次を含めてください。
+- 問題の明確な説明
+- 再現手順
+- 期待される挙動
+- 実際の挙動
+- Claude Code のバージョン
+- OS
 
-## 📜 License
+## 📜 ライセンス
 
-By contributing to this repository, you agree that your contributions will be licensed under the same license as the project (MIT License).
+このリポジトリに貢献することで、あなたの貢献物はプロジェクトと同一のライセンス（MIT License）でライセンスされることに同意したものとみなされます。
 
-## 🙏 Recognition
+## 🙏 クレジット（謝辞）
 
-Contributors will be:
-- Listed in the project's contributors section
-- Credited in release notes
-- Recognized in documentation where appropriate
+コントリビューターは以下の形で紹介されます。
+- プロジェクトの contributors セクションに掲載
+- リリースノートでのクレジット表記
+- 適切な場合、ドキュメント内での謝辞
 
-## 📚 Resources
+## 📚 リソース
 
 - [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
 - [Project README](README.md)
 - [Quick Start Guide](docs/quick-start.md)
 - [Best Practices](docs/best-practices.md)
 
-## ✅ Checklist for Contributors
+## ✅ コントリビューター向けチェックリスト
 
-Before submitting your PR, ensure you have:
+PR を出す前に、以下を確認してください。
 
-- [ ] Forked and cloned the repository
-- [ ] Created a feature branch
-- [ ] Made your changes following the standards
-- [ ] Tested your changes thoroughly
-- [ ] Updated relevant documentation
-- [ ] Committed with a clear message
-- [ ] Pushed to your fork
-- [ ] Created a PR with detailed description
-- [ ] Responded to any review feedback
+- [ ] リポジトリを Fork し、clone した
+- [ ] 機能ブランチを作成した
+- [ ] 標準に従って変更を行った
+- [ ] 変更を十分にテストした
+- [ ] 関連ドキュメントを更新した
+- [ ] 分かりやすいコミットメッセージでコミットした
+- [ ] Fork に push した
+- [ ] 詳細説明付きで PR を作成した
+- [ ] レビューでのフィードバックに対応した
 
-Thank you for contributing to Claude Code Advanced Patterns! Your contributions help make AI-assisted development better for everyone.
+Claude Code Advanced Patterns への貢献ありがとうございます。皆さまの貢献により、AI 支援開発はより良いものになります。
 
 ---
 
-**Questions?** Open a discussion or reach out through GitHub Issues.
+**質問がありますか？** Discussion を立てるか、GitHub Issues を通じてご連絡ください。

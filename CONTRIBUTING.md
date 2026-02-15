@@ -1,59 +1,64 @@
-# Contributing Guidelines
+# コントリビューション（貢献）ガイドライン
 
-Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, or additional
-documentation, we greatly value feedback and contributions from our community.
+本プロジェクトへの貢献にご関心をお寄せいただき、ありがとうございます。バグ報告、新機能の提案、修正、ドキュメントの追加など、コミュニティの皆さまからのフィードバックと貢献を私たちは非常に大切にしています。
 
-Please read through this document before submitting any issues or pull requests to ensure we have all the necessary
-information to effectively respond to your bug report or contribution.
+Issue や Pull Request を送信する前に、本ドキュメントをお読みください。バグ報告や貢献に対して効果的に対応するために必要な情報を、漏れなく共有いただくことを目的としています。
 
+---
 
-## Reporting Bugs/Feature Requests
+## バグ報告／機能リクエスト
 
-We welcome you to use the GitHub issue tracker to report bugs or suggest features.
+バグの報告や機能の提案には、GitHub の Issue トラッカーをご利用ください。
 
-When filing an issue, please check existing open, or recently closed, issues to make sure somebody else hasn't already
-reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
+Issue を作成する際は、同じ内容がすでに報告されていないか確認するために、既存の未解決 Issue や最近クローズされた Issue をご確認ください。また、できるだけ多くの情報を含めるようにしてください。以下のような詳細は非常に有用です。
 
-* A reproducible test case or series of steps
-* The version of our code being used
-* Any modifications you've made relevant to the bug
-* Anything unusual about your environment or deployment
+- 再現可能なテストケース、または再現手順
+- 使用しているコードのバージョン
+- バグに関連する変更点（ご自身で加えた修正や設定変更など）
+- 環境やデプロイに関して通常と異なる点
 
+---
 
-## Contributing via Pull Requests
-Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
+## Pull Request による貢献
 
-1. You are working against the latest source on the *main* branch.
-2. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
-3. You open an issue to discuss any significant work - we would hate for your time to be wasted.
+Pull Request による貢献を歓迎します。Pull Request を送る前に、以下を確認してください。
 
-To send us a pull request, please:
+1. *main* ブランチの最新ソースをベースに作業していること。
+2. 既存の未解決 Pull Request と、最近マージされた Pull Request を確認し、他の誰かがすでに問題に対応していないこと。
+3. 重要な作業については事前に Issue を立てて相談すること（時間が無駄になってしまうのは避けたいと考えています）。
 
-1. Fork the repository.
-2. Modify the source; please focus on the specific change you are contributing. If you also reformat all the code, it will be hard for us to focus on your change.
-3. Ensure local tests pass.
-4. Commit to your fork using clear commit messages.
-5. Send us a pull request, answering any default questions in the pull request interface.
-6. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
+Pull Request の手順は以下のとおりです。
 
-GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
-[creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
+1. リポジトリを Fork します。
+2. ソースを変更します。貢献する変更点に集中してください。コード全体を同時に整形（リフォーマット）してしまうと、私たちが変更点に注目しづらくなります。
+3. ローカルのテストが通ることを確認します。
+4. 分かりやすいコミットメッセージで、Fork したリポジトリにコミットします。
+5. Pull Request を作成し、Pull Request 画面に表示される既定の質問があれば回答します。
+6. Pull Request 上で報告される自動 CI の失敗に注意し、議論にも継続して参加してください。
 
+GitHub には、[リポジトリの Fork](https://help.github.com/articles/fork-a-repo/) と [Pull Request の作成](https://help.github.com/articles/creating-a-pull-request/) に関する追加ドキュメントがあります。
 
-## Finding contributions to work on
-Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any 'help wanted' issues is a great place to start.
+---
 
+## 取り組む貢献の探し方
 
-## Code of Conduct
-This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct).
-For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
-opensource-codeofconduct@amazon.com with any additional questions or comments.
+既存の Issue を見るのは、貢献できる作業を見つける良い方法です。多くのプロジェクトと同様に、本プロジェクトでも既定の GitHub Issue ラベル（enhancement/bug/duplicate/help wanted/invalid/question/wontfix）を使用しています。まずは「help wanted」ラベルの付いた Issue を確認するのがおすすめです。
 
+---
 
-## Security issue notifications
-If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
+## 行動規範
 
+本プロジェクトは、[Amazon Open Source Code of Conduct（Amazon オープンソース行動規範）](https://aws.github.io/code-of-conduct) を採用しています。  
+詳細については、[Code of Conduct FAQ（行動規範 FAQ）](https://aws.github.io/code-of-conduct-faq) をご覧いただくか、追加のご質問・ご意見がありましたら opensource-codeofconduct@amazon.com までご連絡ください。
 
-## Licensing
+---
 
-See the [LICENSE](LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
+## セキュリティ問題の通知
+
+本プロジェクトに潜在的なセキュリティ問題を発見した場合は、[脆弱性報告ページ](http://aws.amazon.com/security/vulnerability-reporting/) を通じて AWS/Amazon Security にご連絡ください。**公開の GitHub Issue は作成しないでください。**
+
+---
+
+## ライセンス
+
+本プロジェクトのライセンスについては、[LICENSE](LICENSE) ファイルをご覧ください。貢献内容のライセンスについて、確認をお願いする場合があります。

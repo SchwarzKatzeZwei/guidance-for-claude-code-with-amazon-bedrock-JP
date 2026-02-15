@@ -1,350 +1,351 @@
-# Guidance for Claude Code with Amazon Bedrock
+# Amazon Bedrock を用いた Claude Code 導入ガイダンス
 
-This guidance provides enterprise deployment patterns for Claude Code with Amazon Bedrock using existing identity providers. Integrates with your IdP (Okta, Azure AD, Auth0, Cognito User Pools) for centralized access control, audit trails, and usage monitoring across your organization.
+本ガイダンスは、既存の ID プロバイダーを利用して Amazon Bedrock 上の Claude Code をエンタープライズ展開するためのデプロイパターンを提供します。組織の IdP（Okta、Azure AD、Auth0、Cognito User Pools）と統合し、組織全体でのアクセス制御の一元化、監査証跡、利用状況モニタリングを実現します。
 
-## Key Features
+## 主な機能
 
-### For Organizations
+### 組織向け
 
-- **Enterprise IdP Integration**: Leverage existing OIDC identity providers (Okta, Azure AD, Auth0, etc.)
-- **Centralized Access Control**: Manage Claude Code access through your identity provider
-- **No API Key Management**: Eliminate the need to distribute or rotate long-lived credentials
-- **Usage Monitoring**: Optional CloudWatch dashboards for tracking usage and costs
-- **Multi-Region Support**: Configure which AWS regions users can access Bedrock in
-- **Multi-Partition Support**: Deploy to AWS Commercial or AWS GovCloud (US) regions
-- **Multi-Platform Support**: Windows, macOS (ARM & Intel), and Linux distributions
+- **エンタープライズ IdP 連携**: 既存の OIDC ID プロバイダー（Okta、Azure AD、Auth0 など）を活用
+- **アクセス制御の一元化**: IdP を通じて Claude Code へのアクセスを管理
+- **API キー管理不要**: 長期的な認証情報の配布やローテーションを不要に
+- **利用状況モニタリング**: （任意）CloudWatch ダッシュボードで利用状況とコストを追跡
+- **マルチリージョン対応**: ユーザーが Bedrock にアクセス可能な AWS リージョンを設定可能
+- **マルチパーティション対応**: AWS 商用（Commercial）または AWS GovCloud（US）リージョンへデプロイ可能
+- **マルチプラットフォーム対応**: Windows、macOS（ARM/Intel）、Linux 向け配布物を提供
 
-### For End Users
+### エンドユーザー向け
 
-- **Seamless Authentication**: Log in with corporate credentials
-- **Automatic Credential Refresh**: No manual token management required
-- **AWS CLI/SDK Integration**: Works with any AWS tool or SDK
-- **Multi-Profile Support**: Manage multiple authentication profiles
-- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **シームレスな認証**: 企業の認証情報でログイン
+- **認証情報の自動更新**: 手動のトークン管理が不要
+- **AWS CLI/SDK 連携**: あらゆる AWS ツール／SDK と連携可能
+- **マルチプロファイル対応**: 複数の認証プロファイルを管理可能
+- **クロスプラットフォーム**: Windows、macOS、Linux で動作
 
-## Table of Contents
+## 目次
 
-1. [Quick Start](#quick-start)
-2. [Architecture Overview](#architecture-overview)
-3. [Prerequisites](#prerequisites)
-4. [AWS Partition Support](#aws-partition-support)
-5. [What Gets Deployed](#what-gets-deployed)
-6. [Monitoring and Operations](#monitoring-and-operations)
-7. [Additional Resources](#additional-resources)
+1. [クイックスタート](#quick-start)
+2. [アーキテクチャ概要](#architecture-overview)
+3. [前提条件](#prerequisites)
+4. [AWS パーティション対応](#aws-partition-support)
+5. [デプロイされるもの](#what-gets-deployed)
+6. [モニタリングと運用](#monitoring-and-operations)
+7. [追加リソース](#additional-resources)
 
-## Quick Start
+## クイックスタート
 
-This guidance integrates Claude Code with your existing OIDC identity provider (Okta, Azure AD, Auth0, or Cognito User Pools) to provide federated access to Amazon Bedrock.
+本ガイダンスは、既存の OIDC ID プロバイダー（Okta、Azure AD、Auth0、Cognito User Pools）と Claude Code を統合し、Amazon Bedrock へのフェデレーテッドアクセスを提供します。
 
-### What You Need
+### 必要なもの
 
-**Existing Identity Provider:**
-You must have an active OIDC provider with the ability to create application registrations. The guidance federates this IdP with AWS IAM to issue temporary credentials for Bedrock access.
+**既存の ID プロバイダー:**
+アプリケーション登録を作成できる有効な OIDC プロバイダーが必要です。本ガイダンスは、この IdP を AWS IAM とフェデレーションし、Bedrock へのアクセスに必要な一時的認証情報を発行します。
 
-**AWS Environment:**
+**AWS 環境:**
 
-- AWS account with IAM and CloudFormation permissions
-- Amazon Bedrock activated in target regions
-- Python 3.10+ development environment for deployment
+- IAM と CloudFormation の権限を持つ AWS アカウント
+- 対象リージョンで Amazon Bedrock が有効化されていること
+- デプロイ用の Python 3.10+ 開発環境
 
-### What Gets Deployed
+### デプロイされるもの
 
-The deployment creates:
+デプロイにより、次が作成されます。
 
-- IAM OIDC Provider or Cognito Identity Pool for federation
-- IAM roles with scoped Bedrock access policies
-- Platform-specific installation packages (Windows, macOS, Linux)
-- Optional: OpenTelemetry monitoring infrastructure
+- フェデレーション用の IAM OIDC プロバイダー または Cognito Identity Pool
+- Bedrock へのアクセスをスコープした IAM ポリシーを持つ IAM ロール
+- プラットフォーム別インストールパッケージ（Windows/macOS/Linux）
+- （任意）OpenTelemetry モニタリング基盤
 
-**Deployment time:** 2-3 hours for initial setup including IdP configuration.
+**デプロイ時間:** IdP 設定を含む初回セットアップで 2～3 時間。
 
-See [QUICK_START.md](QUICK_START.md) for complete step-by-step deployment instructions.
+手順の詳細は [QUICK_START.md](QUICK_START.md) を参照してください。
 
-## Architecture Overview
+## アーキテクチャ概要
 
-This guidance uses Direct IAM OIDC federation as the recommended authentication pattern. This provides temporary AWS credentials with complete user attribution for audit trails and usage monitoring.
+本ガイダンスでは、推奨の認証パターンとして **直接 IAM OIDC フェデレーション**を使用します。これにより、監査証跡および利用状況モニタリングに必要な完全なユーザー帰属情報（ユーザー属性）を伴った一時的な AWS 認証情報を提供できます。
 
-**Alternative:** Cognito Identity Pool is also supported for legacy IdP integrations. See [Deployment Guide](assets/docs/DEPLOYMENT.md) for comparison.
+**代替案:** レガシーな IdP 連携のために Cognito Identity Pool もサポートしています。比較は [Deployment Guide](assets/docs/DEPLOYMENT.md) を参照してください。
 
-### Authentication Flow (Direct IAM Federation)
+### 認証フロー（直接 IAM フェデレーション）
 
-![Architecture Diagram](assets/images/credential-flow-direct-diagram.png)
+![アーキテクチャ図](assets/images/credential-flow-direct-diagram.png)
 
-1. **User initiates authentication**: User requests access to Amazon Bedrock through Claude Code
-2. **OIDC authentication**: User authenticates with their OIDC provider and receives an ID token
-3. **Token submission to IAM**: Application sends the OIDC ID token to Amazon Cognito
-4. **IAM returns credentials**: AWS IAM validates and returns temporary AWS credentials
-5. **Access Amazon Bedrock**: Application uses the temporary credentials to call Amazon Bedrock
-6. **Bedrock response**: Amazon Bedrock processes the request and returns the response
+1. **ユーザーが認証を開始**: Claude Code から Amazon Bedrock へのアクセスを要求
+2. **OIDC 認証**: ユーザーが OIDC プロバイダーで認証し、ID トークンを取得
+3. **IAM へのトークン送信**: アプリケーションが OIDC の ID トークンを Amazon Cognito に送信
+4. **IAM が認証情報を返却**: AWS IAM が検証し、一時的な AWS 認証情報を返却
+5. **Amazon Bedrock へアクセス**: アプリケーションが一時的認証情報を使って Amazon Bedrock を呼び出し
+6. **Bedrock が応答**: Amazon Bedrock が処理し、応答を返却
 
-## Prerequisites
+## 前提条件
 
-### For Deployment (IT Administrators)
+### デプロイ（IT 管理者向け）
 
-**Software Requirements:**
+**ソフトウェア要件:**
 
-- Python 3.10-3.13
-- Poetry (dependency management)
+- Python 3.10～3.13
+- Poetry（依存関係管理）
 - AWS CLI v2
 - Git
 
-**AWS Requirements:**
+**AWS 要件:**
 
-- AWS account with appropriate IAM permissions to create:
-  - CloudFormation stacks
-  - IAM OIDC Providers or Cognito Identity Pools
-  - IAM roles and policies
-  - (Optional) Amazon Elastic Container Service (Amazon ECS) tasks and Amazon CloudWatch dashboards
-  - (Optional) Amazon Athena, AWS Glue, AWS Lambda, and Amazon Data Firehose resources
-  - (Optional) AWS CodeBuild
-- Amazon Bedrock activated in target regions
+以下を作成できる適切な IAM 権限を持つ AWS アカウント：
 
-**OIDC Provider Requirements:**
+- CloudFormation スタック
+- IAM OIDC プロバイダー または Cognito Identity Pool
+- IAM ロールおよびポリシー
+- （任意）Amazon Elastic Container Service（Amazon ECS）タスクおよび Amazon CloudWatch ダッシュボード
+- （任意）Amazon Athena、AWS Glue、AWS Lambda、Amazon Data Firehose リソース
+- （任意）AWS CodeBuild
+- 対象リージョンで Amazon Bedrock が有効化されていること
 
-- Existing OIDC identity provider (Okta, Azure AD, Auth0, etc.)
-- Ability to create OIDC applications
-- Redirect URI support for `http://localhost:8400/callback`
+**OIDC プロバイダー要件:**
 
-### For End Users
+- 既存の OIDC ID プロバイダー（Okta、Azure AD、Auth0 など）
+- OIDC アプリケーションを作成できること
+- `http://localhost:8400/callback` へのリダイレクト URI をサポートしていること
 
-**Software Requirements:**
+### エンドユーザー向け
 
-- AWS CLI v2 (for credential process integration)
-- Claude Code installed
-- Web browser for SSO authentication
+**ソフトウェア要件:**
 
-**No AWS account required** - users authenticate through your organization's identity provider and receive temporary credentials automatically.
+- AWS CLI v2（credential process 連携のため）
+- Claude Code がインストール済みであること
+- SSO 認証用の Web ブラウザ
 
-**No Python, Poetry, or Git required** - users receive pre-built installation packages from IT administrators.
+**AWS アカウントは不要** — ユーザーは組織の ID プロバイダーで認証し、自動的に一時的な認証情報を受け取ります。
 
-### Supported AWS Regions
+**Python / Poetry / Git は不要** — ユーザーには IT 管理者が作成したインストールパッケージが提供されます。
 
-The guidance can be deployed in any AWS region that supports:
+### 対応 AWS リージョン
 
-- IAM OIDC Providers or Amazon Cognito Identity Pools
+本ガイダンスは、次をサポートする任意の AWS リージョンにデプロイできます。
+
+- IAM OIDC プロバイダー または Amazon Cognito Identity Pool
 - Amazon Bedrock
-- (Optional) Amazon Elastic Container Service (Amazon ECS) tasks and Amazon CloudWatch dashboards
-- (Optional) Amazon Athena, AWS Glue, AWS Lambda, and Amazon Data Firehose resources
-- (Optional) AWS CodeBuild
+- （任意）Amazon Elastic Container Service（Amazon ECS）タスクおよび Amazon CloudWatch ダッシュボード
+- （任意）Amazon Athena、AWS Glue、AWS Lambda、Amazon Data Firehose リソース
+- （任意）AWS CodeBuild
 
-Both AWS Commercial and AWS GovCloud (US) partitions are supported. See [AWS Partition Support](#aws-partition-support) for details.
+AWS 商用（Commercial）および AWS GovCloud（US）の両パーティションをサポートします。詳細は [AWS パーティション対応](#aws-partition-support) を参照してください。
 
-### Cross-Region Inference
+### クロスリージョン推論
 
-Claude Code uses Amazon Bedrock's cross-region inference for optimal performance and availability. During setup, you can:
+Claude Code は、性能と可用性を最適化するために Amazon Bedrock のクロスリージョン推論を使用します。セットアップ時に次を選択できます。
 
-- Select your preferred Claude model (Opus, Sonnet, Haiku)
-- Choose a cross-region profile (US, Europe, APAC) for optimal regional routing
-- Select a specific source region within your profile for model inference
+- 使用したい Claude モデル（Opus / Sonnet / Haiku）
+- 最適なリージョンルーティングのためのクロスリージョンプロファイル（US / Europe / APAC）
+- そのプロファイル内で、モデル推論に用いる特定のソースリージョン
 
-This automatically routes requests across multiple AWS regions to ensure the best response times and highest availability. Modern Claude models (3.7+) require cross-region inference for access.
+これにより、最良の応答時間と高い可用性を確保するために、複数の AWS リージョンにまたがってリクエストが自動的にルーティングされます。最新の Claude モデル（3.7 以降）では、アクセスのためにクロスリージョン推論が必要です。
 
-### Platform Support
+### プラットフォーム対応
 
-The authentication tools support all major platforms:
+認証ツールは主要プラットフォームをすべてサポートします。
 
-| Platform | Architecture          | Build Method                | Installation |
-| -------- | --------------------- | --------------------------- | ------------ |
-| Windows  | x64                   | AWS CodeBuild (Nuitka)      | install.bat  |
-| macOS    | ARM64 (Apple Silicon) | Native (PyInstaller)        | install.sh   |
-| macOS    | Intel (x86_64)        | Cross-compile (PyInstaller) | install.sh   |
-| macOS    | Universal (both)      | Universal2 (PyInstaller)    | install.sh   |
-| Linux    | x86_64                | Docker (PyInstaller)        | install.sh   |
-| Linux    | ARM64                 | Docker (PyInstaller)        | install.sh   |
+| プラットフォーム | アーキテクチャ | ビルド方式 | インストール |
+| --- | --- | --- | --- |
+| Windows | x64 | AWS CodeBuild（Nuitka） | install.bat |
+| macOS | ARM64（Apple Silicon） | ネイティブ（PyInstaller） | install.sh |
+| macOS | Intel（x86_64） | クロスコンパイル（PyInstaller） | install.sh |
+| macOS | Universal（両対応） | Universal2（PyInstaller） | install.sh |
+| Linux | x86_64 | Docker（PyInstaller） | install.sh |
+| Linux | ARM64 | Docker（PyInstaller） | install.sh |
 
-**Build System:**
+**ビルドシステム:**
 
-The package builder automatically creates executables for all platforms using PyInstaller (macOS/Linux) and AWS CodeBuild with Nuitka (Windows). All builds create standalone executables - no Python installation required for end users.
+パッケージビルダーは、PyInstaller（macOS/Linux）および Nuitka を用いた AWS CodeBuild（Windows）により、全プラットフォーム向けの実行ファイルを自動作成します。いずれのビルドもスタンドアロン実行ファイルを生成するため、エンドユーザー側で Python をインストールする必要はありません。
 
-See [QUICK_START.md](QUICK_START.md#platform-builds) for detailed build configuration.
+詳細なビルド設定は [QUICK_START.md](QUICK_START.md#platform-builds) を参照してください。
 
-## AWS Partition Support
+## AWS パーティション対応
 
-This guidance supports deployment across multiple AWS partitions with a single, unified codebase. The same CloudFormation templates and deployment process work seamlessly in both AWS Commercial and AWS GovCloud (US) regions.
+本ガイダンスは、単一の統一コードベースで複数の AWS パーティションにまたがるデプロイをサポートします。同一の CloudFormation テンプレートとデプロイ手順が、AWS 商用と AWS GovCloud（US）の両リージョンでシームレスに動作します。
 
-### Supported Partitions
+### 対応パーティション
 
-| Partition | Regions | Use Cases |
-|-----------|---------|-----------|
-| **AWS Commercial** (`aws`) | All regions where Bedrock is available | Standard commercial workloads |
-| **AWS GovCloud (US)** (`aws-us-gov`) | us-gov-west-1, us-gov-east-1 | US government agencies, contractors, and regulated workloads |
+| パーティション | リージョン | 想定用途 |
+|---|---|---|
+| **AWS Commercial**（`aws`） | Bedrock が利用可能なすべてのリージョン | 一般的な商用ワークロード |
+| **AWS GovCloud (US)**（`aws-us-gov`） | us-gov-west-1, us-gov-east-1 | 米国政府機関、請負業者、規制対象ワークロード |
 
-### How It Works
+### 仕組み
 
-The guidance automatically detects the AWS partition at deployment time and configures resources appropriately:
+デプロイ時に AWS パーティションを自動検出し、リソースを適切に構成します。
 
-**Resource ARNs:**
-- CloudFormation uses the `${AWS::Partition}` pseudo-parameter
-- Automatically resolves to `aws` or `aws-us-gov`
-- Example: `arn:${AWS::Partition}:bedrock:*::foundation-model/*`
+**リソース ARN:**
+- CloudFormation は疑似パラメータ `${AWS::Partition}` を使用
+- `aws` または `aws-us-gov` に自動解決
+- 例: `arn:${AWS::Partition}:bedrock:*::foundation-model/*`
 
-**Service Principals:**
-- Cognito Identity service principals are partition-specific
-- Commercial: `cognito-identity.amazonaws.com`
+**サービスプリンシパル:**
+- Cognito Identity のサービスプリンシパルはパーティション／リージョン依存
+- 商用: `cognito-identity.amazonaws.com`
 - GovCloud West: `cognito-identity-us-gov.amazonaws.com`
 - GovCloud East: `cognito-identity.us-gov-east-1.amazonaws.com`
-- IAM role trust policies automatically use the correct principal based on region
+- IAM ロールの信頼ポリシーは、リージョンに応じて正しいプリンシパルを自動的に使用
 
-**S3 Endpoints:**
-- Commercial: `s3.region.amazonaws.com`
+**S3 エンドポイント:**
+- 商用: `s3.region.amazonaws.com`
 - GovCloud: `s3.region.amazonaws.com`
 
-### Deploying to AWS GovCloud
+### AWS GovCloud へのデプロイ
 
-Follow the same [Quick Start](#quick-start) instructions with your GovCloud credentials active. During `ccwb init`, select a GovCloud region (us-gov-west-1 or us-gov-east-1) and the wizard will automatically configure GovCloud-compatible models and endpoints.
+GovCloud の認証情報を有効にしたうえで、同じ [クイックスタート](#quick-start) 手順に従ってください。`ccwb init` の際に GovCloud リージョン（us-gov-west-1 または us-gov-east-1）を選択すると、ウィザードが GovCloud 互換のモデルおよびエンドポイントを自動構成します。
 
-**GovCloud-Specific Considerations:**
+**GovCloud 固有の考慮事項:**
 
-1. **Credentials:** GovCloud requires separate AWS credentials from commercial accounts
-2. **Model IDs:** GovCloud uses region-prefixed model IDs (e.g., `us-gov.anthropic.*`)
-3. **FIPS Endpoints:** Cognito hosted UI uses `{prefix}.auth-fips.{region}.amazoncognito.com`
-4. **Managed Login:** Branding must be created for each Cognito app client
+1. **認証情報:** GovCloud は商用アカウントとは別の AWS 認証情報が必要です
+2. **モデル ID:** GovCloud ではリージョン接頭辞付きモデル ID（例: `us-gov.anthropic.*`）を使用します
+3. **FIPS エンドポイント:** Cognito のホステッド UI は `{prefix}.auth-fips.{region}.amazoncognito.com` を使用します
+4. **Managed Login:** ブランディングは Cognito の各アプリクライアントごとに作成する必要があります
 
-### Validation
+### 検証
 
-After deployment, verify the correct partition configuration:
+デプロイ後、正しいパーティション設定になっていることを確認します。
 
 ```bash
-# Check IAM role ARN uses correct partition
+# IAM ロール ARN が正しいパーティションになっているか確認
 aws iam get-role \
   --role-name BedrockCognitoFederatedRole \
   --region <region> \
   --query 'Role.Arn'
 
-# Expected ARN formats:
+# 期待される ARN 形式:
 # Commercial: arn:aws:iam::ACCOUNT:role/BedrockCognitoFederatedRole
 # GovCloud: arn:aws-us-gov:iam::ACCOUNT:role/BedrockCognitoFederatedRole
 ```
 
-### Backward Compatibility
+### 後方互換性
 
-✅ **All changes are fully backward compatible**
+✅ **変更はすべて完全に後方互換です**
 
-- Existing commercial deployments continue to work without modification
-- CloudFormation updates can be applied to existing stacks
-- No changes to user-facing functionality
-- No data migration required
+- 既存の商用デプロイは修正なしで引き続き動作します
+- CloudFormation の更新を既存スタックに適用できます
+- ユーザー向け機能に変更はありません
+- データ移行は不要です
 
-## What Gets Deployed
+## デプロイされるもの
 
-### Authentication Infrastructure
+### 認証インフラ
 
-The `ccwb deploy` command creates:
+`ccwb deploy` コマンドは次を作成します。
 
-**IAM Resources:**
+**IAM リソース:**
 
-- IAM OIDC Provider (for Direct IAM federation) or Cognito Identity Pool (for legacy IdP)
-- IAM role with trust relationship for federated access
-- IAM policies scoped to:
-  - Bedrock model invocation in configured regions
-  - CloudWatch metric publishing (if monitoring enabled)
+- IAM OIDC プロバイダー（直接 IAM フェデレーション用）または Cognito Identity Pool（レガシー IdP 用）
+- フェデレーテッドアクセスのための信頼関係を持つ IAM ロール
+- 次にスコープした IAM ポリシー：
+  - 設定したリージョンにおける Bedrock モデル呼び出し
+  - （モニタリング有効時）CloudWatch メトリクスの発行
 
-**User Distribution Packages:**
+**ユーザー配布パッケージ:**
 
-- Platform-specific executables (Windows, macOS ARM64/Intel, Linux x64/ARM64)
-- Installation scripts that configure AWS CLI credential process
-- Pre-configured settings (OIDC provider, model selection, monitoring endpoints)
+- プラットフォーム別実行ファイル（Windows、macOS ARM64/Intel、Linux x64/ARM64）
+- AWS CLI の credential process を設定するインストールスクリプト
+- 事前設定済みの設定（OIDC プロバイダー、モデル選択、モニタリングエンドポイント）
 
-### Distribution Options (Optional)
+### 配布オプション（任意）
 
-After building packages, you can share them with users in three ways:
+パッケージをビルドした後、ユーザーへの共有方法は 3 つあります。
 
-| Method                | Best For               | Authentication                 |
-| --------------------- | ---------------------- | ------------------------------ |
-| **Manual Sharing**    | Any size team          | None                           |
-| **Presigned S3 URLs** | Automated distribution | None                           |
-| **Landing Page**      | Self-service portal    | IdP (Okta/Azure/Auth0/Cognito) |
+| 方法 | 適したケース | 認証 |
+| --- | --- | --- |
+| **手動共有** | 規模を問わず | なし |
+| **事前署名付き S3 URL** | 自動配布 | なし |
+| **ランディングページ** | セルフサービスポータル | IdP（Okta/Azure/Auth0/Cognito） |
 
-**Manual Sharing:** Zip the `dist/` folder and share via email or internal file sharing. No additional infrastructure required.
+**手動共有:** `dist/` フォルダを zip 化し、メールや社内ファイル共有で配布します。追加インフラは不要です。
 
-**Presigned URLs:** Generate time-limited S3 URLs for direct downloads. Automated but requires S3 bucket setup.
+**事前署名 URL:** 期限付きの S3 URL を生成して直接ダウンロードさせます。自動化できますが、S3 バケットの準備が必要です。
 
-**Landing Page:** Self-service portal with IdP authentication, platform detection, and custom domain support. Full automation with compliance features.
+**ランディングページ:** IdP 認証、プラットフォーム判別、カスタムドメイン対応を備えたセルフサービス型ポータルです。コンプライアンス向け機能を含む完全自動化が可能です。
 
-See [Distribution Comparison](assets/docs/distribution/comparison.md) for detailed setup guides.
+詳細は [Distribution Comparison](assets/docs/distribution/comparison.md) を参照してください。
 
-### Monitoring Infrastructure (Optional)
+### モニタリング基盤（任意）
 
-Enable usage visibility with OpenTelemetry monitoring stack:
+OpenTelemetry によるモニタリングスタックを有効化して利用状況の可視化を行えます。
 
-**Components:**
+**構成要素:**
 
-- VPC and networking resources (or use existing VPC)
-- ECS Fargate cluster running OpenTelemetry collector
-- Application Load Balancer for metric ingestion
-- CloudWatch dashboards with real-time usage metrics
-- DynamoDB for metrics aggregation
+- VPC およびネットワークリソース（または既存 VPC を使用）
+- OpenTelemetry Collector を実行する ECS Fargate クラスター
+- メトリクス取り込み用 Application Load Balancer
+- リアルタイムの利用状況メトリクスを表示する CloudWatch ダッシュボード
+- メトリクス集計用 DynamoDB
 
-**Optional Analytics Add-On:**
+**（任意）分析アドオン:**
 
-- Kinesis Data Firehose streaming metrics to S3
-- S3 data lake for long-term storage
-- Amazon Athena for SQL queries on historical data
-- AWS Glue Data Catalog for schema management
+- メトリクスを S3 にストリーミングする Kinesis Data Firehose
+- 長期保管のための S3 データレイク
+- 過去データに対する SQL クエリ用 Amazon Athena
+- スキーマ管理のための AWS Glue Data Catalog
 
-See [QUICK_START.md](QUICK_START.md) for step-by-step deployment instructions.
+手順の詳細は [QUICK_START.md](QUICK_START.md) を参照してください。
 
-## Monitoring and Operations
+## モニタリングと運用
 
-Optional OpenTelemetry monitoring provides comprehensive usage visibility for cost attribution, capacity planning, and productivity insights.
+（任意の）OpenTelemetry モニタリングにより、コスト配賦、キャパシティ計画、生産性の把握のための包括的な利用状況可視化を提供します。
 
-### Available Metrics
+### 利用可能なメトリクス
 
-**Token Economics:**
+**トークン経済:**
 
-- Input/output/cache token consumption by user, model, and type
-- Prompt caching effectiveness (hit rates, token savings)
-- Cost attribution by user, team, or department
+- ユーザー／モデル／種別ごとの入力・出力・キャッシュトークン消費
+- プロンプトキャッシュの有効性（ヒット率、トークン節約量）
+- ユーザー、チーム、部門別のコスト配賦
 
-**Code Activity:**
+**コード活動:**
 
-- Lines of code written vs accepted (productivity signal)
-- File operations breakdown (edits, searches, reads)
-- Programming language distribution
+- 記述行数と採用（accepted）行数の比較（生産性のシグナル）
+- ファイル操作の内訳（編集、検索、読み取り）
+- プログラミング言語の分布
 
-**Operational Health:**
+**運用健全性:**
 
-- Active users and top consumers
-- Usage patterns (hourly/daily heatmaps)
-- Authentication and API error rates
+- アクティブユーザー数と上位消費者
+- 利用パターン（時間別／日別ヒートマップ）
+- 認証および API のエラー率
 
-### Infrastructure
+### インフラ
 
-The monitoring stack (deployed with `ccwb deploy monitoring`) includes:
+モニタリングスタック（`ccwb deploy monitoring` でデプロイ）には次が含まれます。
 
-- ECS Fargate running OpenTelemetry collector
-- Application Load Balancer for metric ingestion
-- CloudWatch dashboards for real-time visualization
-- Optional: S3 data lake + Athena for historical analysis
+- OpenTelemetry Collector を実行する ECS Fargate
+- メトリクス取り込み用 Application Load Balancer
+- リアルタイム可視化のための CloudWatch ダッシュボード
+- （任意）S3 データレイク + Athena による履歴分析
 
-See [Monitoring Guide](assets/docs/MONITORING.md) for setup details and dashboard examples.
-See [Analytics Guide](assets/docs/ANALYTICS.md) for SQL queries on historical data.
+セットアップとダッシュボード例は [Monitoring Guide](assets/docs/MONITORING.md) を参照してください。  
+履歴データに対する SQL クエリは [Analytics Guide](assets/docs/ANALYTICS.md) を参照してください。
 
-## Additional Resources
+## 追加リソース
 
-### Getting Started
+### はじめに
 
-- [Quick Start Guide](QUICK_START.md) - Step-by-step deployment walkthrough
-- [CLI Reference](assets/docs/CLI_REFERENCE.md) - Complete command reference for the `ccwb` tool
+- [Quick Start Guide](QUICK_START.md) - ステップバイステップのデプロイ手順
+- [CLI Reference](assets/docs/CLI_REFERENCE.md) - `ccwb` ツールのコマンドリファレンス全体
 
-### Architecture & Deployment
+### アーキテクチャ／デプロイ
 
-- [Architecture Guide](assets/docs/ARCHITECTURE.md) - System architecture and design decisions
-- [Deployment Guide](assets/docs/DEPLOYMENT.md) - Advanced deployment options
-- [Distribution Comparison](assets/docs/distribution/comparison.md) - Presigned URLs vs Landing Page
-- [Local Testing Guide](assets/docs/LOCAL_TESTING.md) - Testing before deployment
+- [Architecture Guide](assets/docs/ARCHITECTURE.md) - システムアーキテクチャと設計判断
+- [Deployment Guide](assets/docs/DEPLOYMENT.md) - 高度なデプロイオプション
+- [Distribution Comparison](assets/docs/distribution/comparison.md) - 事前署名 URL とランディングページの比較
+- [Local Testing Guide](assets/docs/LOCAL_TESTING.md) - デプロイ前のテスト
 
-### Monitoring & Analytics
+### モニタリング／分析
 
-- [Monitoring Guide](assets/docs/MONITORING.md) - OpenTelemetry setup and dashboards
-- [Analytics Guide](assets/docs/ANALYTICS.md) - S3 data lake and Athena SQL queries
+- [Monitoring Guide](assets/docs/MONITORING.md) - OpenTelemetry のセットアップとダッシュボード
+- [Analytics Guide](assets/docs/ANALYTICS.md) - S3 データレイクと Athena の SQL クエリ
 
-### Identity Provider Setup
+### ID プロバイダー設定
 
 - [Okta](assets/docs/providers/okta-setup.md)
-- [Microsoft Entra ID (Azure AD)](assets/docs/providers/microsoft-entra-id-setup.md)
+- [Microsoft Entra ID（Azure AD）](assets/docs/providers/microsoft-entra-id-setup.md)
 - [Auth0](assets/docs/providers/auth0-setup.md)
 
-## License
+## ライセンス
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+本プロジェクトは MIT ライセンスの下で提供されます。詳細は [LICENSE](LICENSE) ファイルを参照してください。

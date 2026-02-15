@@ -1,213 +1,213 @@
-> **Part of**: [Guidance for Claude Code with Amazon Bedrock](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock)
-> **Purpose**: This subdirectory contains production-ready Claude Code plugins - completely independent of the authentication setup
+> **一部**: [Amazon Bedrock を用いた Claude Code 導入ガイダンス](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock)  
+> **目的**: このサブディレクトリには、本番利用可能な Claude Code プラグインが含まれます（認証セットアップとは完全に独立しています）
 
-# Claude Code Plugins Marketplace
+# Claude Code プラグイン マーケットプレイス
 
-Production-ready agents, hooks, and workflows for Claude Code - a comprehensive plugin marketplace providing specialized tools for systematic development, documentation, architecture, security, and more.
+Claude Code 向けの本番利用可能なエージェント、フック、ワークフローを提供します。体系的な開発、ドキュメント、アーキテクチャ、セキュリティなどに特化したツールをまとめた、包括的なプラグイン マーケットプレイスです。
 
-## 🚀 Quick Start
+## 🚀 クイックスタート
 
 ```bash
-# Add the marketplace
+# マーケットプレイスを追加
 /plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 
-# Install your first plugin (EPCC workflow recommended)
+# 最初のプラグインをインストール（EPCC workflow 推奨）
 /plugin install epcc-workflow@aws-claude-code-plugins
 
-# Browse all available plugins interactively
+# 利用可能なプラグインを対話的に参照
 /plugin
 ```
 
-## 📖 Documentation
+## 📖 ドキュメント
 
-**New to plugins?** Start with our hands-on tutorial:
-- [Getting Started with EPCC Workflow](docs/tutorials/getting-started-epcc-workflow.md) - 25-minute tutorial for beginners
+**プラグインが初めての方**は、まずハンズオンチュートリアルから：
+- [EPCC ワークフローを始める](docs/tutorials/getting-started-epcc-workflow.md) - 初心者向け 25 分チュートリアル
 
-**Need to configure plugins?** Check our practical guides:
-- [Plugin Configuration How-To](docs/how-to/configure-plugins.md) - Installation, team setup, and troubleshooting
+**プラグイン設定が必要な方**は、実用ガイドを参照：
+- [プラグイン設定 How-To](docs/how-to/configure-plugins.md) - インストール、チーム設定、トラブルシューティング
 
-**Want to explore all resources?** Visit the documentation hub:
-- [Documentation Hub](docs/README.md) - Complete guide index with learning paths
+**すべてのリソースを確認したい方**は、ドキュメントハブへ：
+- [ドキュメントハブ](docs/README.md) - 学習パス付きのガイド索引
 
-## 📦 Available Plugins
+## 📦 利用可能なプラグイン
 
-### 🔄 epcc-workflow (Recommended First)
-**EPCC (Explore-Plan-Code-Commit) systematic development workflow**
+### 🔄 epcc-workflow（最初におすすめ）
+**EPCC（Explore-Plan-Code-Commit）による体系的な開発ワークフロー**
 
-A comprehensive methodology for systematic software development with exploration and planning phases.
+探索（Explore）と計画（Plan）フェーズを含む、体系的なソフトウェア開発手法を提供します。
 
-**Includes:**
-- 12 specialized agents for exploration, planning, coding, and commit phases
-- 4 workflow commands (/epcc-explore, /epcc-plan, /epcc-code, /epcc-commit)
-- Auto-recovery hooks
+**含まれるもの:**
+- 探索／計画／実装／コミットの各フェーズ向けに特化した 12 のエージェント
+- 4 つのワークフローコマンド（/epcc-explore, /epcc-plan, /epcc-code, /epcc-commit）
+- 自動リカバリーフック
 
-**Install:** `/plugin install epcc-workflow@aws-claude-code-plugins`
+**インストール:** `/plugin install epcc-workflow@aws-claude-code-plugins`
 
-**Use Case:** Teams needing systematic, methodical development approach
+**利用場面:** 体系的・手順的な開発アプローチが必要なチーム
 
 ---
 
 ### 📚 documentation
-**Complete Diataxis documentation framework**
+**Diataxis ドキュメントフレームワーク（完全版）**
 
-Implements the full Diataxis documentation system with 12 specialized agents for tutorials, how-tos, references, explanations, and analysis.
+チュートリアル、How-to、リファレンス、解説、分析のための 12 の特化エージェントを備え、Diataxis のドキュメント体系を完全に実装します。
 
-**Includes:**
-- 12 specialized agents for documentation and analysis
-- 5 documentation commands
-- Diataxis-compliant structure
+**含まれるもの:**
+- ドキュメント／分析向けの 12 エージェント
+- 5 つのドキュメントコマンド
+- Diataxis 準拠の構造
 
-**Install:** `/plugin install documentation@aws-claude-code-plugins`
+**インストール:** `/plugin install documentation@aws-claude-code-plugins`
 
-**Use Case:** Projects requiring comprehensive, user-focused documentation
+**利用場面:** ユーザー志向の包括的ドキュメントが必要なプロジェクト
 
 ---
 
 ### 🏗️ architecture
-**Architecture design, review, and documentation**
+**アーキテクチャ設計、レビュー、ドキュメント化**
 
-Complete toolkit for system architecture design, C4 diagrams, ADRs, and architecture reviews.
+システムアーキテクチャ設計、C4 図、ADR、アーキテクチャレビューのための包括的ツールキットです。
 
-**Includes:**
-- 10 specialized agents for architecture and quality analysis
-- 3 commands (design, review, refactor)
-- 3 automation hooks
+**含まれるもの:**
+- アーキテクチャ／品質分析向けの 10 エージェント
+- 3 コマンド（design / review / refactor）
+- 3 つの自動化フック
 
-**Install:** `/plugin install architecture@aws-claude-code-plugins`
+**インストール:** `/plugin install architecture@aws-claude-code-plugins`
 
-**Use Case:** Architects and teams working on system design
+**利用場面:** システム設計に取り組むアーキテクトおよびチーム
 
 ---
 
 ### 🔒 security
-**Security scanning and compliance automation**
+**セキュリティスキャンとコンプライアンス自動化**
 
-Comprehensive security tooling with automated gates, vulnerability scanning, and compliance validation.
+自動ゲート、脆弱性スキャン、コンプライアンス検証を備えた包括的セキュリティツール群です。
 
-**Includes:**
-- 4 specialized agents for security and analysis
-- 2 commands (/security-scan, /permission-audit)
-- Automated security gates and scripts
+**含まれるもの:**
+- セキュリティ／分析向けの 4 エージェント
+- 2 コマンド（/security-scan, /permission-audit）
+- 自動セキュリティゲートとスクリプト
 
-**Install:** `/plugin install security@aws-claude-code-plugins`
+**インストール:** `/plugin install security@aws-claude-code-plugins`
 
-**Use Case:** Security-conscious teams, compliance requirements
+**利用場面:** セキュリティ重視のチーム、コンプライアンス要件がある場合
 
 ---
 
 ### ✅ testing
-**Testing, QA, and quality gates**
+**テスト、QA、品質ゲート**
 
-Complete testing infrastructure with automated quality gates, linting, and validation.
+自動品質ゲート、lint、検証を備えた完全なテスト基盤です。
 
-**Includes:**
-- 3 specialized agents for testing and design
-- Test generation command
-- Quality gates with Python linting (Black, Ruff, mypy)
+**含まれるもの:**
+- テスト／設計向けの 3 エージェント
+- テスト生成コマンド
+- Python の lint を含む品質ゲート（Black / Ruff / mypy）
 
-**Install:** `/plugin install testing@aws-claude-code-plugins`
+**インストール:** `/plugin install testing@aws-claude-code-plugins`
 
-**Use Case:** QA teams, TDD practitioners, quality-focused development
+**利用場面:** QA チーム、TDD 実践者、品質重視の開発
 
 ---
 
 ### ⚡ performance
-**Performance profiling and optimization**
+**性能プロファイリングと最適化**
 
-Tools for performance analysis, profiling, optimization, and continuous monitoring.
+性能分析、プロファイリング、最適化、継続的モニタリングのためのツールです。
 
-**Includes:**
-- 5 specialized agents for performance analysis
-- Performance analysis command
-- Performance monitoring hooks
+**含まれるもの:**
+- 性能分析向けの 5 エージェント
+- 性能分析コマンド
+- 性能監視フック
 
-**Install:** `/plugin install performance@aws-claude-code-plugins`
+**インストール:** `/plugin install performance@aws-claude-code-plugins`
 
-**Use Case:** Performance-critical applications, optimization work
+**利用場面:** 性能が重要なアプリケーション、最適化作業
 
 ---
 
 ### 🧪 tdd-workflow
-**Test-Driven Development workflow**
+**テスト駆動開発（TDD）ワークフロー**
 
-Specialized workflow for TDD with red-green-refactor cycle support.
+red-green-refactor サイクルを支援する、TDD 向けの特化ワークフローです。
 
-**Includes:**
-- 6 specialized agents for TDD and quality analysis
-- 2 TDD commands (/tdd-feature, /tdd-bugfix)
-- Test-first development patterns
+**含まれるもの:**
+- TDD／品質分析向けの 6 エージェント
+- 2 つの TDD コマンド（/tdd-feature, /tdd-bugfix）
+- テストファースト開発パターン
 
-**Install:** `/plugin install tdd-workflow@aws-claude-code-plugins`
+**インストール:** `/plugin install tdd-workflow@aws-claude-code-plugins`
 
-**Use Case:** TDD practitioners, test-first development teams
+**利用場面:** TDD 実践者、テストファースト開発チーム
 
 ---
 
 ### 📋 agile-tools
-**Agile team roles and processes**
+**アジャイルの役割とプロセス**
 
-Complete set of agile role-based agents for team coordination and project management.
+チーム連携／プロジェクト管理向けに、役割ベースのエージェント一式を提供します。
 
-**Includes:**
-- 4 agile role agents (Scrum Master, Product Owner, Business Analyst, Project Manager)
-- Notification hooks
+**含まれるもの:**
+- 4 つのアジャイル役割エージェント（スクラムマスター、プロダクトオーナー、ビジネスアナリスト、プロジェクトマネージャー）
+- 通知フック
 
-**Install:** `/plugin install agile-tools@aws-claude-code-plugins`
+**インストール:** `/plugin install agile-tools@aws-claude-code-plugins`
 
-**Use Case:** Agile teams, product management, business analysis
+**利用場面:** アジャイルチーム、プロダクト管理、業務分析
 
 ---
 
 ### 🎨 ux-design
-**UX optimization and UI design**
+**UX 最適化と UI デザイン**
 
-User experience and interface design tools with accessibility validation.
+アクセシビリティ検証を含む、ユーザー体験／UI 設計ツールです。
 
-**Includes:**
-- 2 design agents (UI designer, UX optimizer)
-- WCAG accessibility support
+**含まれるもの:**
+- 2 つのデザインエージェント（UI デザイナー、UX オプティマイザー）
+- WCAG アクセシビリティ対応
 
-**Install:** `/plugin install ux-design@aws-claude-code-plugins`
+**インストール:** `/plugin install ux-design@aws-claude-code-plugins`
 
-**Use Case:** Frontend teams, design-focused development
+**利用場面:** フロントエンドチーム、デザイン重視の開発
 
 ---
 
 ### 🚀 deployment
-**Deployment orchestration and automation**
+**デプロイのオーケストレーションと自動化**
 
-DevOps tools for deployment automation, progressive rollouts, and compliance.
+デプロイ自動化、段階的ロールアウト、コンプライアンスのための DevOps ツールです。
 
-**Includes:**
-- Deployment agent
-- Compliance hooks
-- Progressive deployment strategies
+**含まれるもの:**
+- デプロイ用エージェント
+- コンプライアンスフック
+- 段階的デプロイ戦略
 
-**Install:** `/plugin install deployment@aws-claude-code-plugins`
+**インストール:** `/plugin install deployment@aws-claude-code-plugins`
 
-**Use Case:** DevOps teams, CI/CD pipelines
+**利用場面:** DevOps チーム、CI/CD パイプライン
 
 ---
 
 ### 🔍 code-analysis
-**Code archaeology and tech evaluation**
+**コード考古学と技術評価**
 
-Tools for analyzing legacy systems, evaluating technologies, and assessing technical debt.
+レガシーシステム分析、技術評価、技術的負債の評価のためのツールです。
 
-**Includes:**
-- 2 analysis agents (code archaeologist, tech evaluator)
-- Legacy system analysis
+**含まれるもの:**
+- 2 つの分析エージェント（code archaeologist、tech evaluator）
+- レガシーシステム分析
 
-**Install:** `/plugin install code-analysis@aws-claude-code-plugins`
+**インストール:** `/plugin install code-analysis@aws-claude-code-plugins`
 
-**Use Case:** Legacy modernization, technology evaluation
+**利用場面:** レガシー刷新、技術選定・評価
 
 ---
 
-## 🎯 Recommended Plugin Bundles
+## 🎯 推奨プラグインバンドル
 
 ### Starter Bundle
-Perfect for teams getting started with Claude Code:
+Claude Code を導入し始めるチームに最適：
 ```json
 {
   "requiredMarketplaces": ["aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock"],
@@ -220,7 +220,7 @@ Perfect for teams getting started with Claude Code:
 ```
 
 ### Full-Stack Bundle
-Comprehensive tools for full-stack development:
+フルスタック開発向けの包括的ツール：
 ```json
 {
   "requiredPlugins": [
@@ -234,7 +234,7 @@ Comprehensive tools for full-stack development:
 ```
 
 ### Enterprise Bundle
-Complete enterprise development toolkit:
+エンタープライズ向けの完全な開発ツールキット：
 ```json
 {
   "requiredPlugins": [
@@ -250,7 +250,7 @@ Complete enterprise development toolkit:
 ```
 
 ### TDD Bundle
-Everything needed for test-driven development:
+テスト駆動開発に必要な一式：
 ```json
 {
   "requiredPlugins": [
@@ -261,9 +261,9 @@ Everything needed for test-driven development:
 }
 ```
 
-## 🔧 Team Configuration
+## 🔧 チーム設定
 
-Add to your project's `.claude/settings.json`:
+プロジェクトの `.claude/settings.json` に追加します。
 
 ```json
 {
@@ -278,16 +278,16 @@ Add to your project's `.claude/settings.json`:
 }
 ```
 
-All team members will automatically have access to these plugins.
+これにより、チームメンバー全員が自動的にこれらのプラグインを利用できるようになります。
 
-## 📂 Repository Structure
+## 📂 リポジトリ構成
 
 ```
 claude-code-plugins/
 ├── .claude-plugin/
-│   └── marketplace.json       # Marketplace manifest
+│   └── marketplace.json       # マーケットプレイスのマニフェスト
 ├── plugins/
-│   ├── epcc-workflow/         # 11 specialized plugins
+│   ├── epcc-workflow/         # 11 個の特化プラグイン
 │   ├── documentation/
 │   ├── architecture/
 │   ├── security/
@@ -298,51 +298,51 @@ claude-code-plugins/
 │   ├── ux-design/
 │   ├── deployment/
 │   └── code-analysis/
-├── docs/                      # Comprehensive guides
-└── README.md                  # This file
+├── docs/                      # 包括的ガイド
+└── README.md                  # このファイル
 ```
 
-## 🎓 Learning Resources
+## 🎓 学習リソース
 
-### For Individuals
-1. Start with `epcc-workflow` for systematic development
-2. Add `documentation` for writing great docs
-3. Include `security` for automated security checks
+### 個人向け
+1. 体系的な開発のために `epcc-workflow` から始める
+2. 良いドキュメントを書くために `documentation` を追加する
+3. 自動セキュリティチェックのために `security` を含める
 
-### For Teams
-1. Configure required plugins in `.claude/settings.json`
-2. Choose a bundle that matches your workflow
-3. Customize per-project as needed
+### チーム向け
+1. `.claude/settings.json` に必須プラグインを設定する
+2. ワークフローに合うバンドルを選ぶ
+3. 必要に応じてプロジェクト単位でカスタマイズする
 
-### For Enterprises
-1. Deploy security and testing plugins organization-wide
-2. Use EPCC workflow for consistency
-3. Leverage agile-tools for project management
+### エンタープライズ向け
+1. 組織全体で security と testing プラグインを展開する
+2. 一貫性のために EPCC ワークフローを活用する
+3. プロジェクト管理に agile-tools を活用する
 
-## 🤝 Contributing
+## 🤝 コントリビューション
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+貢献を歓迎します。詳細は [Contributing Guide](CONTRIBUTING.md) をお読みください。
 
-## 📄 License
+## 📄 ライセンス
 
-This project is licensed under MIT-0 - see the [LICENSE](LICENSE) file for details.
+本プロジェクトは MIT-0 で提供されます。詳細は [LICENSE](LICENSE) を参照してください。
 
-## 🔗 Links
+## 🔗 リンク
 
 - [Claude Code Documentation](https://docs.claude.com/claude-code)
 - [Plugin Reference](https://docs.claude.com/claude-code/plugins-reference)
 - [Marketplace Guide](https://docs.claude.com/claude-code/plugin-marketplaces)
 - [Issue Tracker](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/issues)
 
-## ⭐ Highlights
+## ⭐ ハイライト
 
-- **11 Production-Ready Plugins** - Comprehensive tooling for modern development
-- **Advanced Metadata** - Rich discoverability with keywords, tags, and categories
-- **Modular Design** - Install only what you need
-- **Team-Friendly** - Enforce standards with required plugins
-- **Well-Documented** - Complete guides and examples
-- **Battle-Tested** - Based on proven patterns and workflows
+- **本番利用可能な 11 プラグイン** — 現代的な開発のための包括的ツール群
+- **高度なメタデータ** — キーワード、タグ、カテゴリによる高い発見性
+- **モジュール設計** — 必要なものだけをインストール可能
+- **チームフレンドリー** — 必須プラグインで標準を徹底
+- **充実したドキュメント** — 完全なガイドと例
+- **実戦で検証済み** — 実証済みパターンとワークフローに基づく
 
 ---
 
-**Get Started:** `/plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock`
+**はじめる:** `/plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock`

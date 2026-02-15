@@ -1,73 +1,72 @@
-# Claude Code Monitoring Implementation
+# Claude Code モニタリング実装
 
-This guide explains how to deploy and use the optional monitoring system for tracking Claude Code usage through Amazon Bedrock.
+本ガイドでは、Amazon Bedrock を通じた Claude Code の利用状況を追跡するための、任意（オプション）のモニタリングシステムをデプロイし利用する方法を説明します。
 
-When you enable monitoring during deployment, the system creates infrastructure to collect and visualize usage metrics from Claude Code. The monitoring stack deploys an OpenTelemetry (OTEL) Collector on AWS ECS Fargate that receives metrics from Claude Code and forwards them to CloudWatch for visualization and analysis.
+デプロイ時にモニタリングを有効にすると、Claude Code からの利用状況メトリクスを収集して可視化するためのインフラが作成されます。モニタリングスタックは、AWS ECS Fargate 上に OpenTelemetry（OTEL）Collector をデプロイし、Claude Code からメトリクスを受信して CloudWatch に転送し、可視化と分析を可能にします。
 
-## Architecture
+## アーキテクチャ
 
-The monitoring system consists of several components working together. Claude Code sends metrics using the OpenTelemetry Protocol (OTLP) to an Application Load Balancer. The ALB forwards these metrics to an OTEL Collector running on ECS Fargate. The collector then converts the metrics to CloudWatch's Embedded Metric Format (EMF) and sends them to CloudWatch Metrics and Logs. Finally, a CloudWatch Dashboard visualizes these metrics.
+モニタリングシステムはいくつかのコンポーネントが連携して動作します。Claude Code は OpenTelemetry Protocol（OTLP）でメトリクスを Application Load Balancer（ALB）に送信します。ALB はこれらのメトリクスを ECS Fargate 上で稼働する OTEL Collector に転送します。collector はメトリクスを CloudWatch の Embedded Metric Format（EMF）に変換して CloudWatch Metrics と Logs に送信します。最後に CloudWatch ダッシュボードがこれらのメトリクスを可視化します。
 
-## Implementation Details
+## 実装詳細
 
-The monitoring infrastructure deploys several AWS resources to handle metric collection and visualization.
+モニタリング基盤は、メトリクス収集と可視化を担うために複数の AWS リソースをデプロイします。
 
-The core component runs as an ECS Fargate service using the AWS Distro for OpenTelemetry (ADOT) Collector image. The service runs with minimal resources (0.25 vCPU and 0.5 GB memory) in private subnets within your VPC. While the CloudFormation template includes auto-scaling configuration for 1-3 tasks based on CPU utilization, this feature requires the ECS service-linked role to be created in your account.
+中核コンポーネントは、AWS Distro for OpenTelemetry（ADOT）Collector イメージを使った ECS Fargate サービスとして動作します。このサービスは VPC 内のプライベートサブネットで、最小リソース（0.25 vCPU / 0.5 GB メモリ）で稼働します。CloudFormation テンプレートには CPU 使用率に基づく 1～3 タスクのオートスケーリング設定が含まれていますが、この機能はアカウント内に ECS のサービスリンクロールが作成されていることを前提とします。
 
-An Application Load Balancer sits in front of the ECS service, receiving OTLP metrics on port 4318. The ALB supports both HTTP and HTTPS protocols. When you provide a custom domain name during deployment, the system automatically creates an ACM certificate and configures HTTPS. Health checks monitor the collector's availability through the root endpoint.
+ECS サービスの前段には Application Load Balancer が配置され、ポート 4318 で OTLP メトリクスを受信します。ALB は HTTP と HTTPS の両プロトコルをサポートします。デプロイ時にカスタムドメイン名を指定すると、システムは ACM 証明書を自動作成し、HTTPS を構成します。ヘルスチェックは root エンドポイントを通じて collector の可用性を監視します。
 
-The CloudWatch Dashboard provides comprehensive visualization of your Claude Code usage. The dashboard uses Lambda functions and DynamoDB for efficient metrics collection and display, presenting real-time and historical usage data through custom widgets.
+CloudWatch ダッシュボードは、Claude Code の利用状況を包括的に可視化します。ダッシュボードは Lambda 関数と DynamoDB を用いて効率的にメトリクスを収集・表示し、カスタムウィジェットでリアルタイムおよび履歴データを提示します。
 
-### Configuration
+### 設定
 
-The OTEL Collector configuration defines how metrics flow through the system. The collector listens for OTLP traffic on port 4318 and processes metrics in batches every 60 seconds before sending them to CloudWatch.
+OTEL Collector の設定は、メトリクスがシステム内をどのように流れるかを定義します。collector はポート 4318 で OTLP トラフィックを待ち受け、CloudWatch に送信する前に 60 秒ごとにメトリクスをバッチ処理します。
 
-The configuration includes an attributes processor that extracts user information from HTTP headers sent by the OTEL helper binary. These headers contain user details from the JWT token, including email, user ID, department, team, cost center, and other organizational attributes. The collector maps these headers to resource attributes that become dimensions in CloudWatch.
+設定には attributes processor が含まれており、OTEL helper バイナリが送信する HTTP ヘッダーからユーザー情報を抽出します。これらのヘッダーには JWT トークン由来のユーザー詳細（メールアドレス、ユーザー ID、部門、チーム、コストセンター、その他の組織属性）が含まれます。collector はこれらのヘッダーをリソース属性へマッピングし、CloudWatch のディメンションとして利用できるようにします。
 
-Claude Code sends several metric types that the collector processes:
+Claude Code は、collector が処理する複数種のメトリクスを送信します。
 
-- `claude_code.token.usage` - Tracks input and output token consumption
-- `claude_code.session.count` - Counts active sessions
-- `claude_code.active_time.total` - Measures time spent actively using Claude Code
-- `claude_code.cost.usage` - Estimates costs based on token usage
-- `claude_code.code_edit_tool.decision` - Records code editing decisions
+- `claude_code.token.usage` - 入力／出力トークン消費を追跡
+- `claude_code.session.count` - アクティブセッション数をカウント
+- `claude_code.active_time.total` - Claude Code を能動的に使用した時間を測定
+- `claude_code.cost.usage` - トークン使用量に基づくコスト推定
+- `claude_code.code_edit_tool.decision` - コード編集の意思決定を記録
 
-## Usage Quota Monitoring
+## 利用クォータ監視
 
-The monitoring system supports optional quota tracking to alert administrators when users approach or exceed token usage limits. This helps manage costs and prevent unexpected overages.
+モニタリングシステムは、ユーザーがトークン使用量の上限に近づいた／超過した際に管理者へ通知するための任意のクォータ追跡をサポートします。これによりコスト管理が容易になり、想定外の超過を防げます。
 
-Quota monitoring deploys as a separate CloudFormation stack that integrates with the dashboard infrastructure. When enabled, it tracks monthly token consumption per user and sends automated alerts through Amazon SNS when usage thresholds are exceeded.
+クォータ監視は、ダッシュボード基盤と統合する別の CloudFormation スタックとしてデプロイされます。有効化すると、ユーザーごとの月次トークン消費を追跡し、しきい値超過時に Amazon SNS で自動アラートを送信します。
 
-> **Detailed Information**: For complete quota monitoring setup, configuration, and usage instructions, see the [Quota Monitoring Guide](QUOTA_MONITORING.md).
+> **詳細**: クォータ監視のセットアップ、設定、利用手順の全体は [Quota Monitoring Guide](QUOTA_MONITORING.md) を参照してください。
 
+## 分析パイプライン（任意）
 
-## Analytics Pipeline (Optional)
+CloudWatch によるリアルタイム監視に加えて、高度なレポーティングと履歴分析のために分析パイプラインを有効化できます。分析スタックは、長期保存と分析のためのデータレイクを作成します。
 
-Beyond real-time monitoring through CloudWatch, you can enable an analytics pipeline for advanced reporting and historical analysis. The analytics stack creates a data lake for long-term metric storage and analysis.
+分析パイプラインは Kinesis Data Firehose を使って CloudWatch Logs を S3 にストリーミングし、効率的なクエリのためにメトリクスを Parquet 形式へ変換します。S3 データレイクは古いデータを自動的に Glacier にアーカイブし、長期保存コストを抑えます。AWS Athena はメトリクスデータに対する SQL クエリを提供し、Glue クローラーを不要にする自動パーティションプロジェクションを備えています。
 
-The analytics pipeline streams CloudWatch Logs to S3 using Kinesis Data Firehose, converting metrics to Parquet format for efficient querying. The S3 data lake automatically archives older data to Glacier for cost-effective long-term storage. AWS Athena provides SQL query capabilities over your metrics data, with automatic partition projection that eliminates the need for Glue crawlers.
+このアーキテクチャにより、強力な機能が実現できます。ユーザー単位のトークン使用量推移の追跡、数か月分の履歴データの効率的クエリ、ユーザー／部門／プロジェクト別のコスト配賦、標準 SQL によるカスタムレポート作成などです。また、トークン消費上位ユーザーの特定、モデル別・種別別のトークン使用分析、時間帯別のユーザー活動パターン理解、使用傾向に基づくコスト予測など、一般的な分析タスク向けの事前作成クエリも含まれます。
 
-This architecture enables several powerful capabilities. You can track individual user token usage over time, query months of historical data efficiently, allocate costs by user, department, or project, and create custom reports using standard SQL. The system includes pre-built queries for common analytics tasks like identifying top users by token consumption, analyzing token usage by model and type, understanding user activity patterns by hour, and forecasting costs based on usage trends.
+## デプロイ手順
 
-## Deployment Process
-
-Monitoring deployment happens during the initial setup when you run `poetry run ccwb init`. The interactive wizard prompts you to enable monitoring and configure the necessary infrastructure.
+モニタリングのデプロイは、`poetry run ccwb init` を実行する初期セットアップ中に行います。対話型ウィザードがモニタリングの有効化と必要インフラの設定を促します。
 
 ```bash
 poetry run ccwb init
 ```
 
-When prompted about monitoring, answering yes triggers additional configuration options. You can either let the system create a new VPC or use an existing one. For existing VPCs, you'll select the VPC ID and at least two subnets for the Application Load Balancer.
+モニタリングの質問で「yes」を選ぶと、追加の設定オプションが表示されます。新しい VPC を作成するか、既存 VPC を利用するかを選べます。既存 VPC を使う場合は、VPC ID と、Application Load Balancer 用に少なくとも 2 つのサブネットを選択します。
 
-The deployment creates the complete monitoring infrastructure: a VPC with public and private subnets (if not using an existing VPC), an ECS cluster and task definition for the OTEL Collector, the collector service itself, an Application Load Balancer to receive metrics, and CloudWatch log groups for storing logs and metrics.
+デプロイでは、モニタリング基盤一式が作成されます。（既存 VPC を使わない場合）パブリック／プライベートサブネットを持つ VPC、OTEL Collector の ECS クラスターとタスク定義、collector サービス本体、メトリクス受信用の Application Load Balancer、ログ／メトリクス保存用の CloudWatch Log Group です。
 
-If you provide a custom domain name and hosted zone ID during setup, the system automatically provisions an ACM certificate and configures HTTPS. This ensures encrypted transmission of metrics from Claude Code to your collector.
+セットアップ時にカスタムドメイン名とホストゾーン ID を指定すると、ACM 証明書が自動的にプロビジョニングされ HTTPS が構成されます。これにより、Claude Code から collector へのメトリクス送信が暗号化されます。
 
-The dashboard stack creates the metrics aggregation infrastructure that supports quota monitoring. If you choose to deploy quota monitoring as a separate stack, it integrates with the dashboard's metrics table to track user consumption.
+ダッシュボードスタックは、クォータ監視を支えるメトリクス集約インフラを作成します。クォータ監視を別スタックとしてデプロイする場合も、ダッシュボードのメトリクステーブルと統合してユーザー消費量を追跡します。
 
-## Claude Code Configuration
+## Claude Code の設定
 
-The package command generates a `claude-settings/settings.json` file in the distribution package that configures Claude Code for telemetry collection. During installation, this file gets copied to `~/.claude/settings.json` in the user's home directory and contains all the settings needed for monitoring.
+package コマンドは、配布パッケージ内に `claude-settings/settings.json` ファイルを生成し、テレメトリ収集のための Claude Code 設定を行います。インストール時にこのファイルがユーザーのホームディレクトリ `~/.claude/settings.json` にコピーされ、モニタリングに必要な設定がすべて含まれます。
 
 ```json
 {
@@ -86,61 +85,61 @@ The package command generates a `claude-settings/settings.json` file in the dist
 }
 ```
 
-The configuration enables Bedrock usage and sets the AWS profile for authentication. It activates telemetry collection and configures the OTLP exporter to send metrics to your deployed collector endpoint. The OTEL resource attributes provide default organizational tags that can be overridden by environment variables.
+この設定は Bedrock 利用を有効化し、認証用の AWS プロファイルを設定します。テレメトリ収集を有効化し、OTLP エクスポーターがデプロイ済み collector エンドポイントへメトリクスを送信するよう構成します。OTEL の resource attributes は、環境変数で上書き可能なデフォルトの組織タグを提供します。
 
-The `otelHeadersHelper` points to the installed OTEL helper binary. This helper extracts user information from the JWT token stored by the authentication process and sends it as HTTP headers with each metric. The OTEL Collector then converts these headers into CloudWatch dimensions for user attribution.
+`otelHeadersHelper` は、インストールされた OTEL helper バイナリを指します。このヘルパーは認証プロセスが保存した JWT トークンからユーザー情報を抽出し、各メトリクスとともに HTTP ヘッダーとして送信します。OTEL Collector はこれらのヘッダーを CloudWatch のディメンションに変換し、ユーザー単位の帰属（attribution）を可能にします。
 
-## Metrics Collected
+## 収集されるメトリクス
 
-The monitoring system tracks comprehensive metrics about Claude Code usage, with each metric tagged with user and organizational attributes for detailed analysis.
+モニタリングシステムは Claude Code の利用状況を包括的に追跡します。各メトリクスにはユーザー属性および組織属性が付与され、詳細な分析が可能です。
 
-For token usage, the system tracks `claude.tokens.input` for input tokens per request, `claude.tokens.output` for generated output tokens, and `claude.tokens.total` for combined token usage. These metrics help you understand consumption patterns and costs.
+トークン使用量については、リクエストごとの入力トークンを示す `claude.tokens.input`、生成された出力トークンの `claude.tokens.output`、合算の `claude.tokens.total` を追跡します。これらは消費パターンとコストの理解に役立ちます。
 
-Request metrics include `claude.requests.count` to track the number of API calls, `claude.requests.duration` to measure response times in milliseconds, and `claude.requests.errors` to monitor failed requests. These help identify performance issues and error patterns.
+リクエストメトリクスとしては、API 呼び出し回数の `claude.requests.count`、応答時間（ミリ秒）を測る `claude.requests.duration`、失敗リクエストを監視する `claude.requests.errors` を収集します。これにより性能問題やエラーパターンを特定できます。
 
-Each metric includes multiple dimensions for filtering and grouping. The `UserEmail` dimension comes from the OIDC token, allowing you to track individual user consumption. The `Model` dimension shows which Claude model was used (like claude-3-sonnet or claude-3-opus). The `Region` dimension indicates the AWS region where Bedrock was accessed.
+各メトリクスには、フィルタや集計に使える複数のディメンションが含まれます。`UserEmail` ディメンションは OIDC トークン由来で、ユーザー単位の消費量を追跡できます。`Model` ディメンションは使用された Claude モデル（例: claude-3-sonnet、claude-3-opus）を示します。`Region` ディメンションは Bedrock にアクセスした AWS リージョンを示します。
 
-Organizational dimensions provide additional context. The `department` field groups users by their organizational department. `team.id` identifies specific teams within departments. `cost_center` enables cost allocation for billing purposes. Additional dimensions like `organization`, `location`, and `role` provide further categorization options for your metrics.
+組織ディメンションは、追加の文脈を提供します。`department` は部門単位のグルーピング、`team.id` は部門内のチーム識別、`cost_center` は請求目的のコスト配賦に使えます。さらに `organization`、`location`、`role` などのディメンションにより、より細かな分類も可能です。
 
-## CloudWatch Dashboard
+## CloudWatch ダッシュボード
 
-The CloudWatch Dashboard named `ClaudeCodeMonitoring` provides comprehensive visualization of your Claude Code metrics.
+`ClaudeCodeMonitoring` という名前の CloudWatch ダッシュボードは、Claude Code メトリクスを包括的に可視化します。
 
-![Claude Code Monitoring Dashboard](/assets/images/ClaudeCodeDashboard.png)
-_Full dashboard view showing all metrics_
+![Claude Code Monitoring Dashboard](/assets/images/ClaudeCodeDashboard.png)  
+_全メトリクスを表示するダッシュボード全体像_
 
-## End User Experience
+## エンドユーザー体験
 
-From the end user perspective, monitoring works automatically without requiring any configuration or setup.
+エンドユーザー視点では、モニタリングは追加設定なしで自動的に動作します。
 
-During installation, the `install.sh` script copies all necessary files including the Claude Code settings and OTEL helper binary. Users don't need to configure anything - the monitoring settings are pre-configured with your organization's collector endpoint.
+インストール中に `install.sh` が Claude Code 設定および OTEL helper バイナリを含む必要ファイル一式をコピーします。ユーザーが何か設定する必要はありません。モニタリング設定は、組織の collector エンドポイントが事前設定された状態で配布されます。
 
-When users work with Claude Code, metrics are sent in the background without affecting performance or user experience. The OTEL helper binary automatically extracts user information from their authentication token and includes it with metrics for attribution.
+ユーザーが Claude Code を利用している間、メトリクスはバックグラウンドで送信され、性能や体験に影響を与えません。OTEL helper バイナリが認証トークンからユーザー情報を自動抽出し、メトリクスに付与して帰属情報を提供します。
 
-Privacy remains a priority in the monitoring implementation. The system collects only usage metrics like token counts and response times - conversation content is never transmitted or stored. While metrics include user email for attribution in organizational reports, the system also generates hashed user IDs for scenarios where email-based identification isn't appropriate.
+モニタリング実装ではプライバシーも重視しています。収集するのはトークン数や応答時間などの利用状況メトリクスのみで、会話内容は送信も保存もしません。組織レポートでの帰属のためメトリクスにユーザーのメールアドレスが含まれますが、メールベースの識別が不適切なケース向けに、ハッシュ化されたユーザー ID も生成します。
 
-## Bedrock API Monitoring
+## Bedrock API のモニタリング
 
-The authentication stack can optionally track Bedrock API calls through AWS CloudTrail, providing an audit trail and additional cost monitoring capabilities.
+認証スタックは、AWS CloudTrail により Bedrock API 呼び出しを追跡し、監査証跡と追加のコスト監視機能を提供することもできます（任意）。
 
-CloudTrail tracking captures every Bedrock model invocation, storing detailed logs in S3 with 90-day retention. These events also stream to CloudWatch Logs at `/aws/bedrock/cognito-access` for real-time analysis. This creates a complete audit trail of who accessed which models and when.
+CloudTrail の追跡では、すべての Bedrock モデル呼び出しを記録し、90 日保持で S3 に詳細ログを保存します。これらのイベントは `/aws/bedrock/cognito-access` として CloudWatch Logs にもストリーミングされ、リアルタイム分析が可能になります。これにより、誰がいつどのモデルにアクセスしたかの完全な監査証跡が得られます。
 
-The monitoring dashboard includes several cost-related features. A separate Bedrock cost dashboard tracks AWS Billing charges for the Bedrock service. The main dashboard estimates costs based on token usage with configurable pricing (default $15 per million tokens). Real-time cost widgets show today's cost, this week's cost, and this month's total spending.
+モニタリングダッシュボードにはコスト関連機能もあります。別途、Bedrock サービスの AWS Billing 課金を追跡する Bedrock コストダッシュボードがあります。メインダッシュボードは、トークン使用量に基づき（既定は 100 万トークンあたり $15 の価格設定で）コストを推定します。リアルタイムのコストウィジェットにより、本日・今週・今月の支出を表示できます。
 
-### Data Privacy
+### データプライバシー
 
-The system collects only usage metrics, never capturing or transmitting conversation content between users and Claude. User attribution works through the email address from the OIDC token, providing clear accountability without excessive data collection. CloudWatch retains metrics for 15 months by default, though you can adjust this based on your retention policies. Beyond the email address used for attribution, no personally identifiable information is transmitted or stored.
+本システムは利用状況メトリクスのみを収集し、ユーザーと Claude の会話内容を取得・送信することはありません。ユーザー帰属は OIDC トークン由来のメールアドレスで行われ、過剰なデータ収集なしに明確な説明責任を確保します。CloudWatch は既定で 15 か月メトリクスを保持しますが、保持期間は組織ポリシーに応じて調整できます。帰属に使用するメールアドレス以外の個人識別情報（PII）は送信も保存もしません。
 
-### Network Security
+### ネットワークセキュリティ
 
-The monitoring infrastructure supports both HTTP and HTTPS protocols. For production deployments, provide a custom domain name during setup to automatically enable HTTPS with an ACM certificate. HTTP mode remains available for development or internal deployments where encryption isn't required.
+モニタリング基盤は HTTP と HTTPS の両方をサポートします。本番デプロイでは、セットアップ時にカスタムドメイン名を指定し、ACM 証明書による HTTPS を自動的に有効化することを推奨します。暗号化が不要な開発環境や内部向けデプロイでは HTTP も利用できます。
 
-The Application Load Balancer is internet-facing to receive metrics from Claude Code installations, while ECS tasks run in private subnets for enhanced security. Security groups restrict access to only necessary ports and protocols, following the principle of least privilege.
+Application Load Balancer は Claude Code のインストール先からのメトリクスを受信するためインターネット向け（internet-facing）ですが、ECS タスクはセキュリティ強化のためプライベートサブネットで稼働します。セキュリティグループは必要なポートとプロトコルのみにアクセスを制限し、最小権限の原則に従います。
 
-## Summary
+## まとめ
 
-The monitoring system provides comprehensive visibility into Claude Code usage across your organization. Deployment is automated through the `ccwb` CLI tools, creating all necessary infrastructure with minimal configuration. The OTEL Collector on ECS Fargate handles metric collection and transformation, while CloudWatch provides storage and visualization.
+モニタリングシステムは、組織全体における Claude Code の利用状況を包括的に可視化します。デプロイは `ccwb` CLI ツールにより自動化され、最小限の設定で必要なインフラがすべて作成されます。ECS Fargate 上の OTEL Collector がメトリクス収集と変換を担い、CloudWatch が保存と可視化を提供します。
 
-User attribution happens automatically through the OTEL helper binary that extracts information from authentication tokens. This enables detailed usage tracking by user, department, team, and other organizational dimensions without requiring manual configuration.
+ユーザー帰属は、認証トークンから情報を抽出する OTEL helper バイナリにより自動で行われます。これにより、手動設定なしでユーザー／部門／チームなど組織ディメンション別の詳細な利用追跡が可能になります。
 
-Quota monitoring provides proactive alerts when users approach or exceed token usage limits. The system sends detailed notifications through SNS, allowing organizations to manage costs and usage patterns effectively.
+クォータ監視は、ユーザーがトークン使用量上限に近づく／超過する前にプロアクティブにアラートを送信します。SNS による詳細通知により、組織はコストと利用傾向を効果的に管理できます。

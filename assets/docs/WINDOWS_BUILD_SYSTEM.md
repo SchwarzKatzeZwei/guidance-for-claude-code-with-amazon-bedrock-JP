@@ -1,168 +1,168 @@
-# Windows Build System Documentation
+# Windows ビルドシステム ドキュメント
 
-## Table of Contents
+## 目次
 
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Prerequisites](#prerequisites)
-4. [Initial Setup](#initial-setup)
-5. [Build Process](#build-process)
-6. [CLI Commands](#cli-commands)
-7. [Distribution](#distribution)
-8. [Troubleshooting](#troubleshooting)
-9. [Technical Details](#technical-details)
+1. [概要](#概要)
+2. [アーキテクチャ](#アーキテクチャ)
+3. [前提条件](#前提条件)
+4. [初期セットアップ](#初期セットアップ)
+5. [ビルドプロセス](#ビルドプロセス)
+6. [CLI コマンド](#cli-コマンド)
+7. [配布](#配布)
+8. [トラブルシューティング](#トラブルシューティング)
+9. [技術詳細](#技術詳細)
 
-## Overview
+## 概要
 
-The Windows build system enables IT administrators to create native Windows executables for Claude Code authentication tools. Due to Nuitka's requirement for native compilation on target platforms, Windows binaries must be built on Windows systems. This is accomplished using AWS CodeBuild with Windows Server 2022 containers.
+Windows ビルドシステムは、Claude Code 認証ツール向けのネイティブ Windows 実行ファイルを IT 管理者が作成できるようにします。Nuitka はターゲットプラットフォーム上でのネイティブコンパイルを要求するため、Windows バイナリは Windows 環境でビルドする必要があります。これを AWS CodeBuild（Windows Server 2022 コンテナ）で実現します。
 
-### Key Features
+### 主な特長
 
-- **Cross-platform support**: Builds Windows, macOS, and Linux binaries
-- **Asynchronous builds**: Non-blocking build process with status tracking
-- **Secure distribution**: Time-limited presigned URLs for package distribution
-- **Automated compilation**: Uses Nuitka for Python-to-native compilation
-- **No manual intervention**: Fully automated through CLI commands
+- **クロスプラットフォーム対応**: Windows / macOS / Linux バイナリをビルド
+- **非同期ビルド**: ブロッキングしないビルド開始と、ステータス追跡
+- **セキュアな配布**: 期限付きの事前署名 URL による配布
+- **自動コンパイル**: Python→ネイティブ変換に Nuitka を使用
+- **手動介入なし**: CLI コマンドで完全自動化
 
-## Architecture
+## アーキテクチャ
 
-### System Components
+### システム構成要素
 
 ```mermaid
 graph TB
-    subgraph "Developer Machine"
+    subgraph "開発者端末"
         CLI[Claude Code CLI<br/>poetry run ccwb]
-        LOCAL[Local Build<br/>macOS/Linux]
+        LOCAL[ローカルビルド<br/>macOS/Linux]
     end
 
-    subgraph "AWS Cloud"
+    subgraph "AWS クラウド"
         subgraph "CodeBuild"
-            CB[Windows Build Project<br/>Windows Server 2022<br/>BUILD_GENERAL1_LARGE]
+            CB[Windows ビルドプロジェクト<br/>Windows Server 2022<br/>BUILD_GENERAL1_LARGE]
         end
 
-        subgraph "Storage"
-            S3[S3 Bucket<br/>Build Artifacts]
-            PS[Parameter Store<br/>Distribution URLs]
+        subgraph "ストレージ"
+            S3[S3 バケット<br/>ビルド成果物]
+            PS[Parameter Store<br/>配布 URL]
         end
 
-        subgraph "Infrastructure"
-            CF[CloudFormation<br/>Stack Management]
+        subgraph "インフラ"
+            CF[CloudFormation<br/>スタック管理]
         end
     end
 
-    CLI -->|1. Start Build| CB
-    CB -->|2. Compile Binaries| CB
-    CB -->|3. Upload Artifacts| S3
-    CLI -->|4. Create Distribution| S3
-    S3 -->|5. Generate URL| PS
-    CLI -->|Build locally| LOCAL
-    CF -->|Manages| CB
-    CF -->|Manages| S3
+    CLI -->|1. ビルド開始| CB
+    CB -->|2. バイナリをコンパイル| CB
+    CB -->|3. 成果物をアップロード| S3
+    CLI -->|4. 配布物を作成| S3
+    S3 -->|5. URL を生成| PS
+    CLI -->|ローカルビルド| LOCAL
+    CF -->|管理| CB
+    CF -->|管理| S3
 ```
 
-### Build Flow Sequence
+### ビルドフロー（シーケンス）
 
 ```mermaid
 sequenceDiagram
-    participant User
+    participant User as ユーザー
     participant CLI
     participant CodeBuild
     participant S3
     participant PS as Parameter Store
 
     User->>CLI: poetry run ccwb package
-    CLI->>CLI: Build macOS binaries locally
-    CLI->>CodeBuild: Start Windows build (async)
-    CodeBuild-->>CLI: Return build ID immediately
-    CLI-->>User: Build started (ID: xxx)
+    CLI->>CLI: macOS バイナリをローカルビルド
+    CLI->>CodeBuild: Windows ビルド開始（非同期）
+    CodeBuild-->>CLI: ビルド ID を即時返却
+    CLI-->>User: ビルド開始（ID: xxx）
 
-    Note over CodeBuild: Building (20+ mins)
+    Note over CodeBuild: ビルド中（20 分以上）
 
     User->>CLI: poetry run ccwb package --status latest
-    CLI->>CodeBuild: Check build status
-    CodeBuild-->>CLI: Status: IN_PROGRESS/SUCCEEDED
-    CLI-->>User: Build status
+    CLI->>CodeBuild: ビルド状態を確認
+    CodeBuild-->>CLI: 状態: IN_PROGRESS/SUCCEEDED
+    CLI-->>User: 状態を表示
 
-    CodeBuild->>S3: Upload artifacts
+    CodeBuild->>S3: 成果物をアップロード
 
     User->>CLI: poetry run ccwb distribute
-    CLI->>S3: Create package
-    S3->>S3: Generate presigned URL
-    CLI->>PS: Store URL metadata
-    CLI-->>User: Distribution URL
+    CLI->>S3: パッケージを作成
+    S3->>S3: 事前署名 URL を生成
+    CLI->>PS: URL メタデータを保存
+    CLI-->>User: 配布 URL
 ```
 
-## Prerequisites
+## 前提条件
 
-### Local Requirements
+### ローカル要件
 
-- Python 3.10, 3.11, or 3.12 (not 3.13+)
-- Poetry package manager
-- AWS CLI v2 configured
+- Python 3.10 / 3.11 / 3.12（3.13+ は不可）
+- Poetry（パッケージマネージャ）
+- AWS CLI v2（設定済み）
 - Git
 
-### AWS Requirements
+### AWS 要件
 
-- AWS account with appropriate IAM permissions
-- Ability to create CloudFormation stacks
-- Permissions for:
-  - CodeBuild projects
-  - S3 buckets
+- 適切な IAM 権限を持つ AWS アカウント
+- CloudFormation スタックを作成できること
+- 次の権限：
+  - CodeBuild プロジェクト
+  - S3 バケット
   - Systems Manager Parameter Store
   - CloudWatch Logs
 
-## Initial Setup
+## 初期セットアップ
 
-### 1. Clone Repository
+### 1. リポジトリのクローン
 
 ```bash
 git clone <repository-url>
 cd guidance-for-claude-code-with-amazon-bedrock/source
 ```
 
-### 2. Install Dependencies
+### 2. 依存関係のインストール
 
 ```bash
 poetry install
 ```
 
-### 3. Initialize Configuration
+### 3. 設定の初期化
 
 ```bash
 poetry run ccwb init
 ```
 
-During initialization, you'll be prompted for:
+初期化中に次を尋ねられます。
 
-- Identity provider domain (e.g., `us-east-1xxxxx.auth.us-east-1.amazoncognito.com`)
-- Client ID from your identity provider
-- AWS region for deployment
-- Cross-region Bedrock access configuration
-- **Enable CodeBuild for Windows binary builds? [Y/n]** - Select Yes
-- Monitoring preferences
+- Id プロバイダーのドメイン（例: `us-east-1xxxxx.auth.us-east-1.amazoncognito.com`）
+- Id プロバイダーの Client ID
+- デプロイ先 AWS リージョン
+- Bedrock のクロスリージョンアクセス設定
+- **Windows バイナリビルドのため CodeBuild を有効化しますか？ [Y/n]** — Yes を選択
+- モニタリング設定
 
-### 4. Deploy Infrastructure
+### 4. インフラのデプロイ
 
 ```bash
 poetry run ccwb deploy
 ```
 
-This creates the following CloudFormation stacks:
+これにより次の CloudFormation スタックが作成されます。
 
-- **Authentication stack**: IAM roles, identity pool
-- **Networking stack**: VPC and subnets (if monitoring enabled)
-- **Monitoring stack**: OpenTelemetry collector (optional)
-- **CodeBuild stack**: Windows build project
-- **Dashboard stack**: CloudWatch dashboard (optional)
-- **Analytics stack**: Athena and Kinesis (optional)
+- **認証スタック**: IAM ロール、identity pool
+- **ネットワーキングスタック**: VPC とサブネット（モニタリング有効時）
+- **モニタリングスタック**: OpenTelemetry collector（任意）
+- **CodeBuild スタック**: Windows ビルドプロジェクト
+- **ダッシュボードスタック**: CloudWatch ダッシュボード（任意）
+- **分析スタック**: Athena と Kinesis（任意）
 
-### 5. Verify CodeBuild Deployment
+### 5. CodeBuild デプロイの確認
 
 ```bash
 poetry run ccwb status
 ```
 
-Verify CodeBuild is deployed:
+CodeBuild がデプロイされていることを確認します。
 
 ```
 CodeBuild Stack:
@@ -171,17 +171,17 @@ CodeBuild Stack:
 • S3 Bucket: claude-code-auth-codebuild-buildbucket-xxxxx
 ```
 
-## Build Process
+## ビルドプロセス
 
-### Starting a Build
+### ビルド開始
 
-The package command now operates asynchronously by default:
+package コマンドは既定で非同期動作します。
 
 ```bash
 poetry run ccwb package
 ```
 
-Output:
+出力例：
 
 ```
 Fetching deployment information...
@@ -222,43 +222,43 @@ To view logs in AWS Console:
   https://console.aws.amazon.com/codesuite/codebuild/projects/claude-code-auth-windows-build/build/abc123-def456-789
 ```
 
-### Checking Build Status
+### ビルド状態の確認
 
-Check the latest build:
+最新ビルドを確認：
 
 ```bash
 poetry run ccwb package --status latest
 ```
 
-Check a specific build:
+特定ビルドを確認：
 
 ```bash
 poetry run ccwb package --status claude-code-auth-windows-build:abc123-def456-789
 ```
 
-Status outputs:
+状態出力例：
 
 ```
-⏳ Build in progress
+⏳ ビルド進行中
 Phase: BUILD
 Elapsed: 5 minutes
 
-✓ Build succeeded!
+✓ ビルド成功！
 Duration: 13 minutes
 Artifacts are ready. Run the following to complete packaging:
 poetry run ccwb package --complete
 
-✗ Build failed
+✗ ビルド失敗
 Failed in phase: BUILD
 ```
 
-### Listing Recent Builds
+### 最近のビルド一覧
 
 ```bash
 poetry run ccwb builds
 ```
 
-Output:
+出力例：
 
 ```
                Recent Builds for claude-code-auth-windows-build
@@ -271,122 +271,125 @@ Output:
 └──────────┴────────────────┴──────────────────┴──────────┴───────────┘
 ```
 
-## CLI Commands
+## CLI コマンド
 
-### Package Command
+### package コマンド
 
-**Basic usage:**
+**基本:**
 
 ```bash
 poetry run ccwb package [options]
 ```
 
-**Options:**
-| Option | Description | Default |
+**オプション:**
+
+| オプション | 説明 | 既定 |
 |--------|-------------|---------|
-| `--target-platform` | Platform to build for (macos/linux/windows/all) | all |
-| `--profile` | Configuration profile to use | default |
-| `--distribute` | Create distribution after build | false |
-| `--expires-hours` | Distribution URL expiration (1-168) | 48 |
-| `--status` | Check build status (build-id or "latest") | - |
+| `--target-platform` | ビルド対象プラットフォーム（macos/linux/windows/all） | all |
+| `--profile` | 使用する設定プロファイル | default |
+| `--distribute` | ビルド後に配布物を作成 | false |
+| `--expires-hours` | 配布 URL の有効期限（1-168） | 48 |
+| `--status` | ビルド状態を確認（build-id または "latest"） | - |
 
-**Examples:**
+**例:**
 
-Build all platforms (returns immediately for Windows):
+全プラットフォーム向けにビルド（Windows は即時リターン）：
 
 ```bash
 poetry run ccwb package
 ```
 
-Build and distribute:
+ビルドして配布：
 
 ```bash
 poetry run ccwb package --distribute
 ```
 
-Check status:
+状態確認：
 
 ```bash
 poetry run ccwb package --status latest
 ```
 
-### Builds Command
+### builds コマンド
 
-**Basic usage:**
+**基本:**
 
 ```bash
 poetry run ccwb builds [options]
 ```
 
-**Options:**
-| Option | Description | Default |
+**オプション:**
+
+| オプション | 説明 | 既定 |
 |--------|-------------|---------|
-| `--limit` | Number of builds to show | 10 |
-| `--project` | CodeBuild project name | auto-detect |
+| `--limit` | 表示するビルド数 | 10 |
+| `--project` | CodeBuild プロジェクト名 | 自動検出 |
 
-### Distribute Command
+### distribute コマンド
 
-**Basic usage:**
+**基本:**
 
 ```bash
 poetry run ccwb distribute [options]
 ```
 
-**Options:**
-| Option | Description | Default |
+**オプション:**
+
+| オプション | 説明 | 既定 |
 |--------|-------------|---------|
-| `--get-latest` | Get existing URL without creating new | false |
-| `--expires-hours` | URL expiration time (1-168) | 48 |
-| `--package-path` | Path to package directory | dist |
-| `--allowed-ips` | IP restrictions (comma-separated) | - |
-| `--qr` | Generate QR code | false |
+| `--get-latest` | 新規作成せず既存 URL を取得 | false |
+| `--expires-hours` | URL の有効期限（1-168） | 48 |
+| `--package-path` | パッケージディレクトリのパス | dist |
+| `--allowed-ips` | IP 制限（カンマ区切り） | - |
+| `--qr` | QR コードを生成 | false |
 
-**Examples:**
+**例:**
 
-Create new distribution:
+新規配布を作成：
 
 ```bash
 poetry run ccwb distribute
 ```
 
-Get existing URL:
+既存 URL を取得：
 
 ```bash
 poetry run ccwb distribute --get-latest
 ```
 
-## Distribution
+## 配布
 
-### Package Contents
+### パッケージ内容
 
-The distribution package (`dist/`) contains:
+配布パッケージ（`dist/`）には次が含まれます。
 
 ```
 dist/
-├── credential-process-windows.exe      # Windows auth binary (~28 MB)
-├── credential-process-macos-arm64      # macOS ARM64 binary (~26 MB)
-├── otel-helper-windows.exe            # Windows telemetry helper (~28 MB)
-├── otel-helper-macos-arm64            # macOS telemetry helper (~26 MB)
-├── config.json                        # Configuration with Cognito settings
-├── install.sh                         # macOS/Linux installer script
-├── install.bat                        # Windows installer script
-├── README.md                          # Installation instructions
+├── credential-process-windows.exe      # Windows 認証バイナリ（約 28MB）
+├── credential-process-macos-arm64      # macOS ARM64 バイナリ（約 26MB）
+├── otel-helper-windows.exe            # Windows テレメトリヘルパー（約 28MB）
+├── otel-helper-macos-arm64            # macOS テレメトリヘルパー（約 26MB）
+├── config.json                        # Cognito 設定を含む構成
+├── install.sh                         # macOS/Linux インストーラ
+├── install.bat                        # Windows インストーラ
+├── README.md                          # インストール手順
 └── .claude/
-    └── settings.json                  # Claude Code telemetry settings
+    └── settings.json                  # Claude Code テレメトリ設定
 ```
 
-### End User Installation
+### エンドユーザーのインストール
 
 **Windows:**
 
 ```batch
-REM Download the package
+REM パッケージをダウンロード
 curl -L -o claude-code-package.zip "<presigned-url>"
 
-REM Extract
+REM 展開
 tar -xf claude-code-package.zip
 
-REM Install
+REM インストール
 cd dist
 install.bat
 ```
@@ -394,94 +397,94 @@ install.bat
 **macOS/Linux:**
 
 ```bash
-# Download the package
+# パッケージをダウンロード
 curl -L -o claude-code-package.zip "<presigned-url>"
 
-# Extract
+# 展開
 unzip claude-code-package.zip
 
-# Install
+# インストール
 cd dist
 ./install.sh
 ```
 
-The installer will:
+インストーラは次を行います。
 
-1. Create `~/claude-code-with-bedrock/` directory
-2. Copy binaries to the directory
-3. Configure AWS CLI profile named `ClaudeCode`
-4. Test authentication
+1. `~/claude-code-with-bedrock/` ディレクトリを作成
+2. バイナリをディレクトリへコピー
+3. `ClaudeCode` という AWS CLI プロファイルを設定
+4. 認証をテスト
 
-## Troubleshooting
+## トラブルシューティング
 
-### Common Build Issues
+### よくあるビルド問題
 
-#### 1. Build Fails Immediately
+#### 1. ビルドが即時失敗する
 
-**Error:** "The Python version '3.12' is not supported by Nuitka '2.0'"
-**Solution:** This has been fixed - we now use Nuitka 2.7.12 which supports Python 3.12
+**エラー:** "The Python version '3.12' is not supported by Nuitka '2.0'"  
+**対処:** これは修正済みです。現在は Python 3.12 をサポートする Nuitka 2.7.12 を使用します。
 
-#### 2. Build Times Out
+#### 2. ビルドがタイムアウトする
 
-**Error:** "Build timed out after 20 minutes"
-**Solution:** Normal build time is 12-15 minutes. Check CodeBuild logs for compilation errors.
+**エラー:** "Build timed out after 20 minutes"  
+**対処:** 通常のビルド時間は 12～15 分です。コンパイルエラーの有無を CodeBuild ログで確認してください。
 
-#### 3. No Artifacts Found
+#### 3. 成果物が見つからない
 
-**Error:** "no matching artifact paths found"
-**Solution:** Check that the build phase completed successfully:
+**エラー:** "no matching artifact paths found"  
+**対処:** ビルドフェーズが成功していることを確認してください。
 
 ```bash
 aws logs tail /aws/codebuild/claude-code-auth-windows-build --region us-east-1 --since 30m
 ```
 
-#### 4. PowerShell Syntax Errors
+#### 4. PowerShell の構文エラー
 
-**Error:** "The term 'SET' is not recognized"
-**Solution:** CodeBuild uses PowerShell, not CMD. The buildspec has been updated to use PowerShell syntax.
+**エラー:** "The term 'SET' is not recognized"  
+**対処:** CodeBuild は CMD ではなく PowerShell を使用します。buildspec は PowerShell 構文を使うよう更新済みです。
 
-### Checking Build Logs
+### ビルドログの確認
 
-**Via AWS CLI:**
+**AWS CLI で確認:**
 
 ```bash
-# Get recent logs
+# 最近のログを取得
 aws logs tail /aws/codebuild/claude-code-auth-windows-build \
   --region us-east-1 \
   --since 30m
 
-# Search for errors
+# エラーを検索
 aws logs filter-log-events \
   --log-group-name /aws/codebuild/claude-code-auth-windows-build \
   --region us-east-1 \
   --filter-pattern "ERROR"
 ```
 
-**Via Console:**
-The package command provides a direct link to the AWS Console for each build.
+**コンソールで確認:**
+package コマンドは、各ビルドの AWS コンソールへの直接リンクを表示します。
 
-## Technical Details
+## 技術詳細
 
-### Windows Build Environment
+### Windows ビルド環境
 
-**CodeBuild Configuration:**
+**CodeBuild 設定:**
 
-- **Environment Type:** `WINDOWS_SERVER_2022_CONTAINER`
-- **Compute Type:** `BUILD_GENERAL1_LARGE` (4 vCPUs, 8 GB memory)
-- **Base Image:** `aws/codebuild/windows-base:2022-1.0`
-- **Timeout:** 30 minutes
-- **Region:** us-east-1 (hardcoded for consistency)
+- **環境タイプ:** `WINDOWS_SERVER_2022_CONTAINER`
+- **コンピュートタイプ:** `BUILD_GENERAL1_LARGE`（4 vCPU、8 GB メモリ）
+- **ベースイメージ:** `aws/codebuild/windows-base:2022-1.0`
+- **タイムアウト:** 30 分
+- **リージョン:** us-east-1（整合性のためハードコード）
 
-### Software Versions
+### ソフトウェアバージョン
 
-**Build Environment:**
+**ビルド環境:**
 
 - Windows Server 2022
-- Python 3.12.10 (installed via Chocolatey)
+- Python 3.12.10（Chocolatey でインストール）
 - Nuitka 2.7.12
 - pip 24.x
 
-**Dependencies installed during build:**
+**ビルド中にインストールされる依存関係:**
 
 - nuitka==2.7.12
 - ordered-set
@@ -497,14 +500,14 @@ The package command provides a direct link to the AWS Console for each build.
 - pydantic
 - pyyaml
 
-### Nuitka Compilation Settings
+### Nuitka のコンパイル設定
 
 ```bash
 C:\Python312\python.exe -m nuitka \
-  --standalone \                    # Include all dependencies
-  --onefile \                      # Single executable file
-  --assume-yes-for-downloads \      # Auto-download requirements
-  --windows-disable-console \       # No console window popup
+  --standalone \                    # 依存関係をすべて同梱
+  --onefile \                       # 単一実行ファイル
+  --assume-yes-for-downloads \      # 必要物の自動ダウンロード
+  --windows-disable-console \       # コンソールウィンドウのポップアップを抑止
   --company-name="Claude Code" \
   --product-name="Claude Code Credential Process" \
   --file-version="1.0.0.0" \
@@ -512,43 +515,43 @@ C:\Python312\python.exe -m nuitka \
   --windows-file-description="AWS Credential Process for Claude Code" \
   --output-filename=credential-process-windows.exe \
   --output-dir=. \
-  --remove-output \                # Clean up build artifacts
+  --remove-output \                 # ビルド成果物をクリーンアップ
   source/credential_provider/__main__.py
 ```
 
-### Build Performance
+### ビルド性能
 
-**Typical build times:**
+**典型的なビルド時間:**
 
-- macOS ARM64 (local): ~30 seconds
-- Windows (CodeBuild): 12-15 minutes
-  - Install phase: ~1 minute
-  - Pre-build (dependencies): ~2 minutes
-  - Build (Nuitka compilation): ~10-12 minutes
-  - Post-build: ~30 seconds
+- macOS ARM64（ローカル）: 約 30 秒
+- Windows（CodeBuild）: 12～15 分
+  - Install: 約 1 分
+  - Pre-build（依存関係）: 約 2 分
+  - Build（Nuitka コンパイル）: 約 10～12 分
+  - Post-build: 約 30 秒
 
-**Optimization history:**
+**最適化の経緯:**
 
-1. Initial: PyInstaller, MEDIUM instance → 16+ minutes
-2. Nuitka 2.0.0, MEDIUM instance → Failed (Python 3.12 incompatible)
-3. Nuitka 2.7.12, LARGE instance → 12-13 minutes (current)
-4. Attempted 2XLARGE → Not supported for Windows containers
+1. 初期: PyInstaller + MEDIUM → 16 分以上
+2. Nuitka 2.0.0 + MEDIUM → 失敗（Python 3.12 非互換）
+3. Nuitka 2.7.12 + LARGE → 12～13 分（現状）
+4. 2XLARGE を試行 → Windows コンテナでは未対応
 
-### Security
+### セキュリティ
 
-**S3 Bucket:**
+**S3 バケット:**
 
-- Private bucket with versioning enabled
-- Server-side encryption (SSE-S3)
-- Lifecycle rules for old packages (90 days)
+- プライベートバケット（バージョニング有効）
+- サーバーサイド暗号化（SSE-S3）
+- 古いパッケージ向けライフサイクルルール（90 日）
 
-**Presigned URLs:**
+**事前署名 URL:**
 
-- Default expiration: 48 hours
-- Maximum expiration: 168 hours (7 days)
-- Optional IP restrictions via bucket policy
+- 既定の有効期限: 48 時間
+- 最大有効期限: 168 時間（7 日）
+- バケットポリシーによる任意の IP 制限
 
-**IAM Permissions Required:**
+**必要な IAM 権限:**
 
 ```json
 {
@@ -580,115 +583,115 @@ C:\Python312\python.exe -m nuitka \
 }
 ```
 
-### Cost Analysis
+### コスト分析
 
-**Per build:**
+**1 ビルドあたり:**
 
-- CodeBuild: ~$0.10 (13 minutes × $0.005/minute for LARGE instance)
-- S3 storage: ~$0.01 (100 MB stored)
-- Data transfer: Varies by downloads
+- CodeBuild: 約 $0.10（LARGE インスタンス $0.005/分 × 13 分）
+- S3 ストレージ: 約 $0.01（100MB 保存）
+- データ転送: ダウンロード量により変動
 
-**Monthly estimate (daily builds):**
+**月額目安（毎日ビルド）:**
 
-- 30 builds × $0.10 = $3.00 CodeBuild
-- Storage: ~$0.50
-- **Total: ~$3.50/month**
+- 30 ビルド × $0.10 = $3.00（CodeBuild）
+- ストレージ: 約 $0.50
+- **合計: 約 $3.50/月**
 
-### File System Locations
+### ファイルシステム上の配置
 
-**Source files:**
+**ソースファイル:**
 
 ```
 /source/
 ├── credential_provider/
-│   └── __main__.py           # Main authentication module
+│   └── __main__.py           # メイン認証モジュール
 ├── otel_helper/
-│   └── __main__.py           # Telemetry helper module
+│   └── __main__.py           # テレメトリヘルパーモジュール
 ├── claude_code_with_bedrock/
 │   └── cli/
 │       └── commands/
-│           ├── package.py    # Package build logic
-│           ├── builds.py     # Build listing logic
-│           └── distribute.py # Distribution logic
+│           ├── package.py    # パッケージビルドロジック
+│           ├── builds.py     # ビルド一覧ロジック
+│           └── distribute.py # 配布ロジック
 └── deployment/
     └── infrastructure/
-        └── codebuild-windows.yaml  # CodeBuild CloudFormation
+        └── codebuild-windows.yaml  # CodeBuild 用 CloudFormation
 ```
 
-**Build artifacts:**
+**ビルド成果物:**
 
 ```
 ~/.claude-code/
-└── latest-build.json         # Latest build metadata
+└── latest-build.json         # 最新ビルドのメタデータ
 
-dist/                         # Local package output
+dist/                         # ローカルのパッケージ出力
 └── [platform binaries]
 
 S3: claude-code-auth-codebuild-buildbucket-xxxxx/
-├── windows-binaries.zip      # Windows build artifacts
+├── windows-binaries.zip      # Windows ビルド成果物
 └── packages/
     └── YYYYMMDD-HHMMSS/
         └── claude-code-package-*.zip
 ```
 
-## Appendix
+## 付録
 
-### Complete Build Process Flow
+### ビルドプロセス全体フロー
 
 ```mermaid
 flowchart TD
-    Start([User runs: poetry run ccwb package])
-    Start --> CheckPlatform{Target platform?}
+    Start([ユーザー: poetry run ccwb package を実行])
+    Start --> CheckPlatform{ターゲットは？}
 
-    CheckPlatform -->|macOS/Linux| LocalBuild[Build locally with Nuitka]
-    CheckPlatform -->|Windows/All| StartCodeBuild[Start CodeBuild project]
+    CheckPlatform -->|macOS/Linux| LocalBuild[ローカルで Nuitka ビルド]
+    CheckPlatform -->|Windows/All| StartCodeBuild[CodeBuild プロジェクトを開始]
 
-    LocalBuild --> LocalSuccess[✓ Local binaries created]
+    LocalBuild --> LocalSuccess[✓ ローカルバイナリ作成完了]
 
-    StartCodeBuild --> ReturnID[Return build ID immediately]
-    ReturnID --> UserWait[User continues working]
+    StartCodeBuild --> ReturnID[ビルド ID を即時返却]
+    ReturnID --> UserWait[ユーザーは作業を継続]
 
-    StartCodeBuild --> CBInstall[CodeBuild: Install Python 3.12]
-    CBInstall --> CBDeps[CodeBuild: Install dependencies]
-    CBDeps --> CBNuitka[CodeBuild: Run Nuitka compilation]
-    CBNuitka --> CBUpload[CodeBuild: Upload to S3]
+    StartCodeBuild --> CBInstall[CodeBuild: Python 3.12 をインストール]
+    CBInstall --> CBDeps[CodeBuild: 依存関係をインストール]
+    CBDeps --> CBNuitka[CodeBuild: Nuitka コンパイルを実行]
+    CBNuitka --> CBUpload[CodeBuild: S3 へアップロード]
 
-    UserWait --> CheckStatus([User runs: package --status])
-    CheckStatus --> ShowStatus{Build status?}
-    ShowStatus -->|In Progress| StillBuilding[Show progress]
-    ShowStatus -->|Succeeded| ReadyDist[Ready for distribution]
-    ShowStatus -->|Failed| ShowError[Show error details]
+    UserWait --> CheckStatus([ユーザー: package --status を実行])
+    CheckStatus --> ShowStatus{ビルド状態は？}
+    ShowStatus -->|進行中| StillBuilding[進捗を表示]
+    ShowStatus -->|成功| ReadyDist[配布の準備完了]
+    ShowStatus -->|失敗| ShowError[エラー詳細を表示]
 
-    LocalSuccess --> Distribute([User runs: distribute])
+    LocalSuccess --> Distribute([ユーザー: distribute を実行])
     ReadyDist --> Distribute
-    Distribute --> CreateZip[Create distribution package]
-    CreateZip --> UploadS3[Upload to S3]
-    UploadS3 --> GenerateURL[Generate presigned URL]
-    GenerateURL --> SaveParam[Save to Parameter Store]
-    SaveParam --> Done([Distribution URL ready])
+    Distribute --> CreateZip[配布パッケージを作成]
+    CreateZip --> UploadS3[ S3 にアップロード]
+    UploadS3 --> GenerateURL[事前署名 URL を生成]
+    GenerateURL --> SaveParam[Parameter Store に保存]
+    SaveParam --> Done([配布 URL 発行完了])
 ```
 
-### Quick Reference Card
+### クイックリファレンスカード
 
 ```bash
-# Daily workflow
-poetry run ccwb package                    # Start build (async)
-poetry run ccwb builds                     # Check recent builds
-poetry run ccwb package --status latest    # Check if done
-poetry run ccwb distribute                 # Create distribution
+# 日常の流れ
+poetry run ccwb package                    # ビルド開始（非同期）
+poetry run ccwb builds                     # 最近のビルドを確認
+poetry run ccwb package --status latest    # 完了したか確認
+poetry run ccwb distribute                 # 配布を作成
 
-# Get existing URL (no rebuild)
+# 既存 URL を取得（再ビルドなし）
 poetry run ccwb distribute --get-latest
 
-# Debug failed build
+# 失敗したビルドのデバッグ
 poetry run ccwb package --status latest
 aws logs tail /aws/codebuild/claude-code-auth-windows-build --region us-east-1
 
-# Extended distribution (7 days)
+# 配布期限を延長（7 日）
 poetry run ccwb distribute --expires-hours 168
 ```
 
 ---
 
-_Last updated: August 2024_
-_Version: 1.0.0_
+_最終更新: 2024 年 8 月_  
+_バージョン: 1.0.0_

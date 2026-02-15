@@ -1,30 +1,30 @@
-# Enterprise Deployment Guide
+# エンタープライズ デプロイガイド
 
-This guide walks IT administrators through deploying Claude Code authentication across your organization, transforming your existing identity provider into a gateway for secure Amazon Bedrock access.
+本ガイドでは、組織全体に Claude Code の認証を展開する手順を IT 管理者向けに解説します。既存の ID プロバイダーを、安全な Amazon Bedrock アクセスのためのゲートウェイへと変換します。
 
-> **Prerequisites**: See the [main README](../../README.md#prerequisites) for detailed requirements. You'll need AWS administrative access, an OIDC identity provider, and Python with Poetry installed.
+> **前提条件**: 詳細な要件は [main README](../../README.md#prerequisites) を参照してください。AWS の管理者権限、OIDC ID プロバイダー、Poetry を導入した Python 環境が必要です。
 
-## The Deployment Process
+## デプロイプロセス
 
-Deploying Claude Code authentication involves four key phases: configuring your identity provider, deploying AWS infrastructure, creating distribution packages, and supporting your users. Each phase builds on the previous one, creating a complete authentication solution that's transparent to end users.
+Claude Code 認証のデプロイは、4 つの主要フェーズで構成されます。ID プロバイダーの設定、AWS インフラのデプロイ、配布パッケージの作成、ユーザーサポートです。各フェーズは前フェーズを土台として積み上がり、エンドユーザーにとって透過的な完全な認証ソリューションを構築します。
 
-## Phase 1: Configuring Your Identity Provider
+## フェーズ 1: ID プロバイダーの設定
 
-The journey begins in your organization's identity provider console. Whether you're using Okta, Azure AD, or Auth0, you'll create a new application that serves as the authentication gateway for Claude Code.
+まずは組織の ID プロバイダーの管理コンソールから始めます。Okta、Azure AD、Auth0 のいずれを使っていても、Claude Code の認証ゲートウェイとして機能する新しいアプリケーションを作成します。
 
-Log into your provider's admin console and navigate to the application creation section. You're creating what's known as a "Native Application" in OIDC terms - this tells the provider that users will authenticate from their local machines rather than a web server. Name it something clear like "Claude Code Authentication" or "Amazon Bedrock CLI Access" so users recognize it during login.
+プロバイダーの管理コンソールにログインし、アプリケーション作成セクションへ移動します。OIDC の用語で「Native Application」と呼ばれる種類のアプリを作ります。これは、ユーザーが Web サーバーではなくローカル端末から認証することをプロバイダーに伝えるものです。ログイン時にユーザーが認識できるよう、「Claude Code Authentication」や「Amazon Bedrock CLI Access」など分かりやすい名前を付けてください。
 
-The critical configuration involves setting up the OAuth2 flow with specific parameters. Enable "Authorization Code" and "Refresh Token" grant types, which allow secure authentication and token renewal. The redirect URI must be exactly `http://localhost:8400/callback` - this is where the authentication process returns after users log in. Request the standard OIDC scopes: `openid`, `profile`, and `email`. Most importantly, enable PKCE (Proof Key for Code Exchange), which provides security without requiring client secrets.
+重要なのは、OAuth2 フローの特定パラメータを正しく設定することです。「Authorization Code」と「Refresh Token」のグラントタイプを有効化してください。これにより安全な認証とトークン更新が可能になります。リダイレクト URI は **必ず** `http://localhost:8400/callback` にします。これはユーザーのログイン後に認証処理が戻ってくる先です。標準の OIDC スコープ `openid`、`profile`、`email` を要求してください。最も重要なのは、クライアントシークレット不要で安全性を提供する PKCE（Proof Key for Code Exchange）を有効化することです。
 
-> **Provider-Specific Guides**: For detailed instructions specific to your identity provider, see our guides for [Okta](providers/okta-setup.md), [Azure AD](providers/microsoft-entra-id-setup.md), or [Auth0](providers/auth0-setup.md).
+> **プロバイダー別ガイド**: 各 ID プロバイダー固有の詳細手順は、[Okta](providers/okta-setup.md)、[Azure AD](providers/microsoft-entra-id-setup.md)、[Auth0](providers/auth0-setup.md) のガイドを参照してください。
 
-Next, determine who should have access. The cleanest approach is creating a dedicated group like "Claude Code Users" and assigning it to the application. This gives you centralized control over access - simply add users to the group to grant access, or remove them to revoke it. Apply any additional policies your organization requires, such as MFA or device trust requirements.
+次に、誰にアクセスを許可するかを決めます。最もすっきりした方法は、「Claude Code Users」のような専用グループを作成し、そのグループをアプリケーションに割り当てることです。これによりアクセス制御を一元化できます。ユーザーをグループに追加すれば付与、削除すれば剥奪です。必要に応じて MFA やデバイストラストなど、組織の追加ポリシーも適用してください。
 
-Before moving on, note two critical values from your application configuration: the provider domain (like `company.okta.com` or `login.microsoftonline.com/{tenant-id}/v2.0`) and the Client ID. You'll need these for the AWS infrastructure deployment.
+次へ進む前に、アプリ設定から次の 2 つの重要値を控えてください：プロバイダードメイン（例: `company.okta.com`、または `login.microsoftonline.com/{tenant-id}/v2.0`）と Client ID です。これらは AWS インフラのデプロイで必要になります。
 
-## Phase 2: Deploying AWS Infrastructure
+## フェーズ 2: AWS インフラのデプロイ
 
-With your identity provider configured, it's time to deploy the AWS infrastructure that bridges your organization's authentication to Amazon Bedrock. Start by cloning the repository and installing the deployment tools:
+ID プロバイダーの設定ができたら、組織の認証を Amazon Bedrock に橋渡しする AWS インフラをデプロイします。まずリポジトリをクローンし、デプロイツールをインストールします。
 
 ```bash
 git clone https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
@@ -32,149 +32,149 @@ cd guidance-for-claude-code-with-amazon-bedrock/source
 poetry install
 ```
 
-The `ccwb` (Claude Code with Bedrock) CLI tool guides you through deployment with an interactive wizard. Run `poetry run ccwb init` to begin. The wizard walks you through each configuration decision, starting with your OIDC provider details - enter the domain and Client ID you noted earlier.
+`ccwb`（Claude Code with Bedrock）CLI は、対話型ウィザードでデプロイを案内します。`poetry run ccwb init` を実行して開始してください。ウィザードは、最初に OIDC プロバイダーの詳細を求めます。先ほど控えたドメインと Client ID を入力してください。
 
-The wizard asks you to choose an authentication method. You can select either Direct IAM federation or Cognito Identity Pool based on your organization's requirements. Both methods provide secure OIDC federation to AWS credentials.
+次に、認証方式を選択します。組織要件に応じて、Direct IAM federation または Cognito Identity Pool のいずれかを選べます。どちらも安全な OIDC フェデレーションにより AWS 認証情報を提供します。
 
-Next, you'll select your Claude model and configure regional access. Choose from available Claude models (Opus, Sonnet, Haiku) and select a cross-region inference profile (US, Europe, or APAC) for optimal performance. The wizard will then prompt you to select a source region within your chosen profile for model inference. Finally, choose where to deploy the authentication infrastructure (typically your primary AWS region) and configure optional monitoring setup, which provides usage analytics and cost tracking through OpenTelemetry.
+続いて Claude モデルとリージョンアクセスを設定します。利用可能な Claude モデル（Opus / Sonnet / Haiku）から選び、最適な性能のためにクロスリージョン推論プロファイル（US / Europe / APAC）を選択します。次に、選択したプロファイル内でモデル推論に利用するソースリージョンを選ぶよう求められます。最後に、認証インフラをデプロイするリージョン（通常は主要 AWS リージョン）を選び、任意のモニタリング設定を行います。モニタリングを有効化すると、OpenTelemetry により利用状況分析とコスト追跡が可能になります。
 
-Once configuration is complete, deploy the infrastructure with:
+設定が完了したら、次でインフラをデプロイします。
 
 ```bash
 poetry run ccwb deploy
 ```
 
-This single command orchestrates the creation of multiple AWS resources. Depending on your chosen authentication method, it creates either an IAM OIDC Provider or a Cognito Identity Pool to establish the trust relationship with your identity provider. IAM roles and policies grant precisely scoped Bedrock access. If you enabled monitoring, it also deploys an ECS Fargate cluster running OpenTelemetry collector, complete with CloudWatch dashboards.
+この単一コマンドが複数の AWS リソース作成をオーケストレーションします。選択した認証方式に応じて、信頼関係を確立するために IAM OIDC Provider または Cognito Identity Pool を作成します。IAM ロールとポリシーは、Bedrock へのアクセスを必要最小限にスコープして付与します。モニタリングを有効化している場合は、OpenTelemetry collector を実行する ECS Fargate クラスターと CloudWatch ダッシュボードもデプロイします。
 
-> **Deployment Options**: For more control, see the [CLI Reference](CLI_REFERENCE.md) for deploying specific stacks or using dry-run mode.
+> **デプロイオプション**: さらに細かい制御が必要な場合は、特定スタックのデプロイや dry-run モードについて [CLI Reference](CLI_REFERENCE.md) を参照してください。
 
-## Phase 3: Creating Distribution Packages
+## フェーズ 3: 配布パッケージの作成
 
-With infrastructure deployed, you're ready to create the package that end users will install.
+インフラのデプロイが完了したら、エンドユーザーがインストールするパッケージを作成します。
 
-### Multi-Platform Build Support
+### マルチプラットフォーム ビルド対応
 
-Claude Code supports building for all major platforms:
+Claude Code は主要プラットフォームすべてのビルドに対応しています。
 
 ```bash
-# Build for all platforms (recommended)
+# 全プラットフォーム向けにビルド（推奨）
 poetry run ccwb package --target-platform=all
 
-# Build for specific platforms
-poetry run ccwb package --target-platform=windows    # Windows via CodeBuild
-poetry run ccwb package --target-platform=macos      # Current macOS architecture
-poetry run ccwb package --target-platform=linux      # Linux via Docker
+# 特定プラットフォーム向けにビルド
+poetry run ccwb package --target-platform=windows    # CodeBuild 経由の Windows
+poetry run ccwb package --target-platform=macos      # 現在の macOS アーキテクチャ
+poetry run ccwb package --target-platform=linux      # Docker 経由の Linux
 ```
 
-**Platform Build Methods (Hybrid System):**
+**プラットフォーム別ビルド方式（ハイブリッド方式）:**
 
-- **Windows**: Uses Nuitka via AWS CodeBuild
-  - Optimized for performance and minimal antivirus false positives
-- **macOS**: Uses PyInstaller with architecture-specific builds
-  - ARM64: Native build on Apple Silicon Macs (works on all Macs via Rosetta)
-  - Intel: **Optional** - requires x86_64 Python environment on ARM Macs
-  - Universal: Requires both architectures' Python libraries
-- **Linux x64/ARM64**: Uses PyInstaller in Docker containers
-  - Automatically builds both architectures when Docker is available
-  - Docker Desktop handles architecture emulation via Rosetta
+- **Windows**: AWS CodeBuild 経由の Nuitka
+  - 高速実行と、アンチウイルスの誤検知最小化を目的に最適化
+- **macOS**: PyInstaller によるアーキテクチャ別ビルド
+  - ARM64: Apple Silicon Mac 上でネイティブビルド（Rosetta により Intel Mac でも動作）
+  - Intel: **任意** — ARM Mac 上で x86_64 Python 環境が必要
+  - Universal: 両アーキテクチャの Python ライブラリが必要
+- **Linux x64/ARM64**: Docker コンテナ内の PyInstaller
+  - Docker が利用可能なら両アーキテクチャを自動ビルド
+  - Docker Desktop が Rosetta によるアーキテクチャエミュレーションを処理
 
-**Optional: Intel Mac Setup**
+**（任意）Intel Mac セットアップ**
 
-To build Intel binaries on Apple Silicon Macs, you'll need an x86_64 Python environment.
-See [CLI Reference](CLI_REFERENCE.md#intel-mac-build-setup-optional) for setup instructions.
+Apple Silicon Mac 上で Intel バイナリをビルドするには x86_64 Python 環境が必要です。  
+セットアップ手順は [CLI Reference](CLI_REFERENCE.md#intel-mac-build-setup-optional) を参照してください。
 
-The package command will continue successfully even without this setup.
+このセットアップがなくても、package コマンドは正常に完了するよう設計されています。
 
-This command performs several operations. First, it retrieves the Cognito Identity Pool ID from your deployed CloudFormation stack. Then it compiles the Python authentication code into standalone executables using PyInstaller for macOS/Linux and Nuitka for Windows. Your organization's configuration - provider domain, client ID, and infrastructure details - gets written to a config.json file that the executables read at runtime.
+このコマンドはいくつかの操作を行います。まず、デプロイ済み CloudFormation スタックから Cognito Identity Pool ID を取得します。次に、macOS/Linux では PyInstaller、Windows では Nuitka により、Python の認証コードをスタンドアロン実行ファイルへコンパイルします。組織の設定（プロバイダードメイン、Client ID、インフラ詳細）は `config.json` に書き込まれ、実行ファイルは実行時にこれを読み取ります。
 
-The resulting `dist/` folder contains everything users need:
+生成される `dist/` フォルダには、ユーザーが必要とするものがすべて入ります。
 
-- Platform-specific executables (`credential-process-<platform>`) handle the OAuth2 authentication flow
-- The configuration file includes all necessary settings
-- Intelligent installer scripts (`install.sh` for Unix, `install.bat` for Windows) detect the user's architecture and set up their AWS profile automatically
-- If you enabled monitoring, OTEL helper executables and Claude Code telemetry settings that point to your OpenTelemetry collector
+- プラットフォーム別実行ファイル（`credential-process-<platform>`）が OAuth2 認証フローを処理
+- 設定ファイルに必要設定がすべて含まれる
+- インテリジェントなインストーラスクリプト（Unix は `install.sh`、Windows は `install.bat`）が、ユーザーのアーキテクチャを判別し AWS プロファイルを自動設定
+- モニタリング有効時は、OTEL helper 実行ファイルと、OpenTelemetry collector を指す Claude Code テレメトリ設定も同梱
 
-### Windows Build System (Optional)
+### Windows ビルドシステム（任意）
 
-Windows binary builds use AWS CodeBuild with Nuitka for optimal performance. Windows support is optional and configured during the `init` process:
+Windows バイナリのビルドは、性能最適化のため AWS CodeBuild + Nuitka を使用します。Windows 対応は任意であり、`init` 時に設定します。
 
-1. **Enable during init**: When running `poetry run ccwb init`, you'll be prompted:
+1. **init 中に有効化**: `poetry run ccwb init` 実行時に次のように尋ねられます。
 
    ```
    Enable Windows build support via AWS CodeBuild? (y/N)
    ```
 
-   If you answer "yes", the CodeBuild stack will be deployed automatically when you run `deploy`.
+   「yes」と答えた場合、`deploy` 実行時に CodeBuild スタックも自動デプロイされます。
 
-2. **If enabled**, Windows builds will automatically trigger when you run:
+2. **有効化されている場合**、次を実行すると Windows ビルドが自動的にトリガーされます。
 
    ```bash
    poetry run ccwb package --target-platform=all
-   # or specifically for Windows:
+   # または Windows のみ:
    poetry run ccwb package --target-platform=windows
    ```
 
-3. **Monitor build progress**:
+3. **ビルド進捗の確認**:
    ```bash
    poetry run ccwb builds
    ```
 
-**Important Notes:**
+**重要事項:**
 
-- Windows builds are completely optional - the package will work without them
-- If CodeBuild is not enabled, Windows builds will be silently skipped
-- Windows builds take 20+ minutes
-- To enable Windows builds after initial setup, re-run `poetry run ccwb init`
+- Windows ビルドは完全に任意です（なくてもパッケージは機能します）
+- CodeBuild が有効化されていない場合、Windows ビルドは黙ってスキップされます
+- Windows ビルドは 20 分以上かかります
+- 初期セットアップ後に Windows ビルドを有効化したい場合は、`poetry run ccwb init` を再実行してください
 
-## Phase 4: Testing Your Deployment
+## フェーズ 4: デプロイのテスト
 
-Before distributing to users, thoroughly test the package to ensure everything works as expected. The CLI provides a comprehensive test command that simulates exactly what end users will experience:
+ユーザーに配布する前に、パッケージが想定どおり動作することを十分に確認してください。CLI には、エンドユーザー体験をそのまま再現する包括的なテストコマンドがあります。
 
 ```bash
 poetry run ccwb test
 ```
 
-This test runs through the complete user journey. It executes the installer in a temporary directory, configures the AWS profile, triggers the authentication flow, and verifies access to Amazon Bedrock. Watch as it opens a browser window for authentication - this is exactly what your users will see.
+このテストはユーザージャーニー全体を通します。一時ディレクトリでインストーラを実行し、AWS プロファイルを設定し、認証フローを起動し、Amazon Bedrock へのアクセスを検証します。認証のためにブラウザが開くはずですが、これはユーザーが実際に目にする挙動と同じです。
 
-For more thorough validation, add the `--api` flag to make actual Bedrock API calls:
+より入念に検証するには、`--api` フラグを付けて実際に Bedrock API を呼び出します。
 
 ```bash
 poetry run ccwb test --api
 ```
 
-## Phase 5: Distributing to Your Users
+## フェーズ 5: ユーザーへの配布
 
-With a tested package in hand, you're ready for the final phase: getting the authentication system to your users. Claude Code offers two distribution methods:
+テスト済みパッケージが用意できたら、最後のフェーズです。認証システムをユーザーへ届けます。Claude Code は 2 つの配布方法を提供します。
 
-### Option 1: Secure URL Distribution
+### オプション 1: セキュア URL 配布
 
-Generate a presigned URL for easy, secure distribution without requiring AWS credentials:
+AWS 認証情報なしで簡単・安全に配布できるよう、事前署名 URL を生成します。
 
 ```bash
-# Create distribution with 48-hour expiration
+# 48 時間の有効期限で配布物を作成
 poetry run ccwb distribute
 
-# Or specify custom expiration (up to 7 days)
+# 有効期限を指定（最大 7 日）
 poetry run ccwb distribute --expires-hours=72
 ```
 
-The command uploads your package to S3 and generates a secure, time-limited URL. Share this URL with developers via email, Slack, or your internal wiki. Users download and run the installer - no AWS credentials required.
+このコマンドはパッケージを S3 にアップロードし、安全な期限付き URL を生成します。この URL をメール、Slack、社内 Wiki などで開発者に共有します。ユーザーはダウンロードしてインストーラを実行するだけで、AWS 認証情報は不要です。
 
-### Option 2: Manual Distribution
+### オプション 2: 手動配布
 
-Share the `dist/` folder through your normal software distribution channels - perhaps a shared drive, internal website, or artifact repository.
+通常のソフトウェア配布チャネル（共有ドライブ、社内サイト、アーティファクトリポジトリなど）で `dist/` フォルダを共有します。
 
-**Installation by Platform:**
+**プラットフォーム別インストール:**
 
-- **Windows**: Users run `install.bat`
-- **macOS/Linux**: Users run `./install.sh`
+- **Windows**: `install.bat` を実行
+- **macOS/Linux**: `./install.sh` を実行
 
-Regardless of distribution method, the user experience remains simple. They receive the package, run the installer for their platform, and they're done. The installer:
+どの配布方法でも、ユーザー体験はシンプルです。パッケージを受け取り、プラットフォームに応じたインストーラを実行すれば完了です。インストーラは次を行います。
 
-- Detects their operating system and architecture
-- Installs the appropriate binary
-- Configures their AWS profile
-- Sets up the credential process
-- Handles all the complex authentication machinery invisibly
+- OS とアーキテクチャを判別
+- 適切なバイナリをインストール
+- AWS プロファイルを設定
+- credential process をセットアップ
+- 認証の複雑な仕組みをすべて裏側で処理
 
-When they run Claude Code with `AWS_PROFILE=ClaudeCode`, authentication happens automatically in the background. On first use, users will see a browser window open for authentication with your organization's identity provider.
+ユーザーが `AWS_PROFILE=ClaudeCode` で Claude Code を実行すると、バックグラウンドで自動的に認証が行われます。初回利用時には、組織の ID プロバイダーでの認証のためにブラウザが開きます。

@@ -1,20 +1,20 @@
-# Documentation Quality Assurance Checklist
+# ドキュメント品質保証（QA）チェックリスト
 
-**Purpose**: Ensure documentation quality, consistency, and proper navigation structure across all Claude Code Plugins Marketplace documentation.
+**目的**: Claude Code Plugins Marketplace のドキュメント全体について、品質・一貫性・適切なナビゲーション構造を担保する。
 
-## 1. Terminology Consistency
+## 1. 用語の一貫性
 
-### Official Names (Use Exactly)
-- ✅ **Claude Code Plugins Marketplace** (project name)
-- ✅ **Claude Code** (the tool)
-- ✅ **EPCC workflow** (plugin name, lowercase "workflow")
-- ✅ **Diataxis** (framework name, capital D)
+### 公式名称（表記を厳密に統一）
+- ✅ **Claude Code Plugins Marketplace**（プロジェクト名）
+- ✅ **Claude Code**（ツール名）
+- ✅ **EPCC workflow**（プラグイン名。「workflow」は小文字）
+- ✅ **Diataxis**（フレームワーク名。D は大文字）
 
-### Plugin Names (Exact Match Required)
-All plugin names must match these exactly:
+### プラグイン名（完全一致必須）
+すべてのプラグイン名は、以下と完全に一致する必要があります。
 
-| Plugin Name | Install Command |
-|-------------|----------------|
+| プラグイン名 | インストールコマンド |
+|-------------|------------------------|
 | `epcc-workflow` | `/plugin install epcc-workflow@aws-claude-code-plugins` |
 | `documentation` | `/plugin install documentation@aws-claude-code-plugins` |
 | `architecture` | `/plugin install architecture@aws-claude-code-plugins` |
@@ -27,67 +27,67 @@ All plugin names must match these exactly:
 | `deployment` | `/plugin install deployment@aws-claude-code-plugins` |
 | `code-analysis` | `/plugin install code-analysis@aws-claude-code-plugins` |
 
-### Command Syntax Standards
-- ✅ Commands always start with `/` (e.g., `/plugin`, `/epcc-explore`)
-- ✅ Marketplace reference: `@aws-claude-code-plugins`
-- ✅ Full install syntax: `/plugin install <name>@aws-claude-code-plugins`
-- ✅ Slash commands: `/epcc-explore`, `/epcc-plan`, `/epcc-code`, `/epcc-commit`
+### コマンド構文の標準
+- ✅ コマンドは必ず `/` から始める（例: `/plugin`、`/epcc-explore`）
+- ✅ マーケットプレイス参照: `@aws-claude-code-plugins`
+- ✅ 完全なインストール構文: `/plugin install <name>@aws-claude-code-plugins`
+- ✅ スラッシュコマンド: `/epcc-explore`、`/epcc-plan`、`/epcc-code`、`/epcc-commit`
 
-### Common Terms (Consistent Usage)
-| Use This | Not This |
+### よく使う用語（表記の統一）
+| こちらを使う | こちらは使わない |
 |----------|----------|
 | plugin | plug-in, Plugin |
-| agent | Agent (unless starting sentence) |
-| marketplace | Marketplace (unless starting sentence) |
-| workflow | Workflow (unless starting sentence) |
-| command | Command (unless starting sentence) |
+| agent | Agent（文頭を除く） |
+| marketplace | Marketplace（文頭を除く） |
+| workflow | Workflow（文頭を除く） |
+| command | Command（文頭を除く） |
 
-## 2. Cross-Reference Verification
+## 2. 相互参照（クロスリファレンス）の検証
 
-### Documentation Hub (docs/README.md)
-- [ ] Links to tutorial: `[Getting Started Tutorial](tutorials/getting-started-epcc-workflow.md)`
-- [ ] Links to how-to: `[Configuration How-To](how-to/configure-plugins.md)`
-- [ ] Links to main README: `[Main Repository README](../README.md)`
-- [ ] Links to CONTRIBUTING: `[Contributing Guide](../CONTRIBUTING.md)`
-- [ ] Links to SECURITY: `[Security Policy](../SECURITY.md)`
-- [ ] All plugin links reference main README sections
+### ドキュメントハブ（docs/README.md）
+- [ ] チュートリアルへのリンク: `[Getting Started Tutorial](tutorials/getting-started-epcc-workflow.md)`
+- [ ] How-To へのリンク: `[Configuration How-To](how-to/configure-plugins.md)`
+- [ ] メイン README へのリンク: `[Main Repository README](../README.md)`
+- [ ] CONTRIBUTING へのリンク: `[Contributing Guide](../CONTRIBUTING.md)`
+- [ ] SECURITY へのリンク: `[Security Policy](../SECURITY.md)`
+- [ ] すべてのプラグインリンクが、メイン README の該当セクションを参照している
 
-### Tutorial Document (docs/tutorials/getting-started-epcc-workflow.md)
-- [ ] Links to documentation hub: `[Documentation Hub](../README.md)`
-- [ ] Links to how-to for advanced topics: `[Configuration Guide](../how-to/configure-plugins.md)`
-- [ ] Links to specific how-to sections with anchors (e.g., `#team-configuration`)
-- [ ] Links to main README for plugin details: `[Main README](../../README.md)`
+### チュートリアル（docs/tutorials/getting-started-epcc-workflow.md）
+- [ ] ドキュメントハブへのリンク: `[Documentation Hub](../README.md)`
+- [ ] 高度なトピック用 How-To へのリンク: `[Configuration Guide](../how-to/configure-plugins.md)`
+- [ ] アンカー付きで How-To の特定セクションへリンク（例: `#team-configuration`）
+- [ ] プラグイン詳細はメイン README にリンク: `[Main README](../../README.md)`
 
-### How-To Document (docs/how-to/configure-plugins.md)
-- [ ] Links to documentation hub: `[Documentation Hub](../README.md)`
-- [ ] Links to tutorial for beginners: `[Getting Started](../tutorials/getting-started-epcc-workflow.md)`
-- [ ] Links to main README for plugin catalog: `[Plugin Catalog](../../README.md#available-plugins)`
-- [ ] Proper section anchors (e.g., `#team-configuration`, `#troubleshooting`)
+### How-To（docs/how-to/configure-plugins.md）
+- [ ] ドキュメントハブへのリンク: `[Documentation Hub](../README.md)`
+- [ ] 初心者向けチュートリアルへのリンク: `[Getting Started](../tutorials/getting-started-epcc-workflow.md)`
+- [ ] プラグインカタログ（メイン README）へのリンク: `[Plugin Catalog](../../README.md#available-plugins)`
+- [ ] 適切なセクションアンカー（例: `#team-configuration`、`#troubleshooting`）
 
-### Main README (README.md)
-- [ ] Links to documentation hub: `[Documentation Hub](docs/README.md)`
-- [ ] Links to tutorial: `[Getting Started Tutorial](docs/tutorials/getting-started-epcc-workflow.md)`
-- [ ] Links to how-to: `[Configuration How-To](docs/how-to/configure-plugins.md)`
-- [ ] Repository structure shows docs directory correctly
-- [ ] All plugin sections have proper anchors
+### メイン README（README.md）
+- [ ] ドキュメントハブへのリンク: `[Documentation Hub](docs/README.md)`
+- [ ] チュートリアルへのリンク: `[Getting Started Tutorial](docs/tutorials/getting-started-epcc-workflow.md)`
+- [ ] How-To へのリンク: `[Configuration How-To](docs/how-to/configure-plugins.md)`
+- [ ] リポジトリ構成で docs ディレクトリが正しく示されている
+- [ ] すべてのプラグイン節に適切なアンカーがある
 
-## 3. Content Consistency
+## 3. 内容の一貫性
 
-### Installation Examples
-Verify all documents use identical installation commands:
+### インストール例
+全ドキュメントで、インストールコマンドが同一であることを確認します。
 
 ```bash
-# Add marketplace
+# マーケットプレイスを追加
 /plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 
-# Install plugin
+# プラグインをインストール
 /plugin install epcc-workflow
-# Browse plugins
+# プラグインを参照
 /plugin
 ```
 
-### Directory Structure Examples
-All documents must show consistent directory structure:
+### ディレクトリ構成例
+すべてのドキュメントで同じ構成を示していること。
 
 ```
 claude-code-plugins/
@@ -105,8 +105,8 @@ claude-code-plugins/
 └── README.md
 ```
 
-### Plugin Descriptions
-Each plugin description must match the main README exactly:
+### プラグイン説明
+各プラグインの説明は、メイン README と完全に一致している必要があります。
 
 #### EPCC Workflow
 - "EPCC (Explore-Plan-Code-Commit) systematic development workflow"
@@ -120,23 +120,24 @@ Each plugin description must match the main README exactly:
 - "Architecture design, review, and documentation"
 - "System design and architecture reviews"
 
-## 4. Example Consistency
+## 4. 例の一貫性
 
-### Working Code Examples
-All code examples must:
-- [ ] Use real, working commands
-- [ ] Produce expected output
-- [ ] Be tested before publication
-- [ ] Include expected results or explanations
-- [ ] Be identical across documents (same example = same code)
+### 動作するコード例
+すべてのコード例は次を満たす必要があります。
+- [ ] 実在して動作するコマンドを使用している
+- [ ] 期待される出力を得られる
+- [ ] 公開前にテストされている
+- [ ] 期待結果または説明が含まれている
+- [ ] 複数ドキュメントで同じ例を使う場合、コードが完全に同一である（同じ例＝同じコード）
 
-### Common Examples to Verify
+### 検証すべき代表例
 
-**Example 1: Basic Plugin Installation**
+**例 1: 基本的なプラグインインストール**
 ```bash
-/plugin install epcc-workflow```
+/plugin install epcc-workflow
+```
 
-**Example 2: Team Configuration**
+**例 2: チーム設定**
 ```json
 {
   "requiredMarketplaces": ["aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock"],
@@ -147,7 +148,7 @@ All code examples must:
 }
 ```
 
-**Example 3: EPCC Workflow Commands**
+**例 3: EPCC workflow コマンド**
 ```bash
 /epcc-explore "authentication system"
 /epcc-plan
@@ -155,213 +156,213 @@ All code examples must:
 /epcc-commit
 ```
 
-## 5. No Contradictions
+## 5. 矛盾がないこと
 
-### Check for Conflicts
+### 競合のチェック
 
-- [ ] Installation steps are identical in all documents
-- [ ] Command syntax is consistent everywhere
-- [ ] Plugin capabilities match across all references
-- [ ] Prerequisites are consistent
-- [ ] Version numbers (if any) match
-- [ ] File paths are consistent
-- [ ] Directory structures match
+- [ ] インストール手順が全ドキュメントで同一
+- [ ] コマンド構文が全箇所で一貫
+- [ ] プラグインの機能説明が参照先間で一致
+- [ ] 前提条件が一貫
+- [ ] （存在する場合）バージョン番号が一致
+- [ ] ファイルパスが一貫
+- [ ] ディレクトリ構成が一致
 
-### Common Contradiction Points
-1. **Installation process**: Tutorial vs How-To must be identical
-2. **Plugin names**: Must match exactly everywhere
-3. **Command syntax**: Must be identical in all examples
-4. **Directory paths**: Must use same structure
-5. **Prerequisites**: Must list same requirements
+### 矛盾が起きやすいポイント
+1. **インストール手順**: チュートリアルと How-To が一致している必要がある
+2. **プラグイン名**: すべての箇所で完全一致が必要
+3. **コマンド構文**: 例を含めて完全一致が必要
+4. **ディレクトリパス**: 同じ構造を使用する
+5. **前提条件**: 同一の要件を列挙する
 
-## 6. Link Validation
+## 6. リンク検証
 
-### Internal Links (Relative Paths)
+### 内部リンク（相対パス）
 
-From `docs/README.md`:
+`docs/README.md` から:
 - [ ] `tutorials/getting-started-epcc-workflow.md` ✓
 - [ ] `how-to/configure-plugins.md` ✓
 - [ ] `../README.md` ✓
 - [ ] `../CONTRIBUTING.md` ✓
 - [ ] `../SECURITY.md` ✓
 
-From `docs/tutorials/getting-started-epcc-workflow.md`:
+`docs/tutorials/getting-started-epcc-workflow.md` から:
 - [ ] `../README.md` ✓
 - [ ] `../how-to/configure-plugins.md` ✓
 - [ ] `../../README.md` ✓
 
-From `docs/how-to/configure-plugins.md`:
+`docs/how-to/configure-plugins.md` から:
 - [ ] `../README.md` ✓
 - [ ] `../tutorials/getting-started-epcc-workflow.md` ✓
 - [ ] `../../README.md` ✓
 
-From `README.md`:
+`README.md` から:
 - [ ] `docs/README.md` ✓
 - [ ] `docs/tutorials/getting-started-epcc-workflow.md` ✓
 - [ ] `docs/how-to/configure-plugins.md` ✓
 - [ ] `CONTRIBUTING.md` ✓
 - [ ] `SECURITY.md` ✓
 
-### External Links
+### 外部リンク
 
 - [ ] `https://docs.claude.com/claude-code` ✓
 - [ ] `https://docs.claude.com/claude-code/plugins-reference` ✓
 - [ ] `https://docs.claude.com/claude-code/plugin-marketplaces` ✓
 - [ ] `https://diataxis.fr/` ✓
-- [ ] GitHub repository links (if applicable) ✓
+- [ ] （該当する場合）GitHub リポジトリリンク ✓
 
-### Anchor Links
+### アンカーリンク
 
-- [ ] `#team-configuration` exists in how-to guide
-- [ ] `#troubleshooting` exists in how-to guide
-- [ ] `#installation` exists in how-to guide
-- [ ] `#available-plugins` exists in main README
-- [ ] All referenced anchors are valid
+- [ ] How-To ガイドに `#team-configuration` が存在する
+- [ ] How-To ガイドに `#troubleshooting` が存在する
+- [ ] How-To ガイドに `#installation` が存在する
+- [ ] メイン README に `#available-plugins` が存在する
+- [ ] 参照しているアンカーがすべて有効
 
-## 7. Diataxis Framework Compliance
+## 7. Diataxis フレームワーク準拠
 
-### Tutorial Document
-- [ ] Learning-oriented (focuses on learning outcomes)
-- [ ] Hands-on, step-by-step instructions
-- [ ] Assumes no prior knowledge
-- [ ] Encourages experimentation
-- [ ] Provides working examples
-- [ ] Has clear completion criteria
-- [ ] Estimated time provided (25 minutes)
+### チュートリアル文書
+- [ ] 学習指向（学習成果に焦点）
+- [ ] ハンズオンで、手順が段階的
+- [ ] 事前知識がない前提
+- [ ] 試行錯誤を促す
+- [ ] 動作する例がある
+- [ ] 明確な完了基準がある
+- [ ] 所要時間の目安がある（25 分）
 
-### How-To Document
-- [ ] Task-oriented (focuses on solving problems)
-- [ ] Goal-focused instructions
-- [ ] Assumes basic knowledge
-- [ ] Provides practical solutions
-- [ ] Multiple use cases covered
-- [ ] Troubleshooting section included
-- [ ] Clear task descriptions
+### How-To 文書
+- [ ] タスク指向（問題解決に焦点）
+- [ ] 目的に直結した手順
+- [ ] 基礎知識がある前提
+- [ ] 実用的な解決策を提示
+- [ ] 複数のユースケースを扱う
+- [ ] トラブルシューティング節がある
+- [ ] タスク説明が明確
 
-### Reference (Main README)
-- [ ] Information-oriented
-- [ ] Comprehensive coverage
-- [ ] Organized by function (plugins)
-- [ ] Technical specifications
-- [ ] Quick lookup structure
+### リファレンス（メイン README）
+- [ ] 情報指向
+- [ ] 網羅的
+- [ ] 機能（プラグイン）別に整理
+- [ ] 技術仕様がある
+- [ ] すばやく参照できる構造
 
-## 8. Professional Quality Standards
+## 8. プロフェッショナル品質基準
 
-### Formatting
-- [ ] Consistent heading levels
-- [ ] Proper code block formatting with language tags
-- [ ] Tables are well-formatted and aligned
-- [ ] Lists use consistent bullet styles
-- [ ] Links are properly formatted
+### 体裁（フォーマット）
+- [ ] 見出しレベルが一貫している
+- [ ] 言語タグ付きのコードブロックが適切
+- [ ] 表が整形され、揃っている
+- [ ] リストの箇条書きスタイルが一貫
+- [ ] リンク形式が正しい
 
-### Grammar and Style
-- [ ] Professional tone throughout
-- [ ] Active voice preferred
-- [ ] Imperative mood for instructions
-- [ ] Consistent tense usage
-- [ ] No spelling errors
+### 文法とスタイル
+- [ ] 全体を通してプロフェッショナルなトーン
+- [ ] 可能な限り能動態
+- [ ] 手順は命令形を優先
+- [ ] 時制が一貫
+- [ ] スペルミスがない
 
-### Structure
-- [ ] Logical information flow
-- [ ] Progressive disclosure (simple → complex)
-- [ ] Clear section boundaries
-- [ ] Table of contents where appropriate
-- [ ] Summary or conclusion sections
+### 構成
+- [ ] 情報の流れが論理的
+- [ ] 段階的開示（簡単 → 複雑）
+- [ ] セクションの境界が明確
+- [ ] 必要に応じて目次がある
+- [ ] まとめ／結論がある（必要に応じて）
 
-### Accessibility
-- [ ] Descriptive link text (not "click here")
-- [ ] Alt text for images (if any)
-- [ ] Clear heading hierarchy
-- [ ] Code examples are readable
-- [ ] Color is not the only information indicator
+### アクセシビリティ
+- [ ] リンクテキストが説明的（"click here" を避ける）
+- [ ] 画像（ある場合）に代替テキストがある
+- [ ] 見出し階層が明確
+- [ ] コード例が読みやすい
+- [ ] 色だけに情報を依存していない
 
-## 9. User Navigation
+## 9. ユーザーナビゲーション
 
-### "Can I Get There From Here?" Test
+### 「ここから辿れるか？」テスト
 
-Starting from main README:
-- [ ] Can reach documentation hub in 1 click
-- [ ] Can reach tutorial in 2 clicks
-- [ ] Can reach how-to in 2 clicks
-- [ ] Can reach contributing guide in 1 click
+メイン README から開始:
+- [ ] 1 クリックでドキュメントハブに到達できる
+- [ ] 2 クリックでチュートリアルに到達できる
+- [ ] 2 クリックで How-To に到達できる
+- [ ] 1 クリックで Contributing ガイドに到達できる
 
-Starting from documentation hub:
-- [ ] Can reach tutorial in 1 click
-- [ ] Can reach how-to in 1 click
-- [ ] Can return to main README in 1 click
-- [ ] Can reach contributing guide in 1 click
+ドキュメントハブから開始:
+- [ ] 1 クリックでチュートリアルに到達できる
+- [ ] 1 クリックで How-To に到達できる
+- [ ] 1 クリックでメイン README に戻れる
+- [ ] 1 クリックで Contributing ガイドに到達できる
 
-Starting from tutorial:
-- [ ] Can reach documentation hub in 1 click
-- [ ] Can reach how-to in 1 click
-- [ ] Can reach main README in 1 click
+チュートリアルから開始:
+- [ ] 1 クリックでドキュメントハブに到達できる
+- [ ] 1 クリックで How-To に到達できる
+- [ ] 1 クリックでメイン README に到達できる
 
-Starting from how-to:
-- [ ] Can reach documentation hub in 1 click
-- [ ] Can reach tutorial in 1 click
-- [ ] Can reach main README in 1 click
+How-To から開始:
+- [ ] 1 クリックでドキュメントハブに到達できる
+- [ ] 1 クリックでチュートリアルに到達できる
+- [ ] 1 クリックでメイン README に到達できる
 
-### User Journey Completeness
+### ユーザージャーニーの完結性
 
-**Beginner Journey:**
-1. [ ] Lands on main README
-2. [ ] Finds documentation hub link
-3. [ ] Identifies as beginner
-4. [ ] Reaches tutorial in 2 clicks
-5. [ ] Completes tutorial
-6. [ ] Finds link to how-to for next steps
+**初心者ジャーニー:**
+1. [ ] メイン README に到達する
+2. [ ] ドキュメントハブへのリンクを見つける
+3. [ ] 自分が初心者であると判断できる
+4. [ ] 2 クリックでチュートリアルへ到達できる
+5. [ ] チュートリアルを完了できる
+6. [ ] 次のステップとして How-To へのリンクを見つけられる
 
-**Practitioner Journey:**
-1. [ ] Lands on main README
-2. [ ] Finds documentation hub link
-3. [ ] Identifies as practitioner
-4. [ ] Reaches how-to in 2 clicks
-5. [ ] Solves specific problem
-6. [ ] Finds link to main README for plugin details
+**実務者ジャーニー:**
+1. [ ] メイン README に到達する
+2. [ ] ドキュメントハブへのリンクを見つける
+3. [ ] 自分が実務者であると判断できる
+4. [ ] 2 クリックで How-To へ到達できる
+5. [ ] 特定の問題を解決できる
+6. [ ] プラグイン詳細のため、メイン README へのリンクを見つけられる
 
-**Team Lead Journey:**
-1. [ ] Lands on main README
-2. [ ] Finds documentation hub link
-3. [ ] Identifies as team lead
-4. [ ] Reaches team configuration in 3 clicks
-5. [ ] Configures plugins for team
-6. [ ] Finds link to tutorial for team training
+**チームリード ジャーニー:**
+1. [ ] メイン README に到達する
+2. [ ] ドキュメントハブへのリンクを見つける
+3. [ ] 自分がチームリードであると判断できる
+4. [ ] 3 クリックでチーム設定に到達できる
+5. [ ] チーム向けにプラグインを設定できる
+6. [ ] チーム教育のためのチュートリアルリンクを見つけられる
 
-## 10. Final Checklist
+## 10. 最終チェックリスト
 
-### Pre-Publication
-- [ ] All agents have completed their documents
-- [ ] Documentation hub is complete
-- [ ] Main README updated with links
-- [ ] All internal links tested
-- [ ] All external links tested
-- [ ] Terminology verified consistent
-- [ ] Examples verified working
-- [ ] No contradictions found
-- [ ] Cross-references complete
+### 公開前
+- [ ] すべての agent が担当ドキュメントを完了している
+- [ ] ドキュメントハブが完成している
+- [ ] メイン README がリンク付きで更新されている
+- [ ] 内部リンクをすべてテストした
+- [ ] 外部リンクをすべてテストした
+- [ ] 用語が一貫している
+- [ ] 例が動作確認済み
+- [ ] 矛盾がない
+- [ ] 相互参照が完備されている
 
-### Quality Gates
-- [ ] Spelling and grammar checked
-- [ ] Code examples tested
-- [ ] Link validity confirmed
-- [ ] User journeys validated
-- [ ] Diataxis principles followed
-- [ ] Professional tone maintained
-- [ ] Accessibility standards met
-- [ ] Navigation structure verified
+### 品質ゲート
+- [ ] スペルと文法をチェックした
+- [ ] コード例をテストした
+- [ ] リンクの妥当性を確認した
+- [ ] ユーザージャーニーを検証した
+- [ ] Diataxis 原則に従っている
+- [ ] プロフェッショナルなトーンを維持している
+- [ ] アクセシビリティ基準を満たしている
+- [ ] ナビゲーション構造を検証した
 
-### Sign-Off
-- [ ] Documentation Coordinator reviewed
-- [ ] Tutorial Agent confirmed completion
-- [ ] How-To Agent confirmed completion
-- [ ] All links manually tested
-- [ ] Ready for user testing
+### サインオフ
+- [ ] ドキュメント統括がレビューした
+- [ ] Tutorial Agent が完了を確認した
+- [ ] How-To Agent が完了を確認した
+- [ ] すべてのリンクを手動でテストした
+- [ ] ユーザーテストの準備ができている
 
 ---
 
-**Testing Notes**: After checklist completion, perform user testing with:
-1. Complete beginner (never used Claude Code)
-2. Experienced developer (familiar with CLI tools)
-3. Team lead (responsible for team configuration)
+**テストメモ**: チェックリスト完了後、次の対象者でユーザーテストを実施してください。
+1. 完全な初心者（Claude Code 未使用）
+2. 経験豊富な開発者（CLI ツールに慣れている）
+3. チームリード（チーム設定の責任者）
 
-Record any navigation issues, unclear instructions, or broken links for immediate correction.
+ナビゲーション上の問題、不明瞭な手順、リンク切れなどがあれば記録し、速やかに修正してください。

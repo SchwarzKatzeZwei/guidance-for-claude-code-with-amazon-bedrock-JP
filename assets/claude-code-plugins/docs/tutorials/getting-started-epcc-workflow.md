@@ -1,143 +1,145 @@
-> 📚 [Back to Documentation Hub](../README.md)
+> 📚 [ドキュメントハブに戻る](../README.md)
 
-# Getting Started with Claude Code: Build Your First Feature Using EPCC Workflow
+# Claude Code 入門: EPCC workflow で最初の機能を作る
 
-**What you'll learn**: By the end of this tutorial, you'll have installed the Claude Code Plugins Marketplace, set up the EPCC workflow plugin, and completed a full development cycle from exploration to commit. You'll be ready to apply systematic development practices to your own projects.
+**学べること**: このチュートリアルを終えるころには、Claude Code Plugins Marketplace をインストールし、EPCC workflow プラグインをセットアップし、探索からコミットまでの開発サイクルを一通り完了できます。体系的な開発プラクティスを自分のプロジェクトに適用できる状態になります。
 
-**Time required**: 25 minutes
-**Prerequisites**:
-- Claude Code installed (if not, visit [https://claude.ai/code](https://claude.ai/code))
-- Basic terminal/command-line familiarity
-- A code project to work with (or we'll help you create one)
+**所要時間**: 25 分  
+**前提条件**:
+- Claude Code がインストール済み（未インストールの場合は [https://claude.ai/code](https://claude.ai/code) を参照）
+- ターミナル／コマンドラインの基本操作に慣れている
+- 作業対象のコードプロジェクトがある（なければ作成を支援します）
 
-## What You'll Build
+## 作るもの
 
-You'll use the EPCC (Explore-Plan-Code-Commit) workflow to add a simple user greeting feature to a project. This represents a real-world development cycle where you:
-- Explore the codebase to understand existing patterns
-- Plan your implementation systematically
-- Code with specialized AI agents helping you
-- Commit with professional documentation
+EPCC（Explore-Plan-Code-Commit）ワークフローを使って、プロジェクトに簡単なユーザー向け挨拶（greeting）機能を追加します。これは、次のような現実的な開発サイクルを表しています。
 
-### Why This Tutorial Matters
+- 既存のパターンを理解するためにコードベースを探索する
+- 実装を体系的に計画する
+- 専門の AI エージェントに支援してもらいながら実装する
+- プロフェッショナルなドキュメント付きでコミットする
 
-EPCC is a methodical approach that prevents common development mistakes: starting to code before understanding the context, missing edge cases, or creating inconsistent implementations. By learning this workflow, you'll develop a habit of thinking before acting - a practice used by professional development teams worldwide.
+### このチュートリアルが重要な理由
 
-## Before We Start
+EPCC は、よくある開発ミス（文脈理解前にコーディングを始める、エッジケースを見落とす、実装が一貫しない）を防ぐための、手順化されたアプローチです。このワークフローを学ぶことで、「行動する前に考える」習慣が身につきます。これは世界中のプロの開発チームで使われている実践です。
 
-### Verify Your Setup
+## 開始前に
 
-First, let's confirm Claude Code is working correctly:
+### セットアップの確認
+
+まず Claude Code が正しく動作していることを確認します。
 
 ```bash
-# Test that Claude Code is installed
+# Claude Code がインストールされているか確認
 claude --version
 ```
 
-**Expected output**: You should see a version number like `claude-code v1.x.x`
+**期待される出力**: `claude-code v1.x.x` のようなバージョン番号が表示されます。
 
-**Checkpoint**: If you see the version number, you're ready to continue. If not, install Claude Code from [https://claude.ai/code](https://claude.ai/code) first.
+**チェックポイント**: バージョン番号が表示されれば続行できます。表示されない場合は、先に [https://claude.ai/code](https://claude.ai/code) から Claude Code をインストールしてください。
 
-## Step 1: Add the Plugin Marketplace
+## 手順 1: プラグインマーケットプレイスを追加
 
-Let's connect Claude Code to the plugins marketplace. This is like adding an app store to your development environment.
+Claude Code をプラグインマーケットプレイスに接続します。開発環境に「アプリストア」を追加するようなものです。
 
 ```bash
-# Add the AWS Samples marketplace
+# AWS Samples のマーケットプレイスを追加
 /plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 ```
 
-**What just happened**: Claude Code connected to a curated collection of 11 production-ready plugins. Think of it as unlocking a toolbox of specialized development assistants.
+**いま起きたこと**: Claude Code が、本番利用可能な 11 個のプラグインをまとめたキュレーション済みコレクションに接続しました。専門の開発アシスタント一式を解放した、と考えると分かりやすいでしょう。
 
-**Expected result**: You should see a confirmation message like:
+**期待される結果**: 次のような確認メッセージが表示されます。
 ```
 ✓ Marketplace added: aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
   11 plugins available
 ```
 
-**Checkpoint**: You should see confirmation that the marketplace was added. This means you now have access to all available plugins.
+**チェックポイント**: マーケットプレイスが追加された旨の確認が表示されること。これで利用可能なプラグインへアクセスできる状態になりました。
 
-### Verify Marketplace Access
+### マーケットプレイスへのアクセス確認
 
-Let's confirm the marketplace is working:
+マーケットプレイスが機能していることを確認します。
 
 ```bash
-# Browse available plugins
+# 利用可能なプラグインを参照
 /plugin
 ```
 
-**Expected result**: You'll see an interactive list showing all 11 plugins, including:
-- epcc-workflow (Explore-Plan-Code-Commit)
-- documentation (Diataxis framework)
-- security (Security scanning)
-- testing (QA and quality gates)
-- And 7 more...
+**期待される結果**: 11 個すべてのプラグインが対話的リストで表示されます。例：
+- epcc-workflow（Explore-Plan-Code-Commit）
+- documentation（Diataxis フレームワーク）
+- security（セキュリティスキャン）
+- testing（QA と品質ゲート）
+- その他 7 個…
 
-**What this means**: The marketplace is connected and you can now install any plugin from this collection.
+**意味するところ**: マーケットプレイス接続は完了しており、このコレクションから任意のプラグインをインストールできます。
 
-## Step 2: Install the EPCC Workflow Plugin
+## 手順 2: EPCC workflow プラグインをインストール
 
-Now let's install your first plugin - the EPCC workflow system:
+最初のプラグインとして、EPCC workflow システムをインストールします。
 
 ```bash
-# Install the EPCC workflow plugin
-/plugin install epcc-workflow```
+# EPCC workflow プラグインをインストール
+/plugin install epcc-workflow
+```
 
-**What just happened**: You installed a complete systematic development workflow that includes:
-- 12 specialized AI agents for exploration, planning, coding, and commit phases
-- 4 workflow commands (/epcc-explore, /epcc-plan, /epcc-code, /epcc-commit)
-- Auto-recovery hooks for error handling
+**いま起きたこと**: 次を含む体系的開発ワークフロー一式をインストールしました。
+- 探索／計画／実装／コミットの各フェーズ向けに特化した 12 の AI エージェント
+- 4 つのワークフローコマンド（/epcc-explore, /epcc-plan, /epcc-code, /epcc-commit）
+- エラーハンドリングのための自動リカバリーフック
 
-**Expected result**: You should see:
+**期待される結果**: 次のように表示されます。
 ```
 ✓ Plugin installed: epcc-workflow  12 agents added
   4 commands added
   Ready to use!
 ```
 
-**Checkpoint**: Type `/epcc` and press Tab to see command completion. You should see all four EPCC commands listed.
+**チェックポイント**: `/epcc` と入力して Tab を押し、コマンド補完が出ることを確認します。4 つの EPCC コマンドが表示されるはずです。
 
-### Verify Installation
+### インストールの確認
 
-Let's make sure everything is ready:
+すべて準備できていることを確認します。
 
 ```bash
-# List your slash commands (you should see /epcc-* commands)
+# スラッシュコマンド一覧（/epcc-* コマンドが見えるはず）
 /
 
-# The tab completion should show:
+# タブ補完で表示される想定:
 # /epcc-explore
 # /epcc-plan
 # /epcc-code
 # /epcc-commit
 ```
 
-**What you're seeing**: These four commands represent the complete EPCC development cycle. You're now equipped with a professional workflow system.
+**いま見えているもの**: これら 4 コマンドが EPCC の開発サイクル全体です。プロフェッショナルなワークフロー一式が使える状態になりました。
 
-## Step 3: Your First EPCC Workflow
+## 手順 3: はじめての EPCC ワークフロー
 
-Now comes the exciting part - using EPCC to build something real. We'll add a simple user greeting feature that demonstrates the full workflow.
+いよいよ EPCC を使って実際に何かを作ります。ワークフロー全体を体験できるよう、簡単なユーザー挨拶機能を追加します。
 
-### Phase 1: Explore (Understanding First)
+### フェーズ 1: Explore（まず理解する）
 
-Before writing any code, we need to understand our project. This is like surveying the land before building a house.
+コードを書く前に、プロジェクトを理解する必要があります。家を建てる前に土地を測るのと同じです。
 
 ```bash
-# Start the exploration phase
+# 探索フェーズを開始
 /epcc-explore "user interface and existing greeting patterns"
 ```
 
-**What just happened**: Claude Code deployed multiple AI agents in parallel:
-- @code-archaeologist analyzed your code structure
-- @system-designer identified architectural patterns
-- @business-analyst mapped process flows
-- @test-generator assessed test coverage
-- @documentation-agent reviewed existing docs
+**いま起きたこと**: Claude Code が複数の AI エージェントを並列に起動しました。
+- @code-archaeologist がコード構造を分析
+- @system-designer がアーキテクチャパターンを特定
+- @business-analyst がプロセスフローを整理
+- @test-generator がテストカバレッジを評価
+- @documentation-agent が既存ドキュメントを確認
 
-**Try it now**: Run the command above in your project directory.
+**いま試す**: 上記コマンドをプロジェクトディレクトリで実行してください。
 
-**Expected result**: Claude will spend 30-60 seconds analyzing your project and then create a file called `EPCC_EXPLORE.md` in your project root.
+**期待される結果**: 30～60 秒程度の分析後、プロジェクトルートに `EPCC_EXPLORE.md` が作成されます。
 
-**Checkpoint**: Open `EPCC_EXPLORE.md` and you should see sections like:
+**チェックポイント**: `EPCC_EXPLORE.md` を開き、次のようなセクションがあることを確認します。
 - Executive Summary
 - Project Structure
 - Key Components
@@ -145,121 +147,121 @@ Before writing any code, we need to understand our project. This is like surveyi
 - Dependencies
 - Constraints & Limitations
 
-**What this means**: You now have a complete map of your codebase. This exploration document prevents you from making changes that conflict with existing patterns or break hidden dependencies.
+**意味するところ**: コードベースの「地図」が手に入りました。これにより、既存のパターンと衝突する変更や、隠れた依存関係を壊す変更を避けられます。
 
-### Phase 2: Plan (Strategic Design)
+### フェーズ 2: Plan（戦略的に設計する）
 
-Now that we understand the project, let's create a detailed implementation plan:
+プロジェクト理解ができたので、詳細な実装計画を作ります。
 
 ```bash
-# Start the planning phase
+# 計画フェーズを開始
 /epcc-plan "Add a simple user greeting feature that displays personalized welcome message"
 ```
 
-**What just happened**: Claude Code:
-- Read your exploration findings from EPCC_EXPLORE.md
-- Created a detailed implementation plan
-- Broke down the work into specific tasks
-- Assessed risks and edge cases
-- Defined success criteria
+**いま起きたこと**: Claude Code は次を行います。
+- `EPCC_EXPLORE.md` の探索結果を読み取る
+- 詳細な実装計画を作成する
+- 作業を具体的タスクへ分解する
+- リスクとエッジケースを評価する
+- 成功基準を定義する
 
-**Expected result**: A new file called `EPCC_PLAN.md` appears in your project root.
+**期待される結果**: プロジェクトルートに `EPCC_PLAN.md` が作成されます。
 
-**Checkpoint**: Open `EPCC_PLAN.md` and you should see:
-- Feature objectives clearly stated
-- Technical approach defined
-- Task breakdown with time estimates
-- Risk assessment matrix
-- Testing strategy
-- Success metrics
+**チェックポイント**: `EPCC_PLAN.md` を開き、次が含まれていることを確認します。
+- 機能目的の明確化
+- 技術方針の定義
+- 所要時間見積もり付きのタスク分解
+- リスク評価マトリクス
+- テスト戦略
+- 成功指標
 
-**What you're seeing**: This is your roadmap. Professional teams spend 20-30% of development time in planning - it prevents costly mistakes and rework later.
+**いま見えているもの**: これはロードマップです。プロのチームは開発時間の 20～30% を計画に使います。後からの手戻りや高コストなミスを防ぐためです。
 
-### Phase 3: Code (Implementation with Confidence)
+### フェーズ 3: Code（自信を持って実装する）
 
-Time to build! But notice - we're not coding blindly. We have our exploration findings and detailed plan to guide us:
+さあ実装です。ただし、やみくもに書き始めません。探索結果と計画に従って進めます。
 
 ```bash
-# Start the coding phase
+# 実装フェーズを開始
 /epcc-code "Implement user greeting feature from plan"
 ```
 
-**What just happened**: Claude Code:
-- Reviewed EPCC_EXPLORE.md for patterns to follow
-- Consulted EPCC_PLAN.md for the implementation strategy
-- Deployed specialized coding agents:
-  - @test-generator wrote tests FIRST (TDD approach)
-  - @security-reviewer validated security practices
-  - @documentation-agent generated inline docs
-  - @optimization-engineer ensured performance
-- Created working, tested code
+**いま起きたこと**: Claude Code は次を行います。
+- `EPCC_EXPLORE.md` を見て、従うべきパターンを確認
+- `EPCC_PLAN.md` を参照して、実装戦略を適用
+- 専門の実装エージェントを起動：
+  - @test-generator がテストを先に作成（TDD アプローチ）
+  - @security-reviewer がセキュリティ実践を検証
+  - @documentation-agent がインラインドキュメントを生成
+  - @optimization-engineer が性能面を考慮
+- 動作し、テスト済みのコードを作成
 
-**Expected result**:
-1. New code files created/modified according to your plan
-2. Test files created with passing tests
-3. A new file called `EPCC_CODE.md` documenting what was built
+**期待される結果**:
+1. 計画に沿った新規／変更コードが作成される
+2. テストファイルが作成され、テストが通る
+3. 作った内容を記録する `EPCC_CODE.md` が作成される
 
-**Checkpoint**: Check these things:
-- [ ] Your greeting feature code exists and works
-- [ ] Tests are present and passing
-- [ ] EPCC_CODE.md shows implementation details
-- [ ] Code follows patterns identified in exploration phase
+**チェックポイント**: 次を確認してください。
+- [ ] 挨拶機能のコードが存在し、期待どおり動く
+- [ ] テストがあり、成功している
+- [ ] `EPCC_CODE.md` に実装詳細が記録されている
+- [ ] 探索フェーズで特定されたパターンに沿っている
 
-**Try it**: Test your new greeting feature:
+**試す**: 新しい挨拶機能をテストします。
 ```bash
-# Run your tests
+# テストを実行
 npm test
-# or
+# または
 pytest
 ```
 
-**What you're seeing**: Tests should be green (passing). This is because Claude followed your project's testing conventions discovered during exploration.
+**いま見えているもの**: テストはグリーン（成功）になるはずです。Claude が探索フェーズで見つけたテスト規約に従って実装したためです。
 
-### Phase 4: Commit (Professional Finalization)
+### フェーズ 4: Commit（プロとして仕上げる）
 
-The final step is creating a professional commit with complete documentation:
+最後は、完全なドキュメントを備えたプロフェッショナルなコミットを作ります。
 
 ```bash
-# Start the commit phase
+# コミットフェーズを開始
 /epcc-commit "Add personalized user greeting feature"
 ```
 
-**What just happened**: Claude Code:
-- Ran final quality checks (tests, linting, security scan)
-- Generated a professional commit message
-- Created comprehensive PR documentation
-- Documented the complete change in EPCC_COMMIT.md
-- Prepared everything for code review
+**いま起きたこと**: Claude Code は次を行います。
+- 最終品質チェック（テスト、lint、セキュリティスキャン）を実行
+- プロフェッショナルなコミットメッセージを生成
+- そのまま使える PR ドキュメントを作成
+- 変更全体を `EPCC_COMMIT.md` に記録
+- コードレビューに向けた準備を整える
 
-**Expected result**: You'll see:
-1. A suggested commit message following conventional commits format
-2. Complete PR description ready to copy
-3. EPCC_COMMIT.md with full documentation
-4. All quality checks passed
+**期待される結果**:
+1. Conventional Commits 形式に沿ったコミットメッセージ案
+2. コピーして使える PR 説明文
+3. 完全な記録が入った `EPCC_COMMIT.md`
+4. 品質チェックがすべて成功
 
-**Checkpoint**: Open `EPCC_COMMIT.md` and you should see:
-- Changes overview (what, why, how)
-- Files changed list
-- Testing summary with coverage
-- Security considerations
-- Performance impact
-- Complete PR description template
+**チェックポイント**: `EPCC_COMMIT.md` を開き、次があることを確認します。
+- 変更概要（what/why/how）
+- 変更ファイル一覧
+- カバレッジを含むテスト概要
+- セキュリティ観点
+- 性能影響
+- PR 説明テンプレート
 
-**What this means**: Your change is professionally documented and ready for team review. Every decision and implementation detail is recorded.
+**意味するところ**: 変更がプロフェッショナルに文書化され、チームレビューに出せる状態になりました。判断と実装の根拠が残ります。
 
-### Make the Actual Commit
+### 実際にコミットする
 
-Now let's commit your work:
+作業をコミットします。
 
 ```bash
-# Review your changes
+# 変更内容を確認
 git status
 git diff
 
-# Stage your changes
+# ステージング
 git add .
 
-# Commit using the message from EPCC_COMMIT.md
+# EPCC_COMMIT.md のメッセージを使ってコミット
 git commit -m "feat: Add personalized user greeting feature
 
 - Implement greeting display component
@@ -274,142 +276,145 @@ Based on:
 - Finalization: EPCC_COMMIT.md"
 ```
 
-**Expected result**: Git confirms your commit was created.
+**期待される結果**: Git がコミット作成を確認します。
 
-**What you've done**: Created a professional commit that tells the complete story of your change. Any developer (including future you) can understand exactly what was done and why.
+**やったこと**: 変更の「全ストーリー」が分かる、プロフェッショナルなコミットを作成しました。将来の自分を含む誰が見ても、何をなぜどう行ったかが追えます。
 
-## What You've Accomplished
+## 達成したこと
 
-Congratulations! You've just completed a full EPCC workflow cycle. Here's what you achieved:
+おめでとうございます。EPCC ワークフローを 1 周完走しました。達成したことは次のとおりです。
 
-✓ Installed the Claude Code Plugins Marketplace
-✓ Set up the EPCC workflow plugin
-✓ Explored a codebase systematically using AI agents
-✓ Created a detailed implementation plan
-✓ Built a feature with automated testing and documentation
-✓ Committed professionally with complete documentation
-✓ Learned a workflow used by professional development teams
+✓ Claude Code Plugins Marketplace をインストールした  
+✓ EPCC workflow プラグインをセットアップした  
+✓ AI エージェントを用いてコードベースを体系的に探索した  
+✓ 詳細な実装計画を作成した  
+✓ 自動テスト／ドキュメント化を伴って機能を実装した  
+✓ 完全なドキュメント付きでプロとしてコミットした  
+✓ プロの開発チームが使うワークフローを学んだ  
 
-**More importantly**: You now understand WHY each phase matters:
-- **Explore** prevents you from breaking things or creating inconsistent code
-- **Plan** saves time by thinking through problems before coding
-- **Code** ensures quality through systematic implementation
-- **Commit** creates maintainable history that teams can understand
+**さらに重要なこと**: 各フェーズがなぜ必要かを理解しました。
+- **Explore**: 破壊的変更や不整合な実装を防ぐ
+- **Plan**: コーディング前に考え、手戻りを減らす
+- **Code**: 体系的実装で品質を担保する
+- **Commit**: チームが理解できる保守可能な履歴を作る
 
-## Next Steps
+## 次のステップ
 
-Now that you understand the EPCC workflow basics:
+EPCC の基本が分かったら、次に進みましょう。
 
-### Apply It to Your Work
-Try EPCC on a real task in your project:
+### 自分の作業に適用する
+プロジェクトの実タスクで EPCC を試してください。
 ```bash
-# Start with exploration
+# まずは探索から
 /epcc-explore "the authentication system"
 
-# Or explore a specific feature you want to add
+# あるいは追加したい機能を探索
 /epcc-explore "API endpoints for user management"
 ```
 
-### Explore Other Plugins
-The marketplace has 10 more plugins to discover:
+### 他のプラグインを試す
+マーケットプレイスには、まだ 10 個のプラグインがあります。
 ```bash
-# Browse all plugins
+# プラグイン一覧
 /plugin
 
-# Popular combinations:
-/plugin install documentation@aws-claude-code-plugins  # Great docs
-/plugin install security@aws-claude-code-plugins       # Security checks
-/plugin install testing@aws-claude-code-plugins        # QA automation
+# よく使われる組み合わせ:
+/plugin install documentation@aws-claude-code-plugins  # ドキュメント強化
+/plugin install security@aws-claude-code-plugins       # セキュリティチェック
+/plugin install testing@aws-claude-code-plugins        # QA 自動化
 ```
 
-### Configure for Your Team
-Set up required plugins for your entire team:
-- **[Team Configuration Guide](../how-to/configure-plugins.md#step-4-install-plugin-bundles)** - Enforce plugins across your team with `.claude/settings.json`
-- **[Bundle Examples](../how-to/configure-plugins.md#starter-bundle-recommended-for-teams-getting-started)** - Pre-configured setups for different team sizes
-- **[Best Practices](../how-to/configure-plugins.md#team-configuration)** - DOs and DON'Ts for team plugin management
+### チーム向けに設定する
+チーム全体で必須プラグインを設定します。
+- **[チーム設定ガイド](../how-to/configure-plugins.md#step-4-install-plugin-bundles)** - `.claude/settings.json` でチーム全体に強制
+- **[バンドル例](../how-to/configure-plugins.md#starter-bundle-recommended-for-teams-getting-started)** - 規模に応じた事前構成
+- **[ベストプラクティス](../how-to/configure-plugins.md#team-configuration)** - チームのプラグイン管理の DO / DON'T
 
-**Why this matters**: Team-level configuration ensures everyone has the same tooling, making collaboration seamless and onboarding instant.
+**重要性**: チームレベル設定により全員のツールが揃い、コラボレーションが滑らかになり、オンボーディングも即時化します。
 
-### Advanced EPCC Techniques
-- **Deep exploration**: `/epcc-explore --deep "complex legacy code"`
-- **Quick iteration**: `/epcc-explore --quick "small bug fix"`
-- **TDD approach**: `/epcc-code --tdd "feature with tests first"`
+### EPCC 応用テクニック
+- **深掘り探索**: `/epcc-explore --deep "complex legacy code"`
+- **高速イテレーション**: `/epcc-explore --quick "small bug fix"`
+- **TDD アプローチ**: `/epcc-code --tdd "feature with tests first"`
 
-### Learn More
-- **Configuration Guide**: See [Plugin Configuration](../how-to/configure-plugins.md) for advanced setup and team configuration
-- **Plugin Catalog**: Browse the [Main README](../../README.md#available-plugins) for complete plugin details
-- **Documentation Hub**: Visit the [Documentation Home](../README.md) for all resources
+### さらに学ぶ
+- **設定ガイド**: チーム設定を含む高度な設定は [Plugin Configuration](../how-to/configure-plugins.md) を参照
+- **プラグインカタログ**: 全プラグイン詳細は [Main README](../../README.md#available-plugins) を参照
+- **ドキュメントハブ**: リソース一覧は [Documentation Home](../README.md) を参照
 
-## Troubleshooting
+## トラブルシューティング
 
-### Problem: Marketplace won't add
+### 問題: マーケットプレイスを追加できない
 ```
 Error: Cannot connect to marketplace
 ```
 
-**Solution**: Check your internet connection and try again:
+**対処**: インターネット接続を確認し、再試行します。
 ```bash
-# Verify Claude Code is up to date
+# Claude Code が最新か確認
 claude --version
 
-# Try adding marketplace again
+# マーケットプレイス追加を再試行
 /plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 ```
 
-### Problem: Plugin installation fails
+### 問題: プラグインのインストールに失敗する
 ```
 Error: Plugin not found
 ```
 
-**Solution**: Make sure the marketplace is added first:
+**対処**: 先にマーケットプレイスが追加されていることを確認します。
 ```bash
-# List marketplaces
+# マーケットプレイス一覧
 /plugin marketplace list
 
-# Should show: aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
-# If not, add it again
+# 表示されるべきもの:
+# aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
+# なければ再追加
 /plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 ```
 
-### Problem: EPCC commands not found
+### 問題: EPCC コマンドが見つからない
 ```
 Command not recognized: /epcc-explore
 ```
 
-**Solution**: Verify plugin installation:
+**対処**: プラグインのインストールを確認します。
 ```bash
-# Check installed plugins
+# インストール済みプラグイン確認
 /plugin list
 
-# Should show: epcc-workflow# If not, reinstall
-/plugin install epcc-workflow```
+# 表示されるべきもの: epcc-workflow
+# なければ再インストール
+/plugin install epcc-workflow
+```
 
-### Problem: Exploration phase takes too long
+### 問題: 探索フェーズに時間がかかりすぎる
 
-**Solution**: Use quick mode for smaller explorations:
+**対処**: 小さい探索では quick モードを使います。
 ```bash
-# Quick exploration for small areas
+# 小範囲の探索向け
 /epcc-explore --quick "specific component"
 ```
 
-### Problem: Too many EPCC_*.md files accumulating
+### 問題: EPCC_*.md ファイルが増えすぎる
 
-**Solution**: Archive completed workflows:
+**対処**: 完了したワークフローをアーカイブします。
 ```bash
-# Create archive directory
+# アーカイブディレクトリ作成
 mkdir -p .epcc-archive/feature-name
 
-# Move completed EPCC files
+# 完了済み EPCC ファイルを移動
 mv EPCC_*.md .epcc-archive/feature-name/
 
-# Or commit them with your feature
+# あるいは機能と一緒にコミット
 git add EPCC_*.md
 git commit -m "docs: Add EPCC workflow documentation"
 ```
 
-### Problem: Generated code doesn't match project style
+### 問題: 生成されたコードがプロジェクトのスタイルに合わない
 
-**Solution**: Create a CLAUDE.md file in your project root with your conventions:
+**対処**: プロジェクトルートに、規約を記した CLAUDE.md を作成します。
 ```markdown
 # CLAUDE.md
 
@@ -424,41 +429,41 @@ git commit -m "docs: Add EPCC workflow documentation"
 - Minimum 80% coverage
 ```
 
-EPCC will automatically read this file during exploration and follow your rules.
+EPCC は探索中にこのファイルを自動的に読み取り、規約に従います。
 
-## Tips for Success
+## 成功のためのヒント
 
-1. **Always start with exploration** - even if you think you know the code. You'll discover patterns and constraints you forgot about.
+1. **必ず探索から始める** — 分かっているつもりでも、忘れていた制約やパターンが見つかります。
 
-2. **Don't skip planning** - 15 minutes of planning saves hours of refactoring later.
+2. **計画を省略しない** — 15 分の計画が、後のリファクタリング数時間を節約します。
 
-3. **Review the EPCC files** - they contain valuable insights. Open EPCC_EXPLORE.md and EPCC_PLAN.md before coding.
+3. **EPCC ファイルを確認する** — コーディング前に `EPCC_EXPLORE.md` と `EPCC_PLAN.md` を開いてください。
 
-4. **Keep EPCC files** - they're great documentation for code reviews and future maintenance.
+4. **EPCC ファイルを残す** — コードレビューや将来の保守で強力なドキュメントになります。
 
-5. **Use flags for different situations**:
-   - Quick fixes: `/epcc-explore --quick`
-   - Complex work: `/epcc-explore --deep`
-   - Test-driven: `/epcc-code --tdd`
+5. **状況に応じてフラグを使い分ける**:
+   - 迅速な修正: `/epcc-explore --quick`
+   - 複雑な作業: `/epcc-explore --deep`
+   - テスト駆動: `/epcc-code --tdd`
 
-6. **Combine with other plugins** - EPCC works great with security, testing, and documentation plugins.
+6. **他プラグインと組み合わせる** — EPCC は security/testing/documentation と相性が良いです。
 
-## Your EPCC Journey
+## EPCC の旅はここから
 
-You've taken your first step into systematic development with AI assistance. The EPCC workflow will become second nature with practice:
+AI 支援による体系的開発の第一歩を踏み出しました。練習すれば EPCC は自然に身につきます。
 
-**Week 1**: Use EPCC for small features to build the habit
-**Week 2**: Try it on bug fixes and refactoring tasks
-**Week 3**: Apply it to complex features with multiple dependencies
-**Week 4**: You'll naturally think "explore, plan, code, commit" before starting any work
+**1 週目**: 小さな機能で EPCC を使い、習慣化する  
+**2 週目**: バグ修正やリファクタリングで試す  
+**3 週目**: 依存関係の多い複雑機能に適用する  
+**4 週目**: 作業開始前に自然と「探索→計画→実装→コミット」と考えるようになる  
 
-Remember: **Think systematically, code confidently, commit professionally.**
+**体系的に考え、自信を持って実装し、プロとしてコミットする。**
 
-Welcome to the EPCC community!
+EPCC コミュニティへようこそ。
 
 ---
 
-**Need Help?**
-- [Report issues](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/issues)
-- [Read the complete documentation](../../README.md)
-- [Back to Documentation Hub](../README.md)
+**困ったときは**
+- [Issue を報告する](https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock/issues)
+- [全ドキュメントを読む](../../README.md)
+- [ドキュメントハブに戻る](../README.md)

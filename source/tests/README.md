@@ -1,294 +1,298 @@
-# Test Suite Documentation
+# テストスイート ドキュメント
 
-This directory contains all tests for the Claude Code with Bedrock project. Tests are organized by category and use pytest as the test framework.
+このディレクトリには、「Claude Code with Bedrock」プロジェクトのすべてのテストが含まれます。テストはカテゴリ別に整理されており、テストフレームワークとして pytest を使用します。
 
-## Quick Start
+## クイックスタート
 
 ```bash
-# Navigate to source directory
+# source ディレクトリへ移動
 cd source
 
-# Install dependencies
+# 依存関係をインストール
 poetry install
 
-# Run all tests (Note: Some tests may fail when run together - see Troubleshooting)
+# すべてのテストを実行（注: まとめて実行すると失敗するテストがある場合があります。トラブルシューティング参照）
 poetry run pytest ../tests
 
-# Run with verbose output
+# 詳細（verbose）出力で実行
 poetry run pytest ../tests -v
 
-# Recommended: Run tests by category for best results
-poetry run pytest ../tests/lambda/test_quota_monitor.py -v      # Quota monitor tests
-poetry run pytest ../tests/lambda/test_metrics_aggregator.py -v  # Metrics aggregator tests
-poetry run pytest ../tests/cli/ -v                              # CLI command tests
-poetry run pytest ../tests/integration/ -v                      # Integration tests
+# 推奨: 最良の結果のため、カテゴリ別に実行
+poetry run pytest ../tests/lambda/test_quota_monitor.py -v      # クォータ監視テスト
+poetry run pytest ../tests/lambda/test_metrics_aggregator.py -v  # メトリクス集約テスト
+poetry run pytest ../tests/cli/ -v                              # CLI コマンドのテスト
+poetry run pytest ../tests/integration/ -v                      # 統合テスト
 ```
 
-## Prerequisites
+## 前提条件
 
-Before running tests, ensure you have:
+テストを実行する前に、次を確認してください。
 
-1. **Python 3.12+** installed
-2. **Poetry** for dependency management
-3. **Working directory**: Navigate to the `source` directory before running tests
+1. **Python 3.12+** がインストールされていること
+2. 依存関係管理のための **Poetry**
+3. **作業ディレクトリ**: テスト実行前に `source` ディレクトリへ移動していること
 
 ```bash
 cd source
-poetry install  # Install all dependencies including test requirements
+poetry install  # テスト要件を含むすべての依存関係をインストール
 ```
 
-## Test Structure
+## テスト構成
 
 ```
 tests/
 ├── cli/
-│   └── commands/      # CLI command tests
-│       ├── test_init.py            # Init command validation tests
-│       ├── test_init_e2e.py        # Init command E2E tests
-│       ├── test_init_models.py     # Init model selection tests
-│       ├── test_init_quota.py      # Init quota configuration tests
-│       ├── test_init_source_regions.py  # Init source region tests
-│       ├── test_deploy_quota.py    # Deploy quota monitoring tests
-│       ├── test_package.py         # Package command tests
-│       ├── test_package_async.py   # Package async build tests
-│       └── test_package_models.py  # Package model tests
-├── test_cloudformation.py  # CloudFormation template validation
-├── test_config.py          # Profile and config management tests
-├── test_config_models.py   # Model configuration persistence tests
-├── test_models.py          # Model configuration tests
-├── test_smoke.py           # Comprehensive smoke tests
-└── test_source_regions.py  # Source region tests
+│   └── commands/      # CLI コマンドのテスト
+│       ├── test_init.py            # init コマンドの検証テスト
+│       ├── test_init_e2e.py        # init コマンドの E2E テスト
+│       ├── test_init_models.py     # init のモデル選択テスト
+│       ├── test_init_quota.py      # init のクォータ設定テスト
+│       ├── test_init_source_regions.py  # init のソースリージョン テスト
+│       ├── test_deploy_quota.py    # deploy のクォータ監視テスト
+│       ├── test_package.py         # package コマンドのテスト
+│       ├── test_package_async.py   # package の非同期ビルド テスト
+│       └── test_package_models.py  # package のモデル テスト
+├── test_cloudformation.py  # CloudFormation テンプレート検証
+├── test_config.py          # プロファイル／設定管理のテスト
+├── test_config_models.py   # モデル設定の永続化テスト
+├── test_models.py          # モデル設定テスト
+├── test_smoke.py           # 包括的なスモークテスト
+└── test_source_regions.py  # ソースリージョン テスト
 ```
 
-### Future Test Categories (Not Yet Implemented)
+### 将来のテストカテゴリ（未実装）
 
-The following test categories are planned but not yet implemented:
+以下のカテゴリは計画されていますが、現時点では未実装です。
 
-- **Lambda function tests** - Tests for quota monitoring and metrics aggregation lambdas
-  - Requires fixing boto3 module-level import isolation issues
-- **Integration tests** - End-to-end tests with AWS services
-  - Planned for LocalStack or dedicated test AWS account
-- **Additional CLI commands** - Tests for deploy, destroy, distribute, quota, status commands
-  - See guidance-docs/TESTING_TODO.md for full list
+- **Lambda 関数テスト** — クォータ監視およびメトリクス集約 Lambda のテスト  
+  - boto3 のモジュールレベル import による分離問題の修正が必要
+- **統合テスト** — AWS サービスを用いたエンドツーエンド テスト  
+  - LocalStack または専用のテスト用 AWS アカウントでの実施を予定
+- **追加の CLI コマンド** — deploy/destroy/distribute/quota/status コマンドのテスト  
+  - 全リストは guidance-docs/TESTING_TODO.md を参照
 
-## Running Tests
+## テストの実行
 
-### All Tests
+### 全テスト
 
 ```bash
-# Run all tests
+# 全テストを実行
 poetry run pytest ../tests
 
-# Run all tests with verbose output
+# 全テストを verbose で実行
 poetry run pytest ../tests -v
 
-# Run all tests with coverage report
+# カバレッジレポート付きで実行
 poetry run pytest ../tests --cov=claude_code_with_bedrock --cov-report=term-missing
 ```
 
-### By Category
+### カテゴリ別
 
-#### CLI Command Tests
+#### CLI コマンドのテスト
 ```bash
-# All CLI tests
+# すべての CLI テスト
 poetry run pytest ../tests/cli/commands/
 
-# Specific command tests
-poetry run pytest ../tests/cli/commands/test_init*.py  # Init command tests
-poetry run pytest ../tests/cli/commands/test_deploy*.py  # Deploy command tests
-poetry run pytest ../tests/cli/commands/test_package*.py  # Package command tests
+# 特定コマンドのテスト
+poetry run pytest ../tests/cli/commands/test_init*.py    # init コマンドのテスト
+poetry run pytest ../tests/cli/commands/test_deploy*.py  # deploy コマンドのテスト
+poetry run pytest ../tests/cli/commands/test_package*.py # package コマンドのテスト
 ```
 
-#### Core Functionality Tests
+#### コア機能のテスト
 ```bash
-# Model configuration tests
+# モデル設定テスト
 poetry run pytest ../tests/test_models.py
 
-# Source regions tests
+# ソースリージョン テスト
 poetry run pytest ../tests/test_source_regions.py
 
-# CloudFormation template validation
+# CloudFormation テンプレート検証
 poetry run pytest ../tests/test_cloudformation.py
 
-# Configuration and profile tests
+# 設定／プロファイルのテスト
 poetry run pytest ../tests/test_config*.py
 
-# Smoke tests (imports, instantiation)
+# スモークテスト（import、インスタンス生成）
 poetry run pytest ../tests/test_smoke.py
 ```
 
-### Specific Test Files or Functions
+### 特定のテストファイル／関数
 
 ```bash
-# Run a specific test file
+# 特定ファイルを実行
 poetry run pytest ../tests/lambda/test_quota_monitor.py
 
-# Run a specific test class
+# 特定クラスを実行
 poetry run pytest ../tests/lambda/test_quota_monitor.py::TestQuotaMonitorLambda
 
-# Run a specific test function
+# 特定関数を実行
 poetry run pytest ../tests/lambda/test_quota_monitor.py::TestQuotaMonitorLambda::test_lambda_handler_no_usage
 ```
 
-## Test Options
+## テストオプション
 
-### Output Control
+### 出力制御
 
 ```bash
-# Quiet mode (minimal output)
+# quiet モード（最小出力）
 poetry run pytest ../tests -q
 
-# Verbose mode (detailed output)
+# verbose モード（詳細出力）
 poetry run pytest ../tests -v
 
-# Extra verbose (show test output)
+# さらに詳細（テスト出力を表示）
 poetry run pytest ../tests -vv
 
-# Show print statements during tests
+# テスト中の print を表示
 poetry run pytest ../tests -s
 
-# Combined verbose with prints
+# verbose + print を併用
 poetry run pytest ../tests -xvs
 ```
 
-### Failure Handling
+### 失敗時の挙動
 
 ```bash
-# Stop on first failure
+# 最初の失敗で停止
 poetry run pytest ../tests -x
 
-# Stop after N failures
+# N 件失敗したら停止
 poetry run pytest ../tests --maxfail=3
 
-# Show last failed tests
+# 前回失敗したテストのみ実行
 poetry run pytest ../tests --lf
 
-# Show failed tests first, then pass
+# 失敗したテストを先に実行し、その後成功分を実行
 poetry run pytest ../tests --ff
 ```
 
-### Performance
+### パフォーマンス
 
 ```bash
-# Run tests in parallel (requires pytest-xdist)
+# 並列実行（pytest-xdist が必要）
 poetry run pytest ../tests -n auto
 
-# Show slowest tests
+# 遅いテスト上位を表示
 poetry run pytest ../tests --durations=10
 
-# Timeout for tests (requires pytest-timeout)
+# タイムアウト設定（pytest-timeout が必要）
 poetry run pytest ../tests --timeout=60
 ```
 
-### Coverage Reports
+### カバレッジレポート
 
 ```bash
-# Generate coverage report
+# カバレッジレポートを生成
 poetry run pytest ../tests --cov=claude_code_with_bedrock
 
-# Coverage with missing lines
+# 未カバー行を表示
 poetry run pytest ../tests --cov=claude_code_with_bedrock --cov-report=term-missing
 
-# Generate HTML coverage report
+# HTML カバレッジレポートを生成
 poetry run pytest ../tests --cov=claude_code_with_bedrock --cov-report=html
 
-# Coverage for specific modules
+# 特定モジュールのカバレッジ
 poetry run pytest ../tests --cov=claude_code_with_bedrock.cli.commands
 ```
 
-## Test Categories Explained
+## テストカテゴリの説明
 
-### Unit Tests
-- **test_models.py**: Tests Claude model configurations, cross-region profiles, and model ID mappings
-- **test_source_regions.py**: Tests source region configurations and region availability
+### ユニットテスト
+- **test_models.py**: Claude モデル設定、クロスリージョンプロファイル、モデル ID マッピングのテスト
+- **test_source_regions.py**: ソースリージョン設定とリージョン利用可否のテスト
 
-### CLI Command Tests
-- **test_init_*.py**: Tests for the `ccwb init` command (configuration wizard)
-- **test_deploy_*.py**: Tests for the `ccwb deploy` command (infrastructure deployment)
-- **test_package_*.py**: Tests for the `ccwb package` command (distribution creation)
+### CLI コマンドのテスト
+- **test_init_*.py**: `ccwb init`（設定ウィザード）のテスト
+- **test_deploy_*.py**: `ccwb deploy`（インフラデプロイ）のテスト
+- **test_package_*.py**: `ccwb package`（配布物作成）のテスト
 
-### Lambda Function Tests
-- **test_quota_monitor.py**: Tests quota monitoring Lambda that checks user usage and sends alerts
-- **test_metrics_aggregator.py**: Tests metrics aggregation Lambda that processes CloudWatch logs
+### Lambda 関数テスト
+- **test_quota_monitor.py**: ユーザー利用状況をチェックしアラートを送信する、クォータ監視 Lambda のテスト
+- **test_metrics_aggregator.py**: CloudWatch Logs を処理する、メトリクス集約 Lambda のテスト
 
-### Integration Tests
-- **test_quota_monitoring_integration.py**: End-to-end tests for quota monitoring flow
+### 統合テスト
+- **test_quota_monitoring_integration.py**: クォータ監視フローのエンドツーエンド テスト
 
-### Fixtures
-- **quota_fixtures.py**: Reusable test data and mock objects for quota monitoring tests
+### フィクスチャ
+- **quota_fixtures.py**: クォータ監視テスト向けの再利用可能なテストデータ／モックオブジェクト
 
-## Common Commands Reference
+## よく使うコマンド（リファレンス）
 
 ```bash
-# Quick test run (no output unless failures)
+# 手早いテスト（失敗しない限りほぼ出力なし）
 poetry run pytest ../tests -q
 
-# Development testing (verbose, stop on failure, show prints)
+# 開発時のテスト（verbose、失敗で停止、print 表示）
 poetry run pytest ../tests -xvs
 
-# Full test suite with coverage
+# カバレッジ付きで全体実行
 poetry run pytest ../tests --cov=claude_code_with_bedrock --cov-report=term-missing
 
-# Test a specific feature area
-poetry run pytest ../tests -k "quota"  # Run all tests with "quota" in the name
+# 特定領域に関するテストだけ実行
+poetry run pytest ../tests -k "quota"  # 名前に quota を含むテストをすべて実行
 
-# Run tests matching a pattern
+# パターン一致で実行
 poetry run pytest ../tests -k "test_deploy or test_init"
 
-# Exclude slow tests (if marked)
+# 遅いテストを除外（マークされている場合）
 poetry run pytest ../tests -m "not slow"
 ```
 
-## Troubleshooting
+## トラブルシューティング
 
-### Module Import Errors
-If you encounter import errors for Lambda functions:
-- The Lambda function directories use hyphens which aren't valid Python module names
-- Tests handle this by adding paths to sys.path dynamically
-- Ensure you're running tests from the `source` directory
+### モジュール import エラー
+Lambda 関数で import エラーが発生する場合：
 
-### Test Isolation Issues
-Lambda tests may fail when run together but pass individually due to module state contamination:
+- Lambda 関数ディレクトリにハイフン（`-`）が含まれており、Python のモジュール名として無効
+- テスト側で `sys.path` にパスを動的に追加して対処しています
+- テストは `source` ディレクトリから実行していることを確認してください
+
+### テスト分離（Isolation）の問題
+Lambda テストは、個別に実行すると通るのにまとめて実行すると失敗する場合があります（モジュール状態の汚染が原因）。
+
 ```bash
-# Lambda tests should be run separately by file for best results
-poetry run pytest ../tests/lambda/test_quota_monitor.py -v      # ✅ All pass
-poetry run pytest ../tests/lambda/test_metrics_aggregator.py -v  # ✅ All pass
+# 推奨: Lambda テストはファイル単位で別々に実行
+poetry run pytest ../tests/lambda/test_quota_monitor.py -v       # ✅ すべて成功
+poetry run pytest ../tests/lambda/test_metrics_aggregator.py -v  # ✅ すべて成功
 
-# Running both together may cause failures due to shared module state
-poetry run pytest ../tests/lambda/ -v  # ⚠️ Some tests may fail
+# まとめて実行すると、共有されたモジュール状態により失敗することがあります
+poetry run pytest ../tests/lambda/ -v  # ⚠️ 一部失敗する可能性
 
-# CLI and other tests can be run together without issues
-poetry run pytest ../tests/cli/ -v       # ✅ Works fine
-poetry run pytest ../tests/integration/ -v  # ✅ Works fine
+# CLI やその他のテストはまとめて実行しても問題ありません
+poetry run pytest ../tests/cli/ -v          # ✅ 問題なし
+poetry run pytest ../tests/integration/ -v  # ✅ 問題なし
 ```
 
-**Why this happens:** Lambda functions create boto3 clients at module import time. When multiple test files import the same Lambda module with different mock configurations, the module state gets contaminated. The tests use module-scoped fixtures to minimize this issue, but complete isolation would require more complex module reloading between test files.
+**原因:** Lambda 関数がモジュール import 時に boto3 クライアントを作成します。複数のテストファイルが、異なるモック設定で同一 Lambda モジュールを import すると、モジュール状態が汚染されます。テストでは module スコープのフィクスチャで影響を最小化していますが、完全な分離には、テストファイル間でのより複雑なモジュール再読み込みが必要になります。
 
-### Environment Variables
-The test suite automatically sets AWS region to avoid boto3 errors (via `tests/conftest.py`).
+### 環境変数
+テストスイートは boto3 エラー回避のため、AWS リージョンを自動設定します（`tests/conftest.py`）。
 
-For manual testing or debugging, you may need to set:
+手動テスト／デバッグでは、以下の設定が必要になる場合があります。
+
 ```bash
-# Set test environment variables
+# テスト用環境変数を設定
 export AWS_DEFAULT_REGION=us-east-1
 export AWS_REGION=us-east-1
 export AWS_PROFILE=test-profile
 ```
 
-### Test Isolation
-Tests should be independent and not affect each other:
-- Use fixtures for setup/teardown
-- Mock external dependencies
-- Clean up any created resources
+### テストの独立性
+テストは互いに独立しており、影響し合わないべきです。
 
-## Writing New Tests
+- セットアップ／後片付けにフィクスチャを使用する
+- 外部依存をモックする
+- 作成したリソースはクリーンアップする
 
-### Naming Conventions
-- Test files: `test_<module_name>.py`
-- Test classes: `Test<ClassName>`
-- Test functions: `test_<description>`
+## 新しいテストの書き方
 
-### Basic Test Structure
+### 命名規則
+- テストファイル: `test_<module_name>.py`
+- テストクラス: `Test<ClassName>`
+- テスト関数: `test_<description>`
+
+### 基本的なテスト構造
 ```python
 import pytest
 from unittest.mock import Mock, patch
@@ -296,43 +300,44 @@ from unittest.mock import Mock, patch
 class TestMyFeature:
     @pytest.fixture(autouse=True)
     def setup(self):
-        """Setup before each test."""
-        # Setup code here
+        """各テスト前のセットアップ。"""
+        # セットアップ処理をここに記述
         pass
 
     def test_feature_behavior(self):
-        """Test specific behavior."""
+        """特定の挙動をテストする。"""
         # Arrange
         # Act
         # Assert
         assert result == expected
 ```
 
-### Mocking AWS Services
+### AWS サービスのモック
 ```python
 @patch("boto3.client")
 def test_aws_operation(mock_client):
-    """Test with mocked AWS client."""
+    """AWS クライアントをモックしてテストする。"""
     mock_client.return_value.operation.return_value = {"Result": "Success"}
-    # Test code here
+    # テストコードをここに記述
 ```
 
-## CI/CD Integration
+## CI/CD 連携
 
-For continuous integration, use:
+継続的インテグレーションでは、以下を使用してください。
 
 ```bash
-# CI-friendly output with coverage
+# CI 向け出力（カバレッジ付き）
 poetry run pytest ../tests --junitxml=test-results.xml --cov=claude_code_with_bedrock --cov-report=xml
 
-# Strict mode for CI (fail on warnings)
+# CI 向け厳格モード（警告をエラー扱い）
 poetry run pytest ../tests --strict-markers -W error
 ```
 
-## Support
+## サポート
 
-For test-related issues:
-1. Check test output for detailed error messages
-2. Run with `-xvs` flags for maximum debugging information
-3. Review test fixtures and mocks for correctness
-4. Ensure all dependencies are installed with `poetry install`
+テスト関連の問題がある場合：
+
+1. テスト出力の詳細なエラーメッセージを確認する
+2. デバッグ情報を最大化するため `-xvs` フラグで実行する
+3. テストフィクスチャとモックが正しいか確認する
+4. `poetry install` で依存関係がすべてインストールされていることを確認する

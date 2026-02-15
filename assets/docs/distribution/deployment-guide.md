@@ -1,161 +1,159 @@
-# Distribution Deployment Guide
+# 配布（Distribution）デプロイガイド
 
-Complete guide for deploying Claude Code package distribution using either presigned S3 URLs (simple) or authenticated landing pages (enterprise).
-
----
-
-## Overview
-
-Claude Code with Bedrock supports **two distribution methods** for sharing packaged binaries and settings with end users:
-
-1. **Presigned S3 URLs** - Simple distribution via time-limited URLs, no authentication required
-2. **Authenticated Landing Page** - Enterprise-grade distribution with IdP authentication via ALB + Lambda
-
-**Choosing the right distribution type:** See [comparison.md](./comparison.md) for detailed comparison, cost analysis, and decision guidance.
-
-### Architecture Overview
-
-#### Presigned S3 Distribution
-
-```
-Admin Machine → S3 Bucket → Presigned URL (7 days) → Users download directly
-```
-
-- **Components**: S3 bucket + IAM user with presigned URL generation
-- **Authentication**: None (URL-based access)
-- **Best for**: Small teams (<20 users), internal trusted users
-
-#### Landing Page Distribution
-
-```
-User → ALB (HTTPS) → OIDC Authentication (IdP) → Lambda → S3 (presigned URLs)
-```
-
-- **Components**: ALB + Lambda + S3 + VPC + Security Groups
-- **Authentication**: IdP (Okta/Azure/Auth0/Cognito) via OIDC
-- **Best for**: Large teams (20-100 users), enterprise compliance requirements
+事前署名付き S3 URL（シンプル）または認証付きランディングページ（エンタープライズ）のいずれかを用いて、Claude Code パッケージ配布をデプロイするための完全ガイドです。
 
 ---
 
-## Prerequisites
+## 概要
 
-### Common Prerequisites (Both Distribution Types)
+Bedrock 版 Claude Code は、パッケージ化したバイナリと設定をエンドユーザーへ配布する **2 つの方法** をサポートしています。
 
-- **AWS CLI**: Installed and configured with credentials
-- **Python 3.10+**: Required for ccwb CLI
-- **Poetry**: Python package manager (`curl -sSL https://install.python-poetry.org | python3 -`)
-- **Basic Authentication Configured**: Must have completed `ccwb init` for Bedrock authentication
-- **Packages Built**: Run `ccwb package` to create distribution packages
+1. **事前署名付き S3 URL（Presigned S3 URLs）** — 有効期限付き URL によるシンプルな配布（認証不要）
+2. **認証付きランディングページ（Authenticated Landing Page）** — ALB + Lambda 経由で IdP 認証を行う、エンタープライズ向け配布
 
-### Landing Page Additional Prerequisites
+**適切な配布方式の選び方:** 詳細な比較、コスト分析、判断指針は [comparison.md](./comparison.md) を参照してください。
 
-- **VPC with Subnets**:
+### アーキテクチャ概要
 
-  - Public subnets in 2+ availability zones (for ALB)
-  - Private subnets in 2+ availability zones (for Lambda)
-  - Can be created via `ccwb deploy networking` or use existing VPC
+#### 事前署名付き S3 による配布
 
-- **IdP Account with Admin Access**:
+```
+管理者端末 → S3 バケット → 事前署名付き URL（7 日） → ユーザーが直接ダウンロード
+```
 
-  - Ability to create web applications (OAuth2 confidential clients)
-  - Access to client secrets
-  - Ability to configure redirect URIs
+- **構成要素**: S3 バケット + 事前署名 URL を生成する IAM ユーザー  
+- **認証**: なし（URL ベースのアクセス）  
+- **最適な対象**: 小規模チーム（20 名未満）、社内の信頼できるユーザー  
 
-- **Understanding of OAuth2/OIDC**:
-  - Authorization code flow
-  - Client credentials (ID + secret)
-  - Redirect URIs / callback URLs
+#### ランディングページによる配布
+
+```
+ユーザー → ALB（HTTPS） → OIDC 認証（IdP） → Lambda → S3（事前署名付き URL）
+```
+
+- **構成要素**: ALB + Lambda + S3 + VPC + セキュリティグループ  
+- **認証**: OIDC 経由の IdP（Okta / Azure / Auth0 / Cognito）  
+- **最適な対象**: 大規模チーム（20〜100 名）、エンタープライズのコンプライアンス要件がある場合  
 
 ---
 
-## Presigned-S3 Distribution Deployment
+## 前提条件
 
-Simple distribution workflow for small teams with no authentication requirements.
+### 共通の前提条件（両方式共通）
 
-### Step 1: Initialize Distribution Configuration
+- **AWS CLI**: インストール済みで、認証情報（credentials）が設定済み
+- **Python 3.10+**: ccwb CLI に必要
+- **Poetry**: Python パッケージマネージャ（`curl -sSL https://install.python-poetry.org | python3 -`）
+- **基本認証の設定完了**: Bedrock 認証のため `ccwb init` を完了していること
+- **パッケージのビルド済み**: `ccwb package` を実行して配布パッケージを作成済みであること
 
-Run the init wizard and select presigned S3 distribution:
+### ランディングページ方式の追加前提条件
+
+- **サブネット付き VPC**:
+  - ALB 用に、2 つ以上の AZ に跨るパブリックサブネット
+  - Lambda 用に、2 つ以上の AZ に跨るプライベートサブネット
+  - `ccwb deploy networking` で作成するか、既存 VPC を利用可能
+
+- **管理者権限のある IdP アカウント**:
+  - Web アプリケーション（OAuth2 の confidential client）を作成できること
+  - クライアントシークレットにアクセスできること
+  - リダイレクト URI を設定できること
+
+- **OAuth2/OIDC の理解**:
+  - Authorization Code フロー
+  - クライアント資格情報（ID + secret）
+  - Redirect URI / Callback URL
+
+---
+
+## Presigned-S3 方式のデプロイ
+
+認証要件のない小規模チーム向けの、シンプルな配布ワークフローです。
+
+### 手順 1: 配布設定の初期化
+
+init ウィザードを実行し、presigned S3 配布を選択します。
 
 ```bash
 poetry run ccwb init
 ```
 
-When prompted for distribution method:
+配布方式の選択プロンプトでは:
 
-- Select: **"Presigned S3 URLs (simple, no authentication)"**
+- 選択: **"Presigned S3 URLs (simple, no authentication)"**
 
-The wizard will:
+ウィザードは次を行います。
 
-- Configure distribution settings in your profile
-- Save configuration to `~/.ccwb/profiles/<profile-name>.json`
+- プロファイルに配布設定を構成
+- 設定を `~/.ccwb/profiles/<profile-name>.json` に保存
 
-### Step 2: Deploy Distribution Stack
+### 手順 2: 配布スタックのデプロイ
 
-Deploy the presigned-s3 distribution infrastructure:
+presigned-s3 配布に必要なインフラをデプロイします。
 
 ```bash
 poetry run ccwb deploy distribution
 ```
 
-This creates:
+作成されるもの:
 
-- **S3 Bucket**: `{identity-pool-name}-dist-{account-id}`
-- **IAM User**: With permissions to generate presigned URLs
-- **Secrets Manager Secret**: Stores IAM user credentials
+- **S3 バケット**: `{identity-pool-name}-dist-{account-id}`
+- **IAM ユーザー**: 事前署名 URL を生成する権限を付与
+- **Secrets Manager のシークレット**: IAM ユーザーの認証情報を保存
 
-**Deployment time**: ~2-3 minutes
+**デプロイ時間**: 約 2〜3 分
 
-### Step 3: Build Packages
+### 手順 3: パッケージのビルド
 
-Build packages for all platforms:
+全プラットフォーム向けにパッケージをビルドします。
 
 ```bash
 poetry run ccwb package --target-platform all
 ```
 
-This creates executables in `dist/` directory:
+`dist/` ディレクトリに実行ファイルが生成されます。
 
 - `credential-process-macos-arm64`
 - `credential-process-macos-intel`
 - `credential-process-linux-x64`
 - `credential-process-linux-arm64`
 - `credential-process-windows.exe`
-- Installation scripts and configuration
+- インストールスクリプトおよび設定
 
-### Step 4: Distribute Packages
+### 手順 4: パッケージの配布
 
-Upload packages and generate presigned URLs:
+パッケージをアップロードし、事前署名 URL を生成します。
 
 ```bash
 poetry run ccwb distribute
 ```
 
-Output includes:
+出力に含まれるもの:
 
-- **Presigned URL**: Valid for 7 days (or custom expiry via `--expires-hours`)
-- **SHA256 Checksum**: For package integrity verification
-- **Download Instructions**: For macOS/Linux and Windows
-- **File Size**: Package size information
+- **事前署名 URL**: 7 日間有効（または `--expires-hours` による任意の期限）
+- **SHA256 チェックサム**: パッケージ整合性の検証用
+- **ダウンロード手順**: macOS/Linux および Windows 向け
+- **ファイルサイズ**: パッケージサイズ情報
 
-### Step 5: Share with Users
+### 手順 5: ユーザーへの共有
 
-**Copy the presigned URL and share via:**
+**事前署名 URL をコピーして、次の手段で共有します。**
 
-- Messaging App
-- Email
-- Internal documentation
+- メッセージングアプリ
+- メール
+- 社内ドキュメント
 
-**URL expires after 7 days** - regenerate by running `ccwb distribute` again.
+**URL は 7 日で失効**します。必要に応じて `ccwb distribute` を再実行して再生成してください。
 
-**Retrieve latest URL** without regenerating:
+再生成せずに **最新 URL を取得**するには:
 
 ```bash
 poetry run ccwb distribute --get-latest
 ```
 
-### Presigned-S3 Stack Outputs
+### Presigned-S3 スタックの出力（Outputs）
 
-View stack outputs:
+スタックの Outputs を確認するには:
 
 ```bash
 aws cloudformation describe-stacks \
@@ -163,172 +161,157 @@ aws cloudformation describe-stacks \
   --query 'Stacks[0].Outputs'
 ```
 
-Key outputs:
+主要な出力:
 
-- `DistributionBucket`: S3 bucket name
-- `IAMUserName`: IAM user for presigned URL generation
-- `IAMUserAccessKeySecretArn`: Secrets Manager ARN for credentials
-
----
-
-## Landing-Page Distribution Deployment
-
-Enterprise distribution with IdP authentication. **Critical**: IdP web application must be configured BEFORE and AFTER deployment.
-
-### Deployment Overview
-
-The landing page deployment requires a **two-phase IdP configuration**:
-
-1. **Phase 1 (BEFORE)**: Create web application in IdP with placeholder redirect URI
-2. **Phase 2 (DURING)**: Deploy infrastructure via ccwb
-3. **Phase 3 (AFTER)**: Update IdP redirect URI with actual ALB DNS/domain
-
-This is necessary because:
-
-- CloudFormation needs client ID/secret to deploy ALB OIDC
-- ALB DNS name is only known AFTER deployment
-- IdP redirect URI must match ALB DNS exactly
+- `DistributionBucket`: S3 バケット名
+- `IAMUserName`: 事前署名 URL 生成用の IAM ユーザー
+- `IAMUserAccessKeySecretArn`: 認証情報を格納した Secrets Manager の ARN
 
 ---
 
-### Phase 1: IdP Web Application Setup (BEFORE ccwb init)
+## ランディングページ方式のデプロイ
 
-You must create a **web application** (OAuth2 confidential client) in your IdP. This is **separate** from the native CLI app.
+IdP 認証を伴うエンタープライズ向け配布です。**重要**: IdP の Web アプリケーションは、デプロイの **前** と **後** の両方で設定が必要です。
 
-#### Why Two Separate Applications?
+### デプロイ概要
 
-|                  | CLI Native App                   | Distribution Web App                   |
-| ---------------- | -------------------------------- | -------------------------------------- |
-| **OAuth2 Flow**  | Authorization Code + PKCE        | Authorization Code                     |
-| **Client Type**  | Public (no secret)               | Confidential (with secret)             |
+ランディングページのデプロイには、IdP 設定の **2 段階（実質 3 フェーズ）** が必要です。
+
+1. **フェーズ 1（事前）**: IdP に Web アプリを作成（仮の redirect URI を設定）
+2. **フェーズ 2（実行中）**: ccwb でインフラをデプロイ
+3. **フェーズ 3（事後）**: 実際の ALB DNS / ドメインで IdP の redirect URI を更新
+
+これが必要な理由:
+
+- CloudFormation は ALB の OIDC デプロイに client ID/secret を必要とする
+- ALB の DNS 名はデプロイ完了後にしか確定しない
+- IdP の redirect URI は ALB の DNS と **完全一致**している必要がある
+
+---
+
+### フェーズ 1: IdP の Web アプリ設定（ccwb init の前）
+
+IdP 上で **Web アプリケーション（OAuth2 confidential client）** を作成する必要があります。これはネイティブ CLI アプリとは **別物** です。
+
+#### なぜ 2 つのアプリが必要か？
+
+|  | CLI ネイティブアプリ | 配布用 Web アプリ |
+| --- | --- | --- |
+| **OAuth2 フロー** | Authorization Code + PKCE | Authorization Code |
+| **クライアント種別** | Public（secret なし） | Confidential（secret あり） |
 | **Redirect URI** | `http://localhost:8400/callback` | `https://<alb-dns>/oauth2/idpresponse` |
-| **Used By**      | CLI credential process           | ALB OIDC authentication                |
-| **Created When** | During first ccwb init           | Before distribution setup              |
+| **用途** | CLI の credential process | ALB の OIDC 認証 |
+| **作成タイミング** | 初回の ccwb init 中 | 配布設定の前 |
 
 ---
 
-#### Okta Web Application Setup
+#### Okta の Web アプリ設定
 
-1. **Navigate to Applications**:
-
+1. **Applications へ移動**:
    - Okta Admin Console → Applications → Applications → Create App Integration
 
-2. **Create OIDC Web Application**:
-
+2. **OIDC Web アプリを作成**:
    - Sign-in method: **"OIDC - OpenID Connect"**
    - Application type: **"Web Application"**
-   - Click **Next**
+   - **Next**
 
-3. **Configure Application Settings**:
-
+3. **アプリ設定**:
    - **App integration name**: `Claude Code Distribution`
-   - **Grant type**: ✅ Authorization Code, ✅ Refresh Token
+   - **Grant type**: ✅ Authorization Code、✅ Refresh Token
    - **Sign-in redirect URIs**:
-     - `https://placeholder.example.com/oauth2/idpresponse` (temporary - will update after deployment)
+     - `https://placeholder.example.com/oauth2/idpresponse`（仮。デプロイ後に更新）
    - **Sign-out redirect URIs**:
-     - `https://placeholder.example.com` (temporary)
-   - **Controlled access**: Configure based on your organization's needs
-   - Click **Save**
+     - `https://placeholder.example.com`（仮）
+   - **Controlled access**: 組織要件に合わせて設定
+   - **Save**
 
-4. **Copy Credentials**:
+4. **認証情報を控える**:
+   - **Client ID**: General タブからコピー
+   - **Client Secret**: General タブからコピー（Show で表示）
+   - **Okta Domain**: 例 `company.okta.com`
 
-   - **Client ID**: Copy from General tab
-   - **Client Secret**: Copy from General tab (click Show to reveal)
-   - **Okta Domain**: Your Okta domain (e.g., `company.okta.com`)
+5. **ユーザー/グループ割り当て（任意）**:
+   - Assignments タブで、配布にアクセスできるユーザー/グループを割り当て
 
-5. **Assign Users/Groups** (Optional):
-   - Assignments tab → Assign to users or groups who should access distribution
-
-**Post-Deployment (Phase 3)**: Return here to update redirect URIs with actual ALB DNS.
+**デプロイ後（フェーズ 3）**: ここに戻り、redirect URI を実際の ALB DNS に更新します。
 
 ---
 
-#### Azure AD / Entra ID Web Application Setup
+#### Azure AD / Entra ID の Web アプリ設定
 
-1. **Navigate to App Registrations**:
-
+1. **アプリ登録へ移動**:
    - Azure Portal → Azure Active Directory → App registrations → New registration
 
-2. **Register Application**:
-
+2. **アプリ登録**:
    - **Name**: `Claude Code Distribution`
    - **Supported account types**: **"Accounts in this organizational directory only (Single tenant)"**
    - **Redirect URI**:
      - Platform: **Web**
-     - URL: `https://placeholder.example.com/oauth2/idpresponse` (temporary)
-   - Click **Register**
+     - URL: `https://placeholder.example.com/oauth2/idpresponse`（仮）
+   - **Register**
 
-3. **Copy Tenant and Client IDs**:
+3. **Tenant / Client ID を控える**:
+   - Overview で次をコピー:
+     - **Application (client) ID**（client ID）
+     - **Directory (tenant) ID**（tenant ID）
 
-   - Overview page → Copy:
-     - **Application (client) ID**: This is your client ID
-     - **Directory (tenant) ID**: This is your tenant ID
-
-4. **Create Client Secret**:
-
-   - Left menu → **Certificates & secrets** → **Client secrets** tab
-   - Click **New client secret**
+4. **クライアントシークレットの作成**:
+   - Certificates & secrets → Client secrets
+   - **New client secret**
    - Description: `Claude Code Distribution Landing Page`
-   - Expires: Choose expiration (recommend 24 months)
-   - Click **Add**
-   - **Copy the secret value immediately** (won't be shown again)
+   - Expires: 有効期限を選択（推奨 24 か月）
+   - **Add**
+   - **secret value は即時にコピー**（以後表示されない）
 
-5. **Configure API Permissions** (if needed):
-   - Left menu → **API permissions**
-   - Ensure OpenID Connect permissions are granted
+5. **API 権限の設定（必要に応じて）**:
+   - API permissions で OpenID Connect 権限が付与済みであることを確認
 
-**Post-Deployment (Phase 3)**: Return to Authentication tab to update redirect URI.
+**デプロイ後（フェーズ 3）**: Authentication タブで redirect URI を更新します。
 
 ---
 
-#### Auth0 Web Application Setup
+#### Auth0 の Web アプリ設定
 
-1. **Navigate to Applications**:
-
+1. **Applications へ移動**:
    - Auth0 Dashboard → Applications → Applications → Create Application
 
-2. **Create Application**:
-
+2. **アプリ作成**:
    - **Name**: `Claude Code Distribution`
    - **Application type**: **"Regular Web Applications"**
-   - Click **Create**
+   - **Create**
 
-3. **Configure Settings**:
+3. **設定**（Settings タブ）:
+   - **Allowed Callback URLs**:
+     - `https://placeholder.example.com/oauth2/idpresponse`（仮）
+   - **Allowed Logout URLs**:
+     - `https://placeholder.example.com`（仮）
+   - **Allowed Web Origins**: 空のままで可
+   - **Save Changes**
 
-   - Settings tab:
-     - **Allowed Callback URLs**:
-       - `https://placeholder.example.com/oauth2/idpresponse` (temporary)
-     - **Allowed Logout URLs**:
-       - `https://placeholder.example.com` (temporary)
-     - **Allowed Web Origins**: Leave empty
-   - Click **Save Changes**
+4. **認証情報を控える**（Basic Information）:
+   - **Domain**: 例 `company.auth0.com` / `company.us.auth0.com`
+   - **Client ID**
+   - **Client Secret**
 
-4. **Copy Credentials**:
+5. **コネクション設定（任意）**:
+   - Connections で SAML / AD 等のエンタープライズ接続を有効化
 
-   - Settings tab → Basic Information:
-     - **Domain**: Your Auth0 domain (e.g., `company.auth0.com` or `company.us.auth0.com`)
-     - **Client ID**: Copy value
-     - **Client Secret**: Copy value
-
-5. **Configure Connections** (Optional):
-   - Connections tab → Enable enterprise connections (e.g., SAML, Active Directory)
-
-**Post-Deployment (Phase 3)**: Return to Settings tab to update callback URLs.
+**デプロイ後（フェーズ 3）**: callback URL を実値に更新します。
 
 ---
 
-#### Cognito User Pool Web Client Setup
+#### Cognito User Pool の Web クライアント設定
 
-**✨ AUTOMATED**: Cognito configuration is now fully automated with zero copy-paste!
+**✨ 自動化**: Cognito 設定は、コピー＆ペースト不要で完全自動化されています。
 
-**Prerequisites**:
+**前提**:
 
-- Cognito User Pool deployed via `cognito-user-pool-setup.yaml` (latest version)
-- Latest template includes `DistributionWebClient` + auto-secret-storage
+- `cognito-user-pool-setup.yaml`（最新）で Cognito User Pool をデプロイ済み
+- 最新テンプレートには `DistributionWebClient` と自動の secret 保存が含まれる
 
-##### Step 1: Deploy/Update Cognito Stack
+##### 手順 1: Cognito スタックのデプロイ/更新
 
-Ensure you're using the latest template with distribution support:
+配布対応の最新テンプレートを使っていることを確認します。
 
 ```bash
 aws cloudformation deploy \
@@ -340,22 +323,22 @@ aws cloudformation deploy \
     DomainPrefix=<your-domain-prefix>
 ```
 
-**What this creates**:
+**作成されるもの**:
 
-- ✅ User Pool with CLI native app client (existing)
-- ✅ Distribution web app client with client secret (NEW)
-- ✅ Client secret automatically stored in Secrets Manager (NEW)
-- ✅ All outputs available for auto-detection (NEW)
+- ✅ CLI ネイティブ app client（既存）
+- ✅ 配布用 Web app client（secret あり、新規）
+- ✅ client secret の Secrets Manager 自動保存（新規）
+- ✅ 自動検出に必要な Outputs（新規）
 
-**Deployment time**: ~3-5 minutes
+**デプロイ時間**: 約 3〜5 分
 
-##### Step 2: Configuration is Automatic!
+##### 手順 2: 設定は自動！
 
-When you run `poetry run ccwb init` (Phase 2), the wizard will:
+`poetry run ccwb init`（フェーズ 2）を実行すると、ウィザードが:
 
-1. **Auto-detect** your Cognito stack
-2. **Validate** it has distribution support
-3. **Display** detected configuration:
+1. Cognito スタックを **自動検出**
+2. 配布対応の Outputs が揃っているかを **検証**
+3. 検出した設定を表示
 
    ```
    ✓ Found Cognito stack: my-cognito-stack
@@ -370,125 +353,120 @@ When you run `poetry run ccwb init` (Phase 2), the wizard will:
    Use these detected values? [Y/n] █
    ```
 
-4. **Press Enter** → Configuration complete! No copy-paste needed.
-
-**That's it!** Cognito configuration is automated through stack outputs.
+4. Enter を押せば設定完了（コピー＆ペースト不要）
 
 ---
 
-### Phase 2: Initialize and Deploy Distribution
+### フェーズ 2: 配布の初期化とデプロイ
 
-Now that you have IdP web application credentials, configure and deploy the landing page.
+IdP Web アプリの認証情報が準備できたら、ランディングページを設定・デプロイします。
 
-#### Step 2.1: Initialize Distribution Configuration
+#### 手順 2.1: 配布設定の初期化
 
-Run the init wizard:
+init ウィザードを実行します。
 
 ```bash
 poetry run ccwb init
 ```
 
-When prompted for distribution method:
+配布方式の選択プロンプトでは:
 
-- Select: **"Authenticated Landing Page (IdP + ALB)"**
+- 選択: **"Authenticated Landing Page (IdP + ALB)"**
 
-**IdP Configuration Prompts**:
+**IdP 設定プロンプト**:
 
-1. **Identity provider for web authentication**:
-   - Select your IdP: Okta / Azure AD / Auth0 / Cognito
+1. **Web 認証に使う IdP**:
+   - Okta / Azure AD / Auth0 / Cognito から選択
 
-**For Cognito**: Auto-detection takes over! ✨
+**Cognito の場合**: 自動検出が動作します（✨）
 
-- Wizard searches for Cognito stack
-- Displays detected configuration (User Pool ID, Domain, Client ID, Secret ARN)
-- You press Enter to accept → Done! (Skip to Custom Domain prompt)
+- Cognito スタックを検索
+- 検出した設定（User Pool ID、Domain、Client ID、Secret ARN）を表示
+- Enter で承認 → 完了（カスタムドメインのプロンプトへ）
 
-**For Okta/Azure/Auth0**: Manual entry required
+**Okta/Azure/Auth0 の場合**: 手入力が必要です
 
-2. **IdP Domain** (Okta/Azure/Auth0 only):
+2. **IdP ドメイン**（Okta/Azure/Auth0 のみ）:
+   - **Okta**: `company.okta.com`
+   - **Azure**: テナント ID（Azure のアプリ登録で得た GUID）
+   - **Auth0**: `company.auth0.com`
 
-   - **Okta**: `company.okta.com` (your Okta domain)
-   - **Azure**: Tenant ID (GUID from Azure app registration)
-   - **Auth0**: `company.auth0.com` (your Auth0 domain)
+3. **IdP Web アプリの Client ID**（Okta/Azure/Auth0 のみ）:
+   - フェーズ 1 で取得した client ID を入力
 
-3. **IdP Web Application Client ID** (Okta/Azure/Auth0 only):
+4. **IdP Web アプリの Client Secret**（Okta/Azure/Auth0 のみ）:
+   - secret を直接入力（Secrets Manager に自動保存）
 
-   - Enter the client ID from Phase 1
+5. **カスタムドメイン**（任意、全 IdP 共通）:
+   - カスタムドメインを有効化するか（yes/no）
+   - yes の場合:
+     - ドメイン名: `downloads.company.com`
+     - Route53 hosted zone ID（Route53 で DNS 管理する場合）
 
-4. **IdP Web Application Client Secret** (Okta/Azure/Auth0 only):
+ウィザードは次を行います。
 
-   - Enter the client secret directly (will be stored in Secrets Manager automatically)
+- **Cognito**: Outputs から自動入力（コピー＆ペースト不要）
+- **それ以外**: client secret を Secrets Manager に自動保存
+- 設定を `~/.ccwb/profiles/<profile-name>.json` に保存
+- `distribution_type = "landing-page"` を設定
 
-5. **Custom Domain** (Optional, all providers):
-   - Enable custom domain? (yes/no)
-   - If yes:
-     - Custom domain name: `downloads.company.com`
-     - Route53 hosted zone ID: (if using Route53 for DNS)
+#### 手順 2.2: VPC のデプロイ（必要な場合）
 
-The wizard will:
+ランディングページには、2 つ以上の AZ に跨る public/private サブネットを持つ VPC が必要です。
 
-- **For Cognito**: Auto-populate from stack outputs (zero copy-paste!)
-- **For others**: Store client secret in AWS Secrets Manager automatically
-- Save configuration to `~/.ccwb/profiles/<profile-name>.json`
-- Set `distribution_type = "landing-page"`
+**選択肢 A: 既存 VPC/サブネットを使う**
 
-#### Step 2.2: Deploy VPC (if needed)
+- ALB 用に 2+ AZ のパブリックサブネットがあること
+- Lambda 用に 2+ AZ のプライベートサブネットがあること
+- VPC ID とサブネット ID を控えておく
 
-Landing page requires VPC with public/private subnets in 2+ availability zones.
-
-**Option A: Use existing VPC/subnets**
-
-- Ensure VPC has public subnets in 2+ AZs (for ALB)
-- Ensure VPC has private subnets in 2+ AZs (for Lambda)
-- Make note of VPC ID and subnet IDs
-
-**Option B: Create new VPC via ccwb**:
+**選択肢 B: ccwb で新規作成**
 
 ```bash
 poetry run ccwb deploy networking
 ```
 
-This creates:
+作成されるもの:
 
-- VPC with CIDR `10.0.0.0/16`
-- 2 public subnets in different AZs
-- 2 private subnets in different AZs
+- CIDR `10.0.0.0/16` の VPC
+- 異なる AZ に 2 つのパブリックサブネット
+- 異なる AZ に 2 つのプライベートサブネット
 - Internet Gateway
-- NAT Gateway (for Lambda internet access)
-- Route tables
+- NAT Gateway（Lambda のインターネットアクセス用）
+- ルートテーブル
 
-**Deployment time**: ~3-5 minutes
+**デプロイ時間**: 約 3〜5 分
 
-#### Step 2.3: Deploy Landing Page Stack
+#### 手順 2.3: ランディングページスタックのデプロイ
 
-Deploy the authenticated landing page infrastructure:
-
-```bash
-poetry run ccwb deploy distribution
-```
-
-This creates:
-
-- **S3 Bucket**: For package storage
-- **Lambda Function**: Generates landing page HTML and presigned URLs
-- **ALB**: Internet-facing load balancer with HTTPS listener
-- **Security Groups**: ALB ingress (port 443) and Lambda egress
-- **Target Group**: Routes ALB traffic to Lambda
-- **ACM Certificate**: If custom domain specified (auto-validated via Route53)
-- **Route53 Record**: If custom domain with Route53 specified
-- **OIDC Configuration**: ALB authenticates via IdP before forwarding to Lambda
-
-**Deployment time**: ~5-10 minutes
-
-#### Step 2.4: Capture Stack Outputs
-
-After deployment completes, get the stack outputs:
+認証付きランディングページのインフラをデプロイします。
 
 ```bash
 poetry run ccwb deploy distribution
 ```
 
-The deployment will display:
+作成されるもの:
+
+- **S3 バケット**: パッケージ保管用
+- **Lambda 関数**: ランディングページ HTML と事前署名 URL を生成
+- **ALB**: インターネット向け HTTPS リスナー付きロードバランサ
+- **セキュリティグループ**: ALB の ingress（443）および Lambda の egress
+- **ターゲットグループ**: ALB トラフィックを Lambda にルーティング
+- **ACM 証明書**: カスタムドメイン指定時（Route53 で自動検証）
+- **Route53 レコード**: Route53 のカスタムドメイン指定時
+- **OIDC 設定**: Lambda へ転送する前に ALB が IdP 認証を実施
+
+**デプロイ時間**: 約 5〜10 分
+
+#### 手順 2.4: スタック出力（Outputs）の取得
+
+デプロイ完了後、スタック出力を取得します。
+
+```bash
+poetry run ccwb deploy distribution
+```
+
+デプロイ時に次のように表示されます。
 
 ```
 ✓ Landing page deployed successfully!
@@ -501,7 +479,7 @@ Distribution URL: https://<alb-dns-name>
    Add this redirect URI to your IdP web application settings before users can authenticate.
 ```
 
-Or query directly:
+もしくは CLI で直接取得:
 
 ```bash
 aws cloudformation describe-stacks \
@@ -509,59 +487,59 @@ aws cloudformation describe-stacks \
   --query 'Stacks[0].Outputs'
 ```
 
-Key outputs:
+主要な出力:
 
-- **DistributionURL**: Landing page URL (ALB DNS or custom domain)
-- **IdPRedirectURI**: Callback URL to configure in IdP
-- **DistributionBucket**: S3 bucket name for packages
+- **DistributionURL**: ランディングページ URL（ALB DNS またはカスタムドメイン）
+- **IdPRedirectURI**: IdP に設定するコールバック URL
+- **DistributionBucket**: パッケージ保管用 S3 バケット名
 
-**Copy the `IdPRedirectURI` value** - you'll need it in Phase 3.
+**`IdPRedirectURI` をコピー**してください。フェーズ 3 で必要です。
 
 ---
 
-### Phase 3: Post-Deployment IdP Configuration
+### フェーズ 3: デプロイ後の IdP 設定
 
-**CRITICAL**: You must update the IdP redirect URI with the actual ALB DNS before authentication will work.
+**重要**: 認証を動作させるため、IdP の redirect URI を実際の ALB DNS に更新する必要があります。
 
-#### Update Okta Redirect URI
+#### Okta の redirect URI 更新
 
-1. **Okta Admin Console** → Applications → Applications
-2. Select **"Claude Code Distribution"** application
-3. **General** tab → Edit **General Settings**
+1. Okta Admin Console → Applications → Applications
+2. 「Claude Code Distribution」アプリを選択
+3. General タブ → General Settings を編集
 4. **Sign-in redirect URIs**:
-   - Remove: `https://placeholder.example.com/oauth2/idpresponse`
-   - Add: `https://<actual-alb-dns>/oauth2/idpresponse` (from stack outputs)
+   - `https://placeholder.example.com/oauth2/idpresponse` を削除
+   - `https://<actual-alb-dns>/oauth2/idpresponse` を追加（Outputs の値）
 5. **Sign-out redirect URIs**:
-   - Remove: `https://placeholder.example.com`
-   - Add: `https://<actual-alb-dns>` (from stack outputs)
-6. Click **Save**
+   - `https://placeholder.example.com` を削除
+   - `https://<actual-alb-dns>` を追加（Outputs の値）
+6. Save
 
-#### Update Azure AD Redirect URI
+#### Azure AD の redirect URI 更新
 
-1. **Azure Portal** → Azure Active Directory → App registrations
-2. Select **"Claude Code Distribution"** application
-3. **Authentication** (left menu)
-4. **Web** → Redirect URIs:
-   - Remove: `https://placeholder.example.com/oauth2/idpresponse`
-   - Add: `https://<actual-alb-dns>/oauth2/idpresponse` (from stack outputs)
-5. Click **Save**
+1. Azure Portal → Azure Active Directory → App registrations
+2. 「Claude Code Distribution」アプリを選択
+3. Authentication（左メニュー）
+4. Web → Redirect URIs:
+   - `https://placeholder.example.com/oauth2/idpresponse` を削除
+   - `https://<actual-alb-dns>/oauth2/idpresponse` を追加（Outputs の値）
+5. Save
 
-#### Update Auth0 Callback URLs
+#### Auth0 の callback URL 更新
 
-1. **Auth0 Dashboard** → Applications → Applications
-2. Select **"Claude Code Distribution"** application
-3. **Settings** tab
+1. Auth0 Dashboard → Applications → Applications
+2. 「Claude Code Distribution」アプリを選択
+3. Settings タブ
 4. **Allowed Callback URLs**:
-   - Remove: `https://placeholder.example.com/oauth2/idpresponse`
-   - Add: `https://<actual-alb-dns>/oauth2/idpresponse` (from stack outputs)
+   - `https://placeholder.example.com/oauth2/idpresponse` を削除
+   - `https://<actual-alb-dns>/oauth2/idpresponse` を追加
 5. **Allowed Logout URLs**:
-   - Remove: `https://placeholder.example.com`
-   - Add: `https://<actual-alb-dns>` (from stack outputs)
-6. Click **Save Changes**
+   - `https://placeholder.example.com` を削除
+   - `https://<actual-alb-dns>` を追加
+6. Save Changes
 
-#### Update Cognito Callback URLs
+#### Cognito の callback URL 更新
 
-Using AWS CLI:
+AWS CLI の例:
 
 ```bash
 aws cognito-idp update-user-pool-client \
@@ -571,37 +549,33 @@ aws cognito-idp update-user-pool-client \
   --logout-urls "https://<actual-alb-dns>"
 ```
 
-Or via AWS Console:
+または AWS コンソール:
 
-1. **AWS Console** → Cognito → User Pools
-2. Select your User Pool
-3. **App integration** → App clients → Select **distribution-web-client**
-4. **Hosted UI** → Edit:
-   - **Allowed callback URLs**: Update to `https://<actual-alb-dns>/oauth2/idpresponse`
-   - **Allowed sign-out URLs**: Update to `https://<actual-alb-dns>`
-5. **Save changes**
+1. AWS Console → Cognito → User Pools
+2. 対象 User Pool を選択
+3. App integration → App clients → distribution-web-client を選択
+4. Hosted UI → Edit:
+   - Allowed callback URLs: `https://<actual-alb-dns>/oauth2/idpresponse` に更新
+   - Allowed sign-out URLs: `https://<actual-alb-dns>` に更新
+5. Save changes
 
 ---
 
-### Phase 4: Publish and Share Packages
+### フェーズ 4: パッケージの公開と共有
 
-#### Step 4.1: Build Packages
-
-Build packages for all platforms:
+#### 手順 4.1: パッケージのビルド
 
 ```bash
 poetry run ccwb package --target-platform all
 ```
 
-#### Step 4.2: Distribute Packages
-
-Upload packages to the landing page:
+#### 手順 4.2: パッケージの配布
 
 ```bash
 poetry run ccwb distribute
 ```
 
-Output for landing-page type:
+landing-page 方式の出力例:
 
 ```
 ✓ Packages published to landing page!
@@ -609,307 +583,299 @@ Output for landing-page type:
 Users can download from: https://<alb-dns-or-custom-domain>
 ```
 
-The command uploads packages to S3 but does NOT generate presigned URLs. Users will access the landing page which generates presigned URLs dynamically after authentication.
+このコマンドはパッケージを S3 にアップロードしますが、事前署名 URL は生成しません。ユーザーがランディングページへアクセスし、認証後に動的に事前署名 URL が生成されます。
 
-#### Step 4.3: Share Landing Page URL
+#### 手順 4.3: ランディングページ URL の共有
 
-**Share the permanent landing page URL via:**
+**恒久的なランディングページ URL を次の手段で共有します。**
 
-- Internal wiki/documentation
-- Slack channel
-- Email distribution list
-- Onboarding documentation
+- 社内 Wiki / ドキュメント
+- Slack チャンネル
+- メール配布リスト
+- オンボーディング資料
 
-**Users will**:
+**ユーザー側の流れ:**
 
-1. Navigate to the landing page URL
-2. Be redirected to IdP for authentication
-3. Authenticate with corporate credentials
-4. View landing page with download buttons
-5. Click download (presigned URL generated on-the-fly, expires in 1 hour)
+1. ランディングページ URL にアクセス
+2. IdP の認証画面へリダイレクトされる
+3. 社内資格情報で認証
+4. ダウンロードボタン付きのランディングページを表示
+5. ダウンロードをクリック（その場で事前署名 URL を生成、有効期限 1 時間）
 
-**No need to regenerate URLs** - the landing page URL is permanent. Only update packages by running `ccwb distribute` when you have new versions.
+**URL の再生成は不要**です。ランディングページ URL は恒久的です。新バージョンを配布する際は `ccwb distribute` を実行してパッケージを更新してください。
 
 ---
 
-### Phase 5: Test the Landing Page
+### フェーズ 5: ランディングページのテスト
 
-1. **Navigate to landing page URL** in your browser
+1. ブラウザで **ランディングページ URL** にアクセス
 
-2. **Expected**: Redirect to IdP login page
+2. **期待される挙動**: IdP のログイン画面にリダイレクト
 
-3. **Authenticate** with your corporate credentials
+3. 社内資格情報で認証
 
-4. **Expected**: Landing page displays:
-
+4. **期待される表示内容**（例）:
    - "Welcome, [your-email]"
-   - Release date
-   - Platform-specific download buttons (Windows, Linux, macOS, All Platforms)
-   - File sizes
-   - Installation instructions
+   - リリース日
+   - プラットフォーム別のダウンロードボタン（Windows / Linux / macOS / All Platforms）
+   - ファイルサイズ
+   - インストール手順
 
-5. **Click download** for your platform
+5. 対象プラットフォームの **download** をクリック
 
-6. **Expected**: Package downloads immediately
+6. **期待される挙動**: すぐにダウンロードが開始
 
-7. **Verify checksum** (optional):
+7. （任意）チェックサム検証:
    ```bash
    sha256sum <downloaded-file>
    ```
 
-#### If Authentication Fails
+#### 認証に失敗する場合
 
 **400 Bad Request**:
-
-- **Cause**: IdP redirect URI not configured or mismatch
-- **Fix**: Verify IdP callback URL exactly matches `IdPRedirectURI` from stack outputs
+- **原因**: IdP の redirect URI が未設定、または不一致
+- **対処**: `IdPRedirectURI`（Outputs）と IdP 側の callback URL が **完全一致**しているか確認
 
 **OIDC Error / Invalid State**:
-
-- **Cause**: Client secret mismatch
-- **Fix**: Verify Secrets Manager secret value matches IdP client secret
+- **原因**: client secret 不一致
+- **対処**: Secrets Manager の値が IdP の client secret と一致しているか確認
 
 **401 Unauthorized**:
+- **原因**: ユーザーが IdP アプリに割り当てられていない
+- **対処**: IdP 管理画面でユーザーをアプリに割り当てる
 
-- **Cause**: User not assigned to IdP application
-- **Fix**: Assign user to IdP application in IdP console
-
-**Redirect Loop**:
-
-- **Cause**: Cookie issues or session configuration
-- **Fix**: Clear browser cookies, verify ALB session timeout settings
+**リダイレクトループ**:
+- **原因**: Cookie 問題またはセッション設定
+- **対処**: ブラウザ Cookie を削除し、ALB のセッションタイムアウト設定を確認
 
 ---
 
-## Publishing Packages
+## パッケージの公開（Publishing）
 
-Both distribution types use the same publishing workflow.
+どちらの配布方式でも、公開（publish）ワークフローは同じです。
 
-### Build Packages
+### パッケージのビルド
 
-Build executables for all platforms:
+全プラットフォーム向けにビルド:
 
 ```bash
 poetry run ccwb package --target-platform all
 ```
 
-Or build for specific platforms:
+特定プラットフォームのみ:
 
 ```bash
-# macOS only
+# macOS のみ
 poetry run ccwb package --target-platform macos
 
-# Windows only (requires CodeBuild)
+# Windows のみ（CodeBuild が必要）
 poetry run ccwb package --target-platform windows
 
-# Linux only
+# Linux のみ
 poetry run ccwb package --target-platform linux
 ```
 
-Packages are created in `dist/` directory:
+`dist/` に生成されるもの:
 
-- Credential process executables for each platform
-- OTEL helper executables (if monitoring enabled)
-- Installation scripts (`install.sh`, `install.bat`)
-- Configuration file (`config.json`)
-- Claude Code settings directory (if configured)
+- 各プラットフォーム向け credential process 実行ファイル
+- （監視有効時）OTEL helper 実行ファイル
+- インストールスクリプト（`install.sh`, `install.bat`）
+- 設定ファイル（`config.json`）
+- （設定されていれば）Claude Code の settings ディレクトリ
 
-### Distribute Packages
-
-Upload packages and generate distribution URLs:
+### パッケージの配布（Distribute）
 
 ```bash
 poetry run ccwb distribute
 ```
 
-**For presigned-s3**:
+**presigned-s3 の場合**:
 
-- Uploads package to S3
-- Generates presigned URL (7-day expiry)
-- Displays URL and download instructions
-- Admin shares URL with users
+- S3 にパッケージをアップロード
+- 事前署名 URL を生成（有効期限 7 日）
+- URL とダウンロード手順を表示
+- 管理者がユーザーへ URL を共有
 
-**For landing-page**:
+**landing-page の場合**:
 
-- Uploads packages to S3
-- Displays landing page URL
-- Admin shares landing page URL with users
-- Users authenticate and download
+- S3 にパッケージをアップロード
+- ランディングページ URL を表示
+- 管理者がランディングページ URL を共有
+- ユーザーは認証してダウンロード
 
-### Custom Expiry (Presigned-S3 Only)
+### 有効期限のカスタマイズ（presigned-s3 のみ）
 
-Set custom expiry time (1-168 hours):
+有効期限を 1〜168 時間で指定:
 
 ```bash
-# 48 hours (default)
+# 48 時間（デフォルト）
 poetry run ccwb distribute --expires-hours 48
 
-# 1 hour (minimum)
+# 1 時間（最小）
 poetry run ccwb distribute --expires-hours 1
 
-# 7 days (168 hours, maximum)
+# 7 日（168 時間、最大）
 poetry run ccwb distribute --expires-hours 168
 ```
 
-**Note**: IAM user presigned URLs have a maximum lifetime of 7 days (168 hours).
+**注記**: IAM ユーザーの事前署名 URL の最大有効期間は 7 日（168 時間）です。
 
-### Retrieve Latest URL (Presigned-S3 Only)
+### 最新 URL の取得（presigned-s3 のみ）
 
-Get the latest presigned URL without regenerating:
+再生成せずに最新 URL を表示:
 
 ```bash
 poetry run ccwb distribute --get-latest
 ```
 
-Displays:
+表示内容:
 
-- Current presigned URL
-- Expiration time
-- Package filename and checksum
-- Download instructions
+- 現在の事前署名 URL
+- 有効期限
+- パッケージのファイル名とチェックサム
+- ダウンロード手順
 
 ---
 
-## Switching Distribution Types
+## 配布方式の切り替え
 
-You can switch between presigned-s3 and landing-page at any time.
+presigned-s3 と landing-page は、いつでも切り替え可能です。
 
-### Process
+### 手順
 
-1. **Reconfigure profile**:
+1. **プロファイルの再設定**:
 
    ```bash
    poetry run ccwb init
    ```
 
-   - Select different distribution type
-   - Complete configuration (IdP setup if switching to landing-page)
+   - 別の配布方式を選択
+   - landing-page へ切り替える場合は IdP 設定も完了させる
 
-2. **Redeploy distribution stack**:
+2. **配布スタックの再デプロイ**:
 
    ```bash
    poetry run ccwb deploy distribution
    ```
 
-   - CloudFormation will **replace** the existing stack with new type
-   - Old stack resources (S3 bucket, IAM user, etc.) will be **deleted**
-   - New stack resources will be **created**
+   - CloudFormation が既存スタックを **置き換え**、新方式で再作成
+   - 旧スタックのリソース（S3 バケット、IAM ユーザー等）は **削除**
+   - 新スタックのリソースを **作成**
 
-3. **Publish packages** to new distribution:
+3. **新しい配布先へパッケージを公開**:
    ```bash
    poetry run ccwb package
    poetry run ccwb distribute
    ```
 
-### Important Notes
+### 重要な注意点
 
-- **Cannot have both deployed simultaneously**: Both types use same stack name (`{identity-pool-name}-distribution`)
-- **Existing packages will be deleted**: S3 bucket is deleted and recreated
-- **Backup packages if needed**: Download from S3 before switching
-- **Update user instructions**: If switching to landing-page, users need new URL and IdP credentials
+- **同時デプロイ不可**: どちらも同じスタック名（`{identity-pool-name}-distribution`）を使用
+- **既存パッケージは削除される**: S3 バケットが削除・再作成される
+- **必要ならバックアップ**: 切り替え前に S3 からダウンロードして保全
+- **ユーザー手順の更新**: landing-page に切り替える場合、新 URL と IdP 認証が必要
 
 ---
 
-## Post-Deployment Operations
+## デプロイ後の運用
 
-### Updating Packages
+### パッケージの更新
 
-To publish new package versions:
+新バージョンを公開するには:
 
-1. **Build new packages**:
+1. **新しいパッケージをビルド**:
 
    ```bash
    poetry run ccwb package --target-platform all
    ```
 
-2. **Upload to distribution**:
+2. **配布先へアップロード**:
 
    ```bash
    poetry run ccwb distribute
    ```
 
-3. **Notify users**:
-   - **Presigned-S3**: Share new URL (old URL still valid until expiry)
-   - **Landing-Page**: No action needed (users refresh landing page for new release date)
+3. **ユーザーへ通知**:
+   - **presigned-s3**: 新 URL を共有（旧 URL は失効まで有効）
+   - **landing-page**: 原則不要（ユーザーはページ更新で新しいリリース日を確認）
 
-**No stack redeployment required** for package updates.
+パッケージ更新のために **スタックを再デプロイする必要はありません**。
 
 ---
 
-### Adding Custom Domain (Landing-Page)
+### カスタムドメインの追加（landing-page）
 
-#### Prerequisites
+#### 前提
 
-- Route53 hosted zone for your domain
-- Domain name (e.g., `downloads.company.com`)
-- Hosted zone ID
+- Route53 の hosted zone
+- ドメイン名（例: `downloads.company.com`）
+- hosted zone ID
 
-#### Process
+#### 手順
 
-1. **Reconfigure with custom domain**:
+1. **カスタムドメイン付きで再設定**:
 
    ```bash
    poetry run ccwb init
    ```
 
-   - When prompted for custom domain: **yes**
-   - Enter domain name: `downloads.company.com`
-   - Enter hosted zone ID: `Z1234567890ABC`
+   - カスタムドメインの質問に **yes**
+   - ドメイン名: `downloads.company.com`
+   - hosted zone ID: `Z1234567890ABC`
 
-2. **Redeploy distribution stack**:
+2. **配布スタックを再デプロイ**:
 
    ```bash
    poetry run ccwb deploy distribution
    ```
 
-   - Creates ACM certificate
-   - Validates certificate via DNS (automatic with Route53)
-   - Creates Route53 A record pointing to ALB
-   - Updates ALB listener with ACM certificate
+   - ACM 証明書を作成
+   - DNS で証明書検証（Route53 なら自動）
+   - ALB を指す Route53 の A レコードを作成
+   - ALB リスナーを ACM 証明書で更新
 
-3. **Update IdP redirect URI** with custom domain:
+3. **IdP の redirect URI をカスタムドメインに更新**:
 
-   - Update callback URL from `https://<alb-dns>/oauth2/idpresponse` to `https://downloads.company.com/oauth2/idpresponse`
-   - Follow Phase 3 instructions for your IdP
+   - `https://<alb-dns>/oauth2/idpresponse` から  
+     `https://downloads.company.com/oauth2/idpresponse` へ更新
+   - IdP ごとのフェーズ 3 手順に従う
 
-4. **Test**:
-   - Navigate to `https://downloads.company.com`
-   - Verify SSL certificate valid
-   - Verify IdP authentication works
+4. **テスト**:
+   - `https://downloads.company.com` にアクセス
+   - SSL 証明書が有効であることを確認
+   - IdP 認証が動作することを確認
 
-**DNS propagation**: 2-5 minutes for Route53
-
----
-
-## Security Considerations
-
-### Distribution Type Comparison
-
-**Presigned-S3**: Time-limited URLs (7-day expiry), no authentication, suitable for internal trusted users only. URLs can be shared/leaked with no access revocation.
-
-**Landing-Page**: IdP authentication required, short-lived presigned URLs (1-hour expiry), ALB access logs for audit trail, suitable for enterprise compliance.
-
-### Best Practices
-
-- Store all credentials in AWS Secrets Manager
-- Verify package integrity using SHA256 checksums
-- For landing-page: Enable MFA, rotate secrets every 90 days, restrict IdP app assignment
-- Monitor downloads via S3/ALB access logs
+**DNS 反映**: Route53 の場合 2〜5 分
 
 ---
 
-## Reference Links
+## セキュリティ上の考慮事項
 
-- **Distribution Comparison**: [comparison.md](./comparison.md) - Detailed comparison of presigned-s3 vs landing-page
-- **IdP Provider Setup**: [../providers/](../providers/) - IdP-specific CLI authentication guides
-- **Main Deployment Guide**: [../../DEPLOYMENT.md](../../DEPLOYMENT.md) - Overall deployment documentation
-- **CLI Reference**: [../../CLI_REFERENCE.md](../../CLI_REFERENCE.md) - Complete command reference
-- **Architecture**: [../../ARCHITECTURE.md](../../ARCHITECTURE.md) - Technical architecture documentation
+### 配布方式の比較（要約）
+
+**presigned-s3**: 有効期限付き URL（7 日）、認証なし。社内の信頼できるユーザー向けに限定。URL は共有・漏洩し得るが、失効前にアクセスを取り消す手段がない。
+
+**landing-page**: IdP 認証必須、短命の事前署名 URL（1 時間）、監査用に ALB アクセスログを利用可能。エンタープライズのコンプライアンス要件に適する。
+
+### ベストプラクティス
+
+- すべての認証情報は AWS Secrets Manager に保存する
+- SHA256 チェックサムでパッケージ整合性を検証する
+- landing-page: MFA を有効化し、90 日ごとに secret をローテーションし、IdP アプリ割り当てを最小化する
+- S3 / ALB のアクセスログでダウンロード状況を監視する
 
 ---
 
+## 参考リンク
+
+- **配布方式の比較**: [comparison.md](./comparison.md) — presigned-s3 と landing-page の詳細比較
+- **IdP プロバイダ設定**: [../providers/](../providers/) — IdP 別の CLI 認証ガイド
+- **メインのデプロイガイド**: [../../DEPLOYMENT.md](../../DEPLOYMENT.md) — 全体デプロイ手順
+- **CLI リファレンス**: [../../CLI_REFERENCE.md](../../CLI_REFERENCE.md) — コマンド完全リファレンス
+- **アーキテクチャ**: [../../ARCHITECTURE.md](../../ARCHITECTURE.md) — 技術アーキテクチャ資料
+
 ---
 
-**Last Updated**: 2025-01-03
-**Version**: 1.0.0
-**Compatibility**: Claude Code with Bedrock v1.0+
+**最終更新日**: 2025-01-03  
+**バージョン**: 1.0.0  
+**互換性**: Bedrock 版 Claude Code v1.0+

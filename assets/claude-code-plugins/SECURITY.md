@@ -1,123 +1,123 @@
-# Security Policy
+# セキュリティポリシー
 
-## Overview
+## 概要
 
-The Claude Code Advanced Patterns repository is designed to provide secure, production-ready development workflows and automation patterns. This document outlines our security practices and provides guidance for safe usage.
+Claude Code Advanced Patterns リポジトリは、安全で本番利用可能な開発ワークフローと自動化パターンを提供することを目的として設計されています。本ドキュメントでは、当リポジトリのセキュリティ上の取り組みと、安全に利用するための指針を示します。
 
-## 🔒 Security Commitment
+## 🔒 セキュリティへのコミットメント
 
-**All patterns and code in this repository are designed with security-first principles:**
+**本リポジトリ内のすべてのパターンおよびコードは、セキュリティファーストの原則に基づいて設計されています。**
 
-- ✅ No actual secrets or credentials are stored in this repository
-- ✅ All tokens and API keys shown are examples or placeholders  
-- ✅ Security hooks prevent accidental secret commits
-- ✅ All external dependencies are vetted for security vulnerabilities
-- ✅ Regular security audits are performed on all components
+- ✅ 実際のシークレットや認証情報は、このリポジトリには保存しません
+- ✅ 記載されているトークンや API キーは、例示またはプレースホルダーのみです  
+- ✅ セキュリティフックにより、誤ってシークレットをコミットすることを防ぎます
+- ✅ 外部依存関係は、セキュリティ脆弱性の観点で精査しています
+- ✅ 全コンポーネントに対して定期的なセキュリティ監査を実施しています
 
-## 📋 Example Tokens and Placeholders
+## 📋 例示トークンとプレースホルダー
 
-This repository contains **example tokens and API keys for documentation purposes only**. These are not real credentials and cannot be used to access any services:
+本リポジトリには、**ドキュメント目的のみ**で **例示用のトークンや API キー**が含まれています。これらは実際の認証情報ではなく、いかなるサービスにもアクセスできません。
 
-### Example Patterns Found in Documentation:
+### ドキュメント中に見られる例示パターン
 
-| Pattern | Example | Purpose |
+| パターン | 例 | 目的 |
 |---------|---------|---------|
-| GitHub Tokens | `ghp_xxxxxxxxxxxx` | Documentation examples |  
-| OpenAI API Keys | `sk-xxxxxxxxxxxx` | Integration guides |
-| Slack Webhooks | `https://hooks.slack.com/xxx` | Notification setup |
-| Database URLs | `postgresql://localhost:5432/mydb` | Local development |
-| AWS Keys | `AKIA[0-9A-Z]{16}` | Security pattern detection |
-| UUIDs | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` | Placeholder identifiers |
+| GitHub トークン | `ghp_xxxxxxxxxxxx` | ドキュメント例 |  
+| OpenAI API キー | `sk-xxxxxxxxxxxx` | 連携ガイド |
+| Slack Webhook | `https://hooks.slack.com/xxx` | 通知設定 |
+| DB URL | `postgresql://localhost:5432/mydb` | ローカル開発 |
+| AWS キー | `AKIA[0-9A-Z]{16}` | セキュリティパターン検出 |
+| UUID | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` | プレースホルダー識別子 |
 
-**⚠️ Important:** These are example patterns only. Replace with your actual credentials when implementing.
+**⚠️ 重要:** これらはあくまで例示パターンです。実装時には、実際の認証情報に置き換えてください。
 
-## 🛡️ Security Features
+## 🛡️ セキュリティ機能
 
-### Built-in Security Hooks
+### 組み込みのセキュリティフック
 
-This repository includes several security hooks that actively protect against common vulnerabilities:
+本リポジトリには、一般的な脆弱性から保護するために能動的に動作するセキュリティフックが複数含まれます。
 
-1. **Secret Detection Hook** (`hooks/security_check.py`):
-   - Scans for potential secrets in file content
-   - Blocks commits containing real API keys or passwords
-   - Validates file permissions and paths
-   - Prevents directory traversal attacks
+1. **シークレット検出フック**（`hooks/security_check.py`）:
+   - ファイル内容からシークレットの可能性がある文字列をスキャン
+   - 実際の API キーやパスワードを含むコミットをブロック
+   - ファイル権限とパスを検証
+   - ディレクトリトラバーサル攻撃を防止
 
-2. **Command Security Hook** (`hooks/command_security_check.sh`):
-   - Validates bash commands for security compliance
-   - Blocks dangerous operations (rm -rf /, chmod 777, etc.)
-   - Prevents download-and-execute patterns
-   - Logs all security events for audit
+2. **コマンド セキュリティフック**（`hooks/command_security_check.sh`）:
+   - bash コマンドがセキュリティ基準に適合するか検証
+   - 危険な操作（`rm -rf /`、`chmod 777` など）をブロック
+   - ダウンロードして即実行するパターンを防止
+   - 監査のため、すべてのセキュリティイベントをログ化
 
-3. **Dependency Validation**:
-   - Python hooks validate tool availability
-   - Provides installation guidance for missing dependencies
-   - Prevents execution with missing security tools
+3. **依存関係の検証**:
+   - Python フックが必要ツールの利用可否を検証
+   - 不足している依存関係のインストール手順を案内
+   - セキュリティツールが不足した状態での実行を防止
 
-### Security Best Practices Enforced
+### 強制されるセキュリティ ベストプラクティス
 
-- **No hardcoded secrets**: All secrets must use environment variables
-- **Least privilege**: Hooks run with minimal required permissions
-- **Input validation**: All user input is sanitized and validated
-- **Secure defaults**: All configurations default to secure settings
-- **Audit logging**: Security events are logged for review
+- **シークレットのハードコード禁止**: すべてのシークレットは環境変数を使用
+- **最小権限**: フックは必要最小限の権限で実行
+- **入力検証**: すべてのユーザー入力はサニタイズおよび検証
+- **セキュアなデフォルト**: すべての設定は安全側を既定値とする
+- **監査ログ**: セキュリティイベントをログに記録しレビュー可能にする
 
-## 🚨 Reporting Security Vulnerabilities
+## 🚨 セキュリティ脆弱性の報告
 
-We take security seriously. If you discover a security vulnerability, please report it responsibly:
+当リポジトリはセキュリティを重視しています。脆弱性を発見した場合は、責任ある開示にご協力ください。
 
-### Reporting Process
+### 報告手順
 
-1. **DO NOT** create a public GitHub issue for security vulnerabilities
-2. **DO** email security concerns to the repository maintainer
-3. **DO** provide detailed information about the vulnerability
-4. **DO** allow reasonable time for investigation and patching
+1. セキュリティ脆弱性について **公開 GitHub Issue を作成しないでください**
+2. セキュリティ懸念は **リポジトリ管理者へメールで連絡**してください
+3. 脆弱性の詳細情報を提供してください
+4. 調査と修正に必要な合理的な期間を確保してください
 
-### What to Report
+### 報告対象
 
-- Code execution vulnerabilities in hooks or agents
-- Path traversal or file access vulnerabilities  
-- Injection vulnerabilities (command, code, etc.)
-- Dependency vulnerabilities with high/critical severity
-- Authentication or authorization bypasses
+- フックまたはエージェントにおけるコード実行脆弱性
+- パストラバーサル／ファイルアクセスの脆弱性  
+- インジェクション脆弱性（コマンド、コードなど）
+- 高／重大（high/critical）の依存関係脆弱性
+- 認証／認可のバイパス
 
-### What NOT to Report
+### 報告対象外
 
-- Example tokens or placeholders in documentation
-- Missing security headers on example applications
-- Rate limiting issues in example code
-- Issues in third-party dependencies already known and tracked
+- ドキュメント中の例示トークンやプレースホルダー
+- サンプルアプリのセキュリティヘッダー不足
+- サンプルコードのレート制限問題
+- 既知で追跡済みのサードパーティ依存関係の問題
 
-## 📋 Security Checklist
+## 📋 セキュリティチェックリスト
 
-Before deploying this repository in production environments:
+本リポジトリを本番環境に展開する前に、以下を確認してください。
 
-### Environment Security
-- [ ] Replace all example tokens with real credentials
-- [ ] Store secrets in environment variables or secret management systems
-- [ ] Enable all security hooks in your `.claude/settings.json`
-- [ ] Review and customize security patterns for your environment
-- [ ] Set up monitoring and alerting for security events
+### 環境セキュリティ
+- [ ] 例示トークンをすべて実際の認証情報に置き換える
+- [ ] シークレットは環境変数またはシークレット管理基盤に保存する
+- [ ] `.claude/settings.json` でセキュリティフックをすべて有効化する
+- [ ] 自組織の環境に合わせてセキュリティパターンを見直し／カスタマイズする
+- [ ] セキュリティイベントの監視とアラートを設定する
 
-### Code Security
-- [ ] Run security scans on all custom code additions
-- [ ] Validate all external dependencies for vulnerabilities
-- [ ] Enable and test all security hooks
-- [ ] Review and approve all agent and command patterns
-- [ ] Implement proper error handling that doesn't leak sensitive information
+### コードセキュリティ
+- [ ] 追加したカスタムコードに対してセキュリティスキャンを実行する
+- [ ] 外部依存関係の脆弱性を検証する
+- [ ] セキュリティフックを有効化し、テストする
+- [ ] すべてのエージェント／コマンドパターンをレビューして承認する
+- [ ] 機微情報が漏えいしない適切なエラーハンドリングを実装する
 
-### Operational Security
-- [ ] Limit access to the repository to authorized personnel only
-- [ ] Enable branch protection and require security reviews
-- [ ] Monitor security audit logs regularly
-- [ ] Keep all dependencies updated to latest secure versions
-- [ ] Implement backup and recovery procedures for configurations
+### 運用セキュリティ
+- [ ] リポジトリアクセスを許可された担当者のみに制限する
+- [ ] ブランチ保護を有効化し、セキュリティレビューを必須化する
+- [ ] セキュリティ監査ログを定期的に確認する
+- [ ] すべての依存関係を最新の安全なバージョンに保つ
+- [ ] 設定のバックアップと復旧手順を整備する
 
-## 🔧 Security Configuration
+## 🔧 セキュリティ設定
 
-### Recommended Settings
+### 推奨設定
 
-Add these security configurations to your `.claude/settings.json`:
+以下のセキュリティ設定を `.claude/settings.json` に追加します。
 
 ```json
 {
@@ -144,9 +144,9 @@ Add these security configurations to your `.claude/settings.json`:
 }
 ```
 
-### Security Hook Configuration
+### セキュリティフック設定
 
-Enable all security hooks by adding them to your hook configuration:
+すべてのセキュリティフックを有効化するには、フック設定に追加します。
 
 ```json
 {
@@ -175,57 +175,57 @@ Enable all security hooks by adding them to your hook configuration:
 }
 ```
 
-## 📚 Security Resources
+## 📚 セキュリティ関連リソース
 
-### Learn More About Security
+### セキュリティについて学ぶ
 
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Most critical web application security risks
-- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework) - Comprehensive security guidance
-- [GitHub Security Best Practices](https://docs.github.com/en/code-security) - Repository and code security
-- [Python Security Guidelines](https://python-security.readthedocs.io/) - Python-specific security practices
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/) - 重大な Web アプリケーションのセキュリティリスク
+- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework) - 包括的なセキュリティ指針
+- [GitHub Security Best Practices](https://docs.github.com/en/code-security) - リポジトリ／コードのセキュリティ
+- [Python Security Guidelines](https://python-security.readthedocs.io/) - Python 固有のセキュリティプラクティス
 
-### Security Tools Integration
+### セキュリティツール連携
 
-This repository integrates with several security tools:
+本リポジトリは複数のセキュリティツールと連携します。
 
-- **Bandit**: Python security linting (via hooks)
-- **Safety**: Python dependency vulnerability scanning
-- **Semgrep**: Static analysis security scanning
-- **Git-secrets**: Prevent secrets in Git repositories
-- **Trufflehhog**: Secret detection in repositories
+- **Bandit**: Python セキュリティ lint（フック経由）
+- **Safety**: Python 依存関係の脆弱性スキャン
+- **Semgrep**: 静的解析によるセキュリティスキャン
+- **Git-secrets**: Git リポジトリへのシークレット混入防止
+- **Trufflehhog**: リポジトリ内シークレット検出
 
-## 🔄 Security Updates
+## 🔄 セキュリティ更新
 
-This repository is regularly updated to address security concerns:
+本リポジトリは、セキュリティ懸念に対応するため定期的に更新されます。
 
-- **Monthly**: Dependency security updates
-- **Quarterly**: Security pattern reviews and updates  
-- **Annually**: Comprehensive security audit
-- **As needed**: Critical vulnerability patches
+- **毎月**: 依存関係のセキュリティ更新
+- **四半期ごと**: セキュリティパターンのレビューと更新  
+- **年 1 回**: 包括的なセキュリティ監査
+- **必要時**: 重大な脆弱性のパッチ
 
-## 📞 Contact
+## 📞 連絡先
 
-For security-related questions or concerns:
+セキュリティに関する質問や懸念について：
 
-- **General Questions**: Create a GitHub Discussion
-- **Security Vulnerabilities**: Contact repository maintainers directly
-- **Feature Requests**: Create a GitHub Issue (for non-security features)
-
----
-
-## ⚖️ Security Disclaimer
-
-This repository provides security tools and patterns as-is, without warranty. Users are responsible for:
-
-- Properly configuring security settings for their environment
-- Regularly updating dependencies and security patterns
-- Implementing appropriate access controls and monitoring
-- Following their organization's security policies and procedures
-
-The security features in this repository are designed to prevent common vulnerabilities but cannot guarantee complete security. Always perform security reviews appropriate for your use case and risk tolerance.
+- **一般的な質問**: GitHub Discussion を作成
+- **セキュリティ脆弱性**: リポジトリ管理者へ直接連絡
+- **機能要望**:（セキュリティ以外）GitHub Issue を作成
 
 ---
 
-**Last Updated**: 2025-08-27  
-**Version**: 1.0.0  
-**Next Security Review**: 2025-11-27
+## ⚖️ セキュリティ免責事項
+
+本リポジトリは、保証なし（as-is）でセキュリティツールおよびパターンを提供します。利用者は以下について責任を負います。
+
+- 自組織の環境に適したセキュリティ設定を適切に構成すること
+- 依存関係およびセキュリティパターンを定期的に更新すること
+- 適切なアクセス制御および監視を実装すること
+- 組織のセキュリティポリシーと手順に従うこと
+
+本リポジトリのセキュリティ機能は一般的な脆弱性を防ぐことを目的としていますが、完全なセキュリティを保証するものではありません。ユースケースとリスク許容度に応じた適切なセキュリティレビューを必ず実施してください。
+
+---
+
+**最終更新日**: 2025-08-27  
+**バージョン**: 1.0.0  
+**次回セキュリティレビュー**: 2025-11-27

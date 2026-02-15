@@ -1,123 +1,123 @@
-> 📚 [Back to Documentation Hub](../README.md)
+> 📚 [ドキュメントハブに戻る](../README.md)
 
-# How to Configure and Use Claude Code Plugins
+# Claude Code プラグインの設定と利用方法
 
-> **Goal**: Successfully install, configure, and use plugins from the Claude Code marketplace
-> **Use case**: Teams and individuals who need to extend Claude Code with specialized tools
-> **Time required**: 15-30 minutes for basic setup, 1-2 hours for enterprise configuration
+> **目的**: Claude Code マーケットプレイスのプラグインを、正しくインストール／設定し、利用できる状態にする  
+> **想定ユースケース**: 特化ツールで Claude Code を拡張したいチームおよび個人  
+> **所要時間**: 基本セットアップ 15～30 分、エンタープライズ向け設定 1～2 時間
 
-## Prerequisites
-Before starting, you should:
-- Have Claude Code installed and authenticated
-- Be familiar with Claude Code basic commands
-- Understand your project's development workflow needs
-- Have access to your project repository (for team configuration)
-- Know which problems you're trying to solve (documentation, security, testing, etc.)
+## 前提条件
+開始前に、以下を満たしていることを確認してください。
+- Claude Code がインストール済みで、認証が完了している
+- Claude Code の基本コマンドに慣れている
+- プロジェクトの開発ワークフロー上の要件を理解している
+- （チーム設定のため）プロジェクトのリポジトリにアクセスできる
+- 解決したい課題（ドキュメント、セキュリティ、テストなど）を把握している
 
-## Problem Context
-Claude Code provides powerful base functionality, but specialized development tasks require additional tools. The Claude Code Plugins Marketplace (`aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock`) offers 11 production-ready plugins for systematic development, documentation, security, testing, and more. This guide shows you how to install, configure, and use these plugins effectively.
+## 課題の背景
+Claude Code は強力な基本機能を提供しますが、専門的な開発タスクには追加ツールが必要です。Claude Code Plugins Marketplace（`aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock`）には、体系的な開発、ドキュメント、セキュリティ、テストなどに対応する **本番利用可能（production-ready）な 11 個のプラグイン**が用意されています。本ガイドでは、これらのプラグインを効果的にインストールし、設定し、利用する方法を説明します。
 
-## Solution Overview
-We'll solve this by:
-1. Adding the marketplace to your Claude Code installation
-2. Installing individual plugins or bundles based on your needs
-3. Configuring team-wide plugin requirements
-4. Using plugin components (agents, commands, hooks)
-5. Troubleshooting common configuration issues
+## 解決策の概要
+以下の手順で解決します。
+1. Claude Code にマーケットプレイスを追加する
+2. 要件に応じて個別プラグインまたはバンドルをインストールする
+3. チーム全体に適用するプラグイン要件を設定する
+4. プラグインの構成要素（エージェント、コマンド、フック）を利用する
+5. よくある設定問題をトラブルシューティングする
 
-**Why this approach**: The marketplace provides modular, battle-tested plugins that integrate seamlessly with Claude Code, avoiding the need to build custom tooling from scratch.
+**この方法を選ぶ理由**: マーケットプレイスは、モジュール化され、実運用で鍛えられたプラグインを提供し、Claude Code とシームレスに統合できます。これにより、ゼロからカスタムツールを作る必要がなくなります。
 
-## Step 1: Add the Marketplace
+## 手順 1: マーケットプレイスを追加
 
-Connect Claude Code to the plugins marketplace:
+Claude Code をプラグインマーケットプレイスに接続します。
 
 ```bash
-# Add the marketplace (one-time setup)
+# マーケットプレイスを追加（初回のみ）
 /plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 
-# Verify marketplace was added
+# 追加されたことを確認
 /plugin marketplace list
 ```
 
-**Expected result**: You should see `aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock` in the marketplace list.
+**期待される結果**: マーケットプレイス一覧に `aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock` が表示されます。
 
-**Alternative using CLI**:
+**CLI を使う代替方法**:
 ```bash
-# If using Claude Code from terminal
+# ターミナルから Claude Code を使っている場合
 claude "/plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock"
 ```
 
-## Step 2: Browse Available Plugins
+## 手順 2: 利用可能なプラグインを確認
 
-Explore plugins interactively to find what you need:
+対話的にプラグインを探索して、必要なものを見つけます。
 
 ```bash
-# Interactive browser showing all 11 plugins
+# 11 個のプラグインをすべて表示する対話ブラウザ
 /plugin
 
-# Or browse specific marketplace
+# あるいは特定マーケットプレイスを参照
 /plugin browse aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 ```
 
-**What you'll see**:
-- Plugin names and descriptions
-- Categories (workflow, documentation, security, testing, etc.)
-- Version information
-- Installation commands
+**表示される内容**:
+- プラグイン名と説明
+- カテゴリ（workflow、documentation、security、testing など）
+- バージョン情報
+- インストールコマンド
 
-**Success criteria**: You can see the list of 11 plugins: epcc-workflow, documentation, architecture, security, testing, performance, tdd-workflow, agile-tools, ux-design, deployment, code-analysis.
+**成功基準**: 11 個のプラグイン（epcc-workflow、documentation、architecture、security、testing、performance、tdd-workflow、agile-tools、ux-design、deployment、code-analysis）が一覧で確認できること。
 
-## Step 3: Install Your First Plugin
+## 手順 3: 最初のプラグインをインストール
 
-Start with the EPCC workflow plugin (recommended for systematic development):
+体系的な開発に推奨の EPCC workflow プラグインから始めます。
 
 ```bash
-# Install EPCC workflow plugin
+# EPCC workflow プラグインをインストール
 /plugin install epcc-workflow
-# Verify installation
+# インストール確認
 /plugin list
 ```
 
-**Expected result**: The plugin appears in your installed plugins list, and new commands become available.
+**期待される結果**: インストール済みプラグイン一覧に表示され、新しいコマンドが利用可能になります。
 
-**Verify it worked**: Try using a plugin command:
+**動作確認**: プラグインコマンドを試します。
 ```bash
-# Test the explore command
+# explore コマンドをテスト
 /epcc-explore
 
-# Test calling a plugin agent
+# プラグインのエージェントを呼び出してテスト
 @code-archaeologist
 ```
 
-If the command and agent are recognized, the plugin is installed correctly.
+コマンドとエージェントが認識されれば、正しくインストールされています。
 
-## Step 4: Install Plugin Bundles
+## 手順 4: プラグインバンドルをインストール
 
-Instead of installing plugins individually, use pre-configured bundles for common scenarios.
+個別インストールの代わりに、一般的なシナリオ向けの事前構成済みバンドルを使用できます。
 
-### Understanding Team-Level Plugin Enforcement
+### チームレベルのプラグイン強制（必須化）の考え方
 
-Claude Code supports **team-level required plugins** through `.claude/settings.json`. When this file exists in your project root:
+Claude Code は `.claude/settings.json` により **チームレベルの必須プラグイン**をサポートします。プロジェクトルートにこのファイルがある場合：
 
-**How it works:**
-1. Any team member opening the project in Claude Code sees the required plugins
-2. Claude Code automatically prompts to install missing plugins
-3. All team members get the same tooling and capabilities
-4. Configuration is version-controlled with your code
+**仕組み:**
+1. チームメンバーが Claude Code でプロジェクトを開くと、必須プラグインが提示される
+2. 未インストールのプラグインがあれば、Claude Code が自動的にインストールを促す
+3. 全員が同じツール群と機能を利用できる
+4. 設定はコードと一緒にバージョン管理される
 
-**Key benefits:**
-- ✅ **Consistent tooling** - Everyone uses the same agents, commands, and hooks
-- ✅ **Zero configuration** - New team members automatically get required plugins
-- ✅ **Team standards** - Enforce security, testing, and quality practices
-- ✅ **Seamless onboarding** - One git clone gets complete setup
+**主なメリット:**
+- ✅ **ツールの一貫性** — 同じエージェント／コマンド／フックを利用
+- ✅ **ゼロ設定** — 新メンバーも自動で必要プラグインが揃う
+- ✅ **チーム標準** — セキュリティ、テスト、品質のプラクティスを徹底
+- ✅ **オンボーディングが容易** — git clone だけでセットアップが完了
 
-**Enforcement level:**
-- `requiredPlugins`: Shows prompts but doesn't block usage
-- Best combined with code review requirements and CI/CD checks
+**強制レベル:**
+- `requiredPlugins`: 促し（プロンプト）は表示されますが、利用をブロックはしません  
+- コードレビュー要件や CI/CD チェックと組み合わせるのが推奨です
 
-### Starter Bundle (Recommended for Teams Getting Started)
+### スターターバンドル（チーム導入に推奨）
 
-Create `.claude/settings.json` in your project root:
+プロジェクトルートに `.claude/settings.json` を作成します。
 
 ```json
 {
@@ -132,15 +132,15 @@ Create `.claude/settings.json` in your project root:
 }
 ```
 
-**What this does**:
-- Automatically installs 3 essential plugins for all team members
-- Enforces systematic development workflow (EPCC)
-- Enables comprehensive documentation (Diataxis framework)
-- Provides security scanning and compliance
+**この設定で行われること**:
+- チーム全員に、必須の 3 プラグインを自動インストール
+- 体系的な開発ワークフロー（EPCC）を適用
+- 包括的なドキュメント化（Diataxis フレームワーク）を有効化
+- セキュリティスキャンとコンプライアンスを提供
 
-**When to use**: Small to medium teams starting with AI-assisted development.
+**利用場面**: AI 支援開発を導入し始めた小～中規模チーム。
 
-### Full-Stack Bundle (Comprehensive Development)
+### フルスタック バンドル（包括的な開発）
 
 ```json
 {
@@ -157,9 +157,9 @@ Create `.claude/settings.json` in your project root:
 }
 ```
 
-**When to use**: Full-stack teams building web applications with frontend and backend components.
+**利用場面**: フロントエンド／バックエンドを含む Web アプリを開発するフルスタックチーム。
 
-### Enterprise Bundle (Complete Enterprise Toolkit)
+### エンタープライズ バンドル（企業向けフルセット）
 
 ```json
 {
@@ -178,9 +178,9 @@ Create `.claude/settings.json` in your project root:
 }
 ```
 
-**When to use**: Enterprise teams requiring security, compliance, performance monitoring, and deployment automation.
+**利用場面**: セキュリティ、コンプライアンス、性能監視、デプロイ自動化が必要なエンタープライズチーム。
 
-### TDD Bundle (Test-Driven Development)
+### TDD バンドル（テスト駆動開発）
 
 ```json
 {
@@ -195,100 +195,100 @@ Create `.claude/settings.json` in your project root:
 }
 ```
 
-**When to use**: Teams practicing test-driven development with red-green-refactor cycles.
+**利用場面**: red-green-refactor サイクルでテスト駆動開発を行うチーム。
 
-**Success criteria**: After creating `.claude/settings.json`, run `/plugin list` to verify all required plugins are installed automatically.
+**成功基準**: `.claude/settings.json` を作成後、`/plugin list` を実行し、必須プラグインが自動的にインストールされていることを確認できること。
 
-## Step 5: Using Plugin Agents
+## 手順 5: プラグインのエージェントを使う
 
-Plugins provide specialized agents for specific tasks. Call agents using the `@` prefix:
+プラグインは、特定タスク向けの専用エージェントを提供します。エージェントは `@` 接頭辞で呼び出します。
 
 ```bash
-# Call single agent
+# 単一エージェントを呼び出す
 @security-reviewer
 
-# Call multiple agents in parallel (key pattern)
+# 複数エージェントを並列に呼び出す（重要パターン）
 @docs-tutorial-agent @docs-howto-agent @docs-reference-agent @docs-explanation-agent
 
-# Cross-functional team deployment
+# 横断チームでのデプロイ
 @architect @security-reviewer @qa-engineer @deployment-agent
 ```
 
-**Working example** - Security review:
+**動作例** — セキュリティレビュー:
 ```bash
-# Ask Claude to review security with the security plugin agent
+# セキュリティプラグインのエージェントにレビューを依頼
 claude "@security-reviewer scan this codebase for vulnerabilities and generate a report"
 ```
 
-**Expected output**: Security analysis report covering:
-- Potential vulnerabilities
-- Compliance issues
-- Security recommendations
-- Risk assessment
+**期待される出力**: 次を含むセキュリティ分析レポート
+- 潜在的な脆弱性
+- コンプライアンス上の問題
+- セキュリティ改善提案
+- リスク評価
 
-**Agent orchestration pattern** - Complete documentation:
+**エージェント編成（オーケストレーション）パターン** — ドキュメント一式:
 ```bash
-# Generate complete documentation set using parallel agents
+# 並列エージェントで包括的ドキュメントを生成
 claude "@docs-tutorial-agent @docs-howto-agent @docs-reference-agent @docs-explanation-agent create comprehensive documentation for the authentication system"
 ```
 
-**Why parallel**: Deploying agents in parallel is more efficient than sequential execution and leverages Claude Code's concurrent processing capabilities.
+**並列が良い理由**: 逐次実行より効率的で、Claude Code の同時処理能力を活かせます。
 
-## Step 6: Using Plugin Commands
+## 手順 6: プラグインコマンドを使う
 
-Plugins provide slash commands with argument support:
+プラグインは、引数を取れるスラッシュコマンドを提供します。
 
 ```bash
-# EPCC workflow commands
+# EPCC ワークフロー コマンド
 /epcc-explore "authentication module"
 /epcc-plan
 /epcc-code
 /epcc-commit
 
-# Documentation commands with smart routing
+# ドキュメントコマンド（スマートルーティング）
 /docs-create "API endpoints" --complete
 /docs-create "user guide" --learning
 /docs-howto "configure SSL"
 
-# TDD workflow commands
+# TDD ワークフロー コマンド
 /tdd-feature "user login"
 /tdd-bugfix "authentication timeout"
 
-# Security commands
+# セキュリティコマンド
 /security-scan --strict
 /permission-audit
 
-# Architecture commands
+# アーキテクチャ コマンド
 /design-architecture "microservices system"
 /code-review --comprehensive
 ```
 
-**Working example** - EPCC exploration with depth control:
+**動作例** — EPCC の探索（深さ制御）:
 ```bash
-# Quick exploration (uses default depth)
+# 簡易探索（デフォルトの深さ）
 /epcc-explore "database layer"
 
-# Deep exploration (more thorough analysis)
+# 深掘り探索（より徹底した分析）
 /epcc-explore "payment processing" --deep
 ```
 
-**Expected result**: Creates `EPCC_EXPLORE.md` with comprehensive analysis of the specified area.
+**期待される結果**: 指定領域の包括的分析を含む `EPCC_EXPLORE.md` が作成されます。
 
-## Step 7: Configure Security Hooks
+## 手順 7: セキュリティフックを設定
 
-Security plugin provides pre-commit hooks to block dangerous operations.
+security プラグインは、危険な操作をブロックする pre-commit フックを提供します。
 
-Create `hooks/security_check.py` in your project:
+プロジェクトに `hooks/security_check.py` を作成します。
 
 ```python
 #!/usr/bin/env python3
-"""Security validation hook for Claude Code."""
+"""Claude Code 用セキュリティ検証フック。"""
 
 import sys
 import re
 
 def check_secrets(file_path, content):
-    """Check for potential secrets in code."""
+    """コード内の潜在的なシークレットを検出する。"""
     secret_patterns = [
         r'api[_-]?key\s*=\s*["\'][\w\-]+["\']',
         r'secret[_-]?key\s*=\s*["\'][\w\-]+["\']',
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     main()
 ```
 
-Add hook configuration to `.claude/settings.json`:
+`.claude/settings.json` にフック設定を追加します。
 
 ```json
 {
@@ -341,27 +341,27 @@ Add hook configuration to `.claude/settings.json`:
 }
 ```
 
-**Make script executable**:
+**スクリプトに実行権限を付与**:
 ```bash
 chmod +x hooks/security_check.py
 ```
 
-**Test the security hook**:
+**セキュリティフックをテスト**:
 ```bash
-# This should be blocked by the hook
+# この操作はフックによりブロックされる想定
 echo 'API_KEY="sk-1234567890"' > test.py
 claude "edit test.py to add a function"
 ```
 
-**Expected result**: Hook blocks the operation and displays error about potential secret.
+**期待される結果**: フックが操作をブロックし、潜在的なシークレットに関するエラーが表示されます。
 
-**Verify it worked**: The file write should be prevented, and you'll see a security warning.
+**確認方法**: 書き込みが防止され、セキュリティ警告が表示されること。
 
-## Step 8: Configure Quality Gates
+## 手順 8: 品質ゲートを設定
 
-Testing plugin provides automated quality checks before commits.
+testing プラグインは、コミット前に自動品質チェックを実行できます。
 
-Add to `.claude/settings.json`:
+`.claude/settings.json` に追加します。
 
 ```json
 {
@@ -399,241 +399,244 @@ Add to `.claude/settings.json`:
 }
 ```
 
-**What each gate does**:
-- **black**: Ensures consistent code formatting (blocking)
-- **ruff**: Checks for code quality issues (blocking)
-- **mypy**: Validates type hints (non-blocking warning)
-- **pytest**: Runs test suite (blocking)
+**各ゲートの内容**:
+- **black**: コードフォーマットの一貫性を保証（ブロッキング）
+- **ruff**: コード品質の問題を検出（ブロッキング）
+- **mypy**: 型ヒントを検証（非ブロッキングの警告）
+- **pytest**: テストスイートを実行（ブロッキング）
 
-**Install required tools**:
+**必要ツールのインストール**:
 ```bash
-# Using uv (recommended)
+# uv を使う場合（推奨）
 uvx black --version
 uvx ruff --version
 uvx mypy --version
 uvx pytest --version
 
-# Or install traditionally
+# 従来どおりインストールする場合
 pip install black ruff mypy pytest
 ```
 
-**Test quality gates**:
+**品質ゲートをテスト**:
 ```bash
-# Trigger a commit that will run gates
+# コミットを発行してゲートを実行
 git add .
 git commit -m "test quality gates"
 ```
 
-**Expected result**: All quality checks run automatically. Commit proceeds only if all blocking checks pass.
+**期待される結果**: 品質チェックが自動で実行され、ブロッキングチェックがすべて成功した場合のみコミットが進行します。
 
-## Step 9: Enable/Disable Plugins
+## 手順 9: プラグインの有効化／無効化
 
-Manage plugins without uninstalling:
+アンインストールせずにプラグインを管理できます。
 
 ```bash
-# Disable a plugin temporarily
+# 一時的に無効化
 /plugin disable security
-# Enable it again
+# 再度有効化
 /plugin enable security
-# List all plugins showing enabled/disabled status
+# 有効／無効の状態も含めて一覧表示
 /plugin list
 ```
 
-**When to disable**:
-- Testing without certain constraints
-- Performance optimization
-- Troubleshooting plugin conflicts
+**無効化する場面**:
+- 一時的に制約を外してテストしたい
+- パフォーマンス最適化
+- プラグイン競合の切り分け
 
-**Note**: Disabled plugins remain installed but their agents, commands, and hooks are inactive.
+**注**: 無効化してもプラグインはインストールされたままですが、エージェント／コマンド／フックは無効になります。
 
-## Step 10: Update and Uninstall Plugins
+## 手順 10: プラグインの更新とアンインストール
 
-Keep plugins current or remove unused ones:
+プラグインを最新化する、または不要なものを削除します。
 
 ```bash
-# Check for plugin updates
+# 更新の有無を確認
 /plugin update --check
 
-# Update specific plugin
+# 特定プラグインを更新
 /plugin update epcc-workflow
-# Update all plugins
+# すべて更新
 /plugin update --all
 
-# Uninstall plugin
+# アンインストール
 /plugin uninstall performance
-# Uninstall with confirmation
-/plugin uninstall --force performance```
+# 確認なしでアンインストール
+/plugin uninstall --force performance
+```
 
-**Best practice**: Update plugins regularly to get bug fixes and new features.
+**ベストプラクティス**: バグ修正や新機能を取り込むため、定期的に更新してください。
 
-**Verify updates worked**:
+**更新確認**:
 ```bash
-# Check version numbers
+# バージョン番号を確認
 /plugin list --verbose
 ```
 
-## Verification
+## 検証
 
-Confirm your plugin configuration works correctly:
+プラグイン設定が正しく動作していることを確認します。
 
 ```bash
-# Test marketplace access
+# マーケットプレイスへのアクセスを確認
 /plugin marketplace list
-# Expected: aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock appears
+# 期待: aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock が表示される
 
-# Test plugin installation
+# プラグインのインストール確認
 /plugin list
-# Expected: Your installed plugins appear with version numbers
+# 期待: インストール済みプラグインがバージョン番号付きで表示される
 
-# Test agent availability
+# エージェントの利用可否確認
 @code-archaeologist
-# Expected: Agent responds or shows help
+# 期待: エージェントが応答する、またはヘルプが表示される
 
-# Test command availability
+# コマンドの利用可否確認
 /epcc-explore
-# Expected: Command executes or prompts for input
+# 期待: コマンドが実行される、または入力を促される
 
-# Test hooks (if configured)
+# フック（設定している場合）の確認
 git commit -m "test hooks"
-# Expected: Quality gates run automatically
+# 期待: 品質ゲートが自動実行される
 ```
 
-**Success indicators**:
-- Marketplace is accessible
-- Plugins appear in list
-- Agents respond to @ mentions
-- Slash commands are recognized
-- Hooks execute on appropriate triggers
+**成功の指標**:
+- マーケットプレイスにアクセスできる
+- プラグインが一覧に表示される
+- `@` メンションでエージェントが応答する
+- スラッシュコマンドが認識される
+- 適切なトリガーでフックが実行される
 
-## Troubleshooting
+## トラブルシューティング
 
-### Problem: Marketplace Not Found
-**Symptoms**: `/plugin marketplace list` doesn't show aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
-**Cause**: Marketplace not added or network issue
-**Solution**:
+### 問題: マーケットプレイスが見つからない
+**症状**: `/plugin marketplace list` に aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock が表示されない  
+**原因**: マーケットプレイス未追加、またはネットワーク問題  
+**対処**:
 ```bash
-# Re-add marketplace
+# 再追加
 /plugin marketplace add aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 
-# Check internet connectivity
+# インターネット接続を確認
 curl -I https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock
 
-# Verify marketplace file
+# マーケットプレイス設定ファイルを確認
 cat ~/.claude/marketplaces.json
 ```
 
-### Problem: Plugin Not Installing
-**Symptoms**: `/plugin install` fails or plugin doesn't appear in list
-**Cause**: Version mismatch, permission issue, or corrupt cache
-**Solution**:
+### 問題: プラグインがインストールできない
+**症状**: `/plugin install` が失敗する／一覧に出てこない  
+**原因**: バージョン不整合、権限問題、またはキャッシュ破損  
+**対処**:
 ```bash
-# Clear plugin cache
+# プラグインキャッシュを削除
 rm -rf ~/.claude/plugins/cache
 
-# Try with explicit version
+# バージョンを明示して試す
 /plugin install epcc-workflow@1.0.0
-# Check permissions
+# 権限を確認
 ls -la ~/.claude/plugins/
 
-# Reinstall if necessary
-/plugin uninstall epcc-workflow/plugin install epcc-workflow```
+# 必要なら再インストール
+/plugin uninstall epcc-workflow
+/plugin install epcc-workflow
+```
 
-### Problem: Agent Not Responding
-**Symptoms**: `@agent-name` is not recognized or doesn't work
-**Cause**: Plugin not installed, agent name typo, or plugin disabled
-**Solution**:
+### 問題: エージェントが応答しない
+**症状**: `@agent-name` が認識されない／動かない  
+**原因**: プラグイン未インストール、エージェント名の誤り、プラグイン無効化  
+**対処**:
 ```bash
-# Verify plugin is installed and enabled
+# インストール済みで有効か確認
 /plugin list
 
-# Check exact agent name in plugin
+# プラグイン内の正確なエージェント名を確認
 cat ~/.claude/plugins/epcc-workflow/agents/code-archaeologist.md
 
-# Enable if disabled
+# 無効なら有効化
 /plugin enable epcc-workflow
-# Restart Claude Code session
+# Claude Code セッションを再起動（クリア）
 /clear
 ```
 
-### Problem: Command Not Available
-**Symptoms**: Slash command shows "command not found"
-**Cause**: Plugin not installed or command prefix incorrect
-**Solution**:
+### 問題: コマンドが使えない
+**症状**: スラッシュコマンドで "command not found" が出る  
+**原因**: プラグイン未インストール、またはコマンド接頭辞が違う  
+**対処**:
 ```bash
-# Verify plugin with commands is installed
+# コマンドを提供するプラグインが入っているか確認
 /plugin list
 
-# Use tab completion to find correct command
+# タブ補完で正しいコマンドを探す
 /epcc[TAB]
 
-# Check command files exist
+# コマンドファイルが存在するか確認
 ls ~/.claude/plugins/epcc-workflow/commands/
 
-# Reload plugins
+# プラグインの再読み込み
 /plugin reload
 ```
 
-### Problem: Hooks Not Triggering
-**Symptoms**: PreCommit or PreToolUse hooks don't execute
-**Cause**: Invalid JSON in settings.json, incorrect matcher, or script not executable
-**Solution**:
+### 問題: フックが発火しない
+**症状**: PreCommit や PreToolUse フックが実行されない  
+**原因**: settings.json の JSON が不正、matcher が不適切、スクリプトに実行権限がない  
+**対処**:
 ```bash
-# Validate JSON syntax
+# JSON 構文チェック
 python -m json.tool .claude/settings.json
 
-# Check hook script permissions
+# フックスクリプト権限を確認
 ls -la hooks/security_check.py
 
-# Make script executable
+# 実行権限付与
 chmod +x hooks/security_check.py
 
-# Test hook directly
+# フックを直接テスト
 python hooks/security_check.py test_file.py < test_file.py
 
-# Check Claude Code hook logs
+# Claude Code のフックログを確認
 cat ~/.claude/logs/hooks.log
 ```
 
-### Problem: Team Settings Not Applied
-**Symptoms**: Team members don't have required plugins automatically
-**Cause**: settings.json not committed, wrong location, or cache issue
-**Solution**:
+### 問題: チーム設定が適用されない
+**症状**: チームメンバーに必須プラグインが自動導入されない  
+**原因**: settings.json がコミットされていない、配置場所が違う、キャッシュ問題  
+**対処**:
 ```bash
-# Verify settings.json is in correct location
+# settings.json の場所を確認
 ls -la .claude/settings.json
 
-# Check settings.json is committed to git
+# git にコミットされているか確認
 git ls-files .claude/settings.json
 
-# Have team members pull latest
+# 最新を取得してもらう
 git pull origin main
 
-# Clear local plugin cache
+# ローカルプラグインキャッシュ削除
 rm -rf ~/.claude/plugins/cache
 
-# Trigger plugin installation
+# インストールを促す
 claude /plugin list
 ```
 
-### Problem: Plugin Conflicts
-**Symptoms**: Multiple plugins with same agent/command names
-**Cause**: Overlapping functionality from different plugins
-**Solution**:
+### 問題: プラグインの競合
+**症状**: 複数プラグインで同名のエージェント／コマンドがある  
+**原因**: 複数プラグインの機能が重複  
+**対処**:
 ```bash
-# List all agents to find conflicts
+# 全エージェントを列挙して競合を確認
 grep -r "name:" ~/.claude/plugins/*/agents/*.md
 
-# Disable conflicting plugin
+# 競合するプラグインを無効化
 /plugin disable conflicting-plugin@marketplace
 
-# Or use fully qualified agent name
+# または完全修飾名で呼び出す
 @epcc-workflow/code-archaeologist
 ```
 
-### Problem: Hook Performance Issues
-**Symptoms**: Commits or file operations are very slow
-**Cause**: Blocking hooks taking too long to execute
-**Solution**:
+### 問題: フックの性能問題
+**症状**: コミットやファイル操作が極端に遅い  
+**原因**: ブロッキングフックの実行時間が長い  
+**対処（例）**:
 ```json
 {
   "hooks": {
@@ -649,52 +652,52 @@ grep -r "name:" ~/.claude/plugins/*/agents/*.md
 }
 ```
 
-**Strategy**: Convert slow hooks to non-blocking (warnings only) or optimize scripts.
+**方針**: 遅いフックは非ブロッキング（警告のみ）にする、またはスクリプトを高速化します。
 
-## Alternative Approaches
+## 代替アプローチ
 
-### For Individual Contributors
-If you're working solo and don't need team enforcement:
+### 個人コントリビューター向け
+ソロで作業し、チーム強制が不要な場合：
 
-**Approach**: Install plugins globally for personal use
-**Pros**:
-- Available across all projects
-- No project configuration needed
-- Easy to experiment
+**アプローチ**: 個人用途としてグローバルにプラグインをインストール  
+**長所**:
+- すべてのプロジェクトで利用できる
+- プロジェクトごとの設定が不要
+- 試行錯誤が容易
 
-**Cons**:
-- Team members won't have same setup
-- Manual updates required
+**短所**:
+- チームメンバーは同じ設定にならない
+- 更新が手動になる
 
-**When to use**: Personal projects, exploration, learning
+**利用場面**: 個人プロジェクト、探索、学習
 
-**How to implement**:
+**実装方法**:
 ```bash
-# Install to global Claude Code config
+# Claude Code のグローバル設定にインストール
 /plugin install epcc-workflow
-# Plugins available in all projects
+# すべてのプロジェクトで利用可能
 cd ~/any-project
-@code-archaeologist  # Works everywhere
+@code-archaeologist  # どこでも動作
 ```
 
-### For Large Organizations
-For enterprise-scale deployments with hundreds of developers:
+### 大規模組織向け
+数百人規模の開発者がいるエンタープライズ導入の場合：
 
-**Approach**: Central plugin configuration with organizational defaults
-**Pros**:
-- Consistent tooling across organization
-- Centralized updates and security
-- Audit and compliance tracking
+**アプローチ**: 組織デフォルトとして中央集約のプラグイン設定  
+**長所**:
+- 組織全体でツールの一貫性を確保
+- 更新とセキュリティを中央で管理
+- 監査／コンプライアンス追跡に寄与
 
-**Cons**:
-- Requires infrastructure setup
-- Less flexibility for individual teams
+**短所**:
+- インフラ整備が必要
+- チーム個別の柔軟性は低下
 
-**When to use**: Enterprise environments with security/compliance requirements
+**利用場面**: セキュリティ／コンプライアンス要件があるエンタープライズ環境
 
-**How to implement**:
+**実装方法（例）**:
 ```bash
-# Create organizational settings template
+# 組織の設定テンプレートを作成
 # .claude/org-defaults.json
 {
   "requiredMarketplaces": [
@@ -717,24 +720,24 @@ For enterprise-scale deployments with hundreds of developers:
   }
 }
 
-# Distribute to teams via git template or CI/CD
+# git テンプレートや CI/CD でチームに配布
 git clone git@github.com:company/project-template.git
 cd project-template
 cp .claude/org-defaults.json my-new-project/.claude/settings.json
 ```
 
-### For Plugin Development
-If you need custom functionality not in marketplace:
+### プラグイン開発向け
+マーケットプレイスにない機能が必要な場合：
 
-**Approach**: Create custom plugins alongside marketplace plugins
-**Pros**: Extend functionality for specific needs
-**Cons**: Maintenance burden, need plugin development skills
+**アプローチ**: マーケットプレイスプラグインと並行してカスタムプラグインを作成  
+**長所**: 独自要件に合わせて拡張できる  
+**短所**: 保守負担が増え、プラグイン開発スキルが必要
 
-**When to use**: Unique workflows or proprietary tools
+**利用場面**: 固有のワークフローや社内専用ツールが必要な場合
 
-**How to implement**:
+**実装方法（例）**:
 ```bash
-# Use both marketplace and local plugins
+# マーケットプレイスとローカルプラグインを併用
 # .claude/settings.json
 {
   "requiredMarketplaces": [
@@ -751,37 +754,37 @@ If you need custom functionality not in marketplace:
 }
 ```
 
-## Best Practices
+## ベストプラクティス
 
-**Plugin Selection**:
-- Start with Starter Bundle, expand as needed
-- Install only plugins you'll actively use
-- Review plugin documentation before installing
+**プラグイン選定**:
+- Starter Bundle から始め、必要に応じて拡張する
+- 実際に使うプラグインだけを導入する
+- 導入前にプラグインドキュメントを確認する
 
-**Configuration Management**:
-- Commit `.claude/settings.json` to version control
-- Document plugin choices in project README
-- Use consistent configuration across team projects
+**設定管理**:
+- `.claude/settings.json` をバージョン管理にコミットする
+- プラグイン選定理由をプロジェクト README に記載する
+- チームの複数プロジェクトで一貫した設定を使う
 
-**Security**:
-- Always enable security plugin for production projects
-- Review hook scripts before using them
-- Keep plugins updated for security patches
+**セキュリティ**:
+- 本番プロジェクトでは常に security プラグインを有効化する
+- フックスクリプトは使用前にレビューする
+- セキュリティパッチのためにプラグインを最新化する
 
-**Performance**:
-- Use non-blocking hooks for warnings
-- Optimize hook scripts for speed
-- Disable unused plugins rather than uninstalling
+**パフォーマンス**:
+- 警告用途には非ブロッキングフックを使う
+- フックスクリプトを高速化する
+- 未使用プラグインはアンインストールではなく無効化する
 
-**Team Configuration**:
-- **DO commit `.claude/settings.json`** to version control for consistency
-- **DO use `requiredMarketplaces`** to specify plugin sources explicitly
-- **DO document why plugins are required** (add `description` field explaining team standards)
-- **DO keep the list focused** - Start with 3-7 essential plugins, expand as needed
-- **DON'T require too many plugins** - Consider onboarding experience and performance
-- **DON'T mix personal preferences with team requirements** - Use `requiredPlugins` for team standards only
+**チーム設定**:
+- 一貫性のため、**`.claude/settings.json` を必ずコミットする**
+- プラグインの入手元を明示するため、**`requiredMarketplaces` を使用する**
+- **なぜプラグインが必須なのかを記録する**（チーム標準を説明する `description` フィールドを追加）
+- **リストは絞る** — 最初は 3～7 個の必須プラグインから始め、必要に応じて拡張
+- **必須プラグインを増やしすぎない** — オンボーディング体験と性能を考慮
+- **個人の好みをチーム要件に混ぜない** — `requiredPlugins` はチーム標準のみに使う
 
-**Example with documentation:**
+**説明付きの例:**
 ```json
 {
   "description": "Team standards: EPCC for consistency, security for compliance",
@@ -793,14 +796,14 @@ If you need custom functionality not in marketplace:
 }
 ```
 
-## Related Tasks
+## 関連タスク
 
-- [Getting Started with EPCC Workflow](../tutorials/getting-started-epcc-workflow.md) - Learn systematic development
-- [Documentation Hub](../README.md) - Complete documentation index
+- [EPCC ワークフローを始める](../tutorials/getting-started-epcc-workflow.md) - 体系的な開発を学ぶ
+- [ドキュメントハブ](../README.md) - ドキュメント索引
 
-## Further Reading
+## さらに読む
 
-- **New to Claude Code?** Start with [Getting Started Guide](https://docs.claude.com/claude-code) →
-- **Need plugin specifications?** Check [Plugin Reference](https://docs.claude.com/claude-code/plugins-reference) →
-- **All plugin details**: See [Main README](../../README.md#available-plugins) →
-- **More documentation**: Visit [Documentation Hub](../README.md) →
+- **Claude Code が初めての方**: [Getting Started Guide](https://docs.claude.com/claude-code) →
+- **プラグイン仕様が必要な方**: [Plugin Reference](https://docs.claude.com/claude-code/plugins-reference) →
+- **プラグインの全詳細**: [Main README](../../README.md#available-plugins) →
+- **追加ドキュメント**: [Documentation Hub](../README.md) →

@@ -1,219 +1,219 @@
-# Claude Code Quota Monitoring
+# Claude Code クォータ監視
 
-Quota monitoring tracks user token consumption and sends automated alerts when usage thresholds are exceeded, helping administrators manage costs and prevent unexpected overages.
+クォータ監視はユーザーのトークン消費量を追跡し、使用量のしきい値を超えた場合に自動アラートを送信します。これにより管理者はコスト管理を行いやすくなり、想定外の超過を防止できます。
 
-## Overview
+## 概要
 
-The quota monitoring system is an optional CloudFormation stack that integrates with the dashboard stack to track monthly token consumption per user and send SNS alerts at configurable thresholds.
+クォータ監視システムは、ダッシュボードスタックと統合して、ユーザーごとの月次トークン消費を追跡し、設定可能なしきい値で SNS アラートを送る **任意の CloudFormation スタック**です。
 
-### Key Features
+### 主な機能
 
-- **Per-user token tracking**: Monthly and daily consumption monitoring for each authenticated user
-- **Fine-grained quota policies**: Set limits at user, group, or default levels with precedence rules
-- **Multiple limit types**: Monthly tokens and daily tokens
-- **Configurable thresholds**: Alerts at 80%, 90%, and 100% of limits
-- **JWT group integration**: Automatically extract group membership from identity provider claims
-- **Alert deduplication**: One alert per threshold per limit type per user per period
-- **DynamoDB storage**: Efficient tracking with automatic TTL cleanup
+- **ユーザー別トークン追跡**: 認証済みユーザーごとに、月次／日次の消費量を監視
+- **細粒度のクォータポリシー**: user / group / default の各レベルで上限を設定し、優先規則で解決
+- **複数の上限タイプ**: 月次トークンと日次トークン
+- **しきい値の設定**: 上限の 80%／90%／100% でアラート
+- **JWT グループ統合**: IdP クレームからグループ所属を自動抽出
+- **アラート重複排除**: ユーザー×期間×上限タイプ×しきい値ごとに 1 回のみ送信
+- **DynamoDB で保存**: TTL による自動クリーンアップで効率的に追跡
 
-### Architecture Components
+### アーキテクチャ構成要素
 
-- **UserQuotaMetrics Table**: DynamoDB table storing monthly/daily usage totals with token type breakdown
-- **QuotaPolicies Table**: DynamoDB table storing fine-grained quota policies (user/group/default)
-- **Quota Monitor Lambda**: Scheduled function checking thresholds every 15 minutes
-- **SNS Topic**: Alert delivery to administrators
-- **EventBridge Rule**: Lambda scheduling
-- **Metrics Aggregator Integration**: Updates quota table during metric processing
+- **UserQuotaMetrics テーブル**: DynamoDB。月次／日次の使用合計（トークン種別内訳も）を保存
+- **QuotaPolicies テーブル**: DynamoDB。細粒度ポリシー（user/group/default）を保存
+- **Quota Monitor Lambda**: 15 分ごとにしきい値をチェックするスケジュール関数
+- **SNS トピック**: 管理者向けアラート配信
+- **EventBridge ルール**: Lambda のスケジューリング
+- **Metrics Aggregator 連携**: メトリクス処理中にクォータテーブルを更新
 
-## Configuration
+## 設定
 
-> **Prerequisites**: Monitoring must be enabled and the dashboard stack deployed. See the [CLI Reference](CLI_REFERENCE.md#deploy---deploy-infrastructure) for deployment details.
+> **前提条件**: モニタリングが有効で、dashboard スタックがデプロイ済みである必要があります。デプロイ詳細は [CLI Reference](CLI_REFERENCE.md#deploy---deploy-infrastructure) を参照してください。
 
-During `ccwb init`, quota monitoring is **enabled by default** when monitoring is enabled. You'll be prompted to configure:
-- Monthly token limit per user (default: 225 million tokens)
-- Automatic threshold calculation (80% warning at 180M, 90% critical at 202.5M)
-- Daily token limit with burst buffer (auto-calculated from monthly)
-- Enforcement modes for daily and monthly limits
+`ccwb init` 実行時、モニタリングが有効であればクォータ監視は **既定で有効**です。次を設定するよう促されます。
+- ユーザーごとの月次トークン上限（既定: 2 億 2,500 万トークン）
+- しきい値の自動算出（例: 80% 警告は 180M、90% クリティカルは 202.5M）
+- バーストバッファ付き日次トークン上限（月次から自動算出）
+- 日次／月次の上限に対する強制モード
 
-Deploy using `poetry run ccwb deploy` (deploys all enabled stacks) or `poetry run ccwb deploy quota` for just the quota stack. The OIDC configuration is automatically passed from your profile settings. For complete deployment instructions, see the [CLI Reference](CLI_REFERENCE.md#deploy---deploy-infrastructure).
+デプロイは `poetry run ccwb deploy`（有効スタックを一括デプロイ）または `poetry run ccwb deploy quota`（クォータスタックのみ）で行います。OIDC 設定はプロファイル設定から自動的に引き渡されます。完全な手順は [CLI Reference](CLI_REFERENCE.md#deploy---deploy-infrastructure) を参照してください。
 
-## Configuration Settings
+## 設定パラメータ
 
-| Parameter               | Default     | Description                                    |
-| ----------------------- | ----------- | ---------------------------------------------- |
-| MonthlyTokenLimit       | 225M tokens | Default maximum per user per month             |
-| DailyTokenLimit         | ~8.25M tokens| Daily limit (auto-calculated with burst buffer)|
-| BurstBufferPercent      | 10%         | Daily buffer for usage variation (5-25%)       |
-| MonthlyEnforcementMode  | block       | Block access when monthly limit exceeded       |
-| DailyEnforcementMode    | alert       | Alert only when daily limit exceeded           |
-| Warning Threshold       | 80% (180M)  | First alert level                              |
-| Critical Threshold      | 90% (202.5M)| Second alert level                             |
-| Check Frequency         | 15 minutes  | Lambda execution interval                      |
-| Alert Retention         | 60 days     | DynamoDB TTL for deduplication                 |
-| EnableFinegrainedQuotas | true        | Enable fine-grained policy support             |
+| パラメータ | 既定値 | 説明 |
+| --- | --- | --- |
+| MonthlyTokenLimit | 225M tokens | ユーザー 1 人あたりの月次上限（既定） |
+| DailyTokenLimit | ~8.25M tokens | 日次上限（バーストバッファ付きで自動算出） |
+| BurstBufferPercent | 10% | 日次上限のバッファ率（5～25%） |
+| MonthlyEnforcementMode | block | 月次上限超過時にアクセスをブロック |
+| DailyEnforcementMode | alert | 日次上限超過時はアラートのみ |
+| Warning Threshold | 80% (180M) | 第 1 段階のアラート |
+| Critical Threshold | 90% (202.5M) | 第 2 段階のアラート |
+| Check Frequency | 15 minutes | Lambda 実行間隔 |
+| Alert Retention | 60 days | 重複排除のための DynamoDB TTL |
+| EnableFinegrainedQuotas | true | 細粒度ポリシー対応を有効化 |
 
-To update limits: Re-run `ccwb init` and redeploy with `ccwb deploy quota`.
+上限を更新するには、`ccwb init` を再実行し、`ccwb deploy quota` で再デプロイしてください。
 
-## Daily Limits and Bill Shock Protection
+## 日次上限と請求ショック（bill shock）対策
 
-To prevent unexpected costs from runaway usage, the system auto-calculates a daily limit from your monthly quota with a configurable burst buffer.
+暴走的な利用による想定外コストを防ぐため、本システムは月次クォータから日次上限を自動算出し、バーストバッファを設定できます。
 
-### Why Daily Limits?
+### なぜ日次上限が必要か
 
-Without daily limits, a user could consume their entire monthly quota in just 2-3 days of heavy usage, leading to unexpected costs or blocked access mid-month. Daily limits catch runaway usage within 24 hours while still allowing legitimate work patterns.
+日次上限がないと、ヘビーユースにより月次クォータを 2～3 日で使い切り、想定外コストや月途中のブロックにつながる可能性があります。日次上限は 24 時間以内に異常を検知しつつ、正当な作業パターンも許容します。
 
-### Calculation
+### 算出式
 
 ```
 daily_limit = monthly_limit ÷ 30 × (1 + burst_buffer%)
 ```
 
-Example with 225M monthly limit and 10% burst:
-- Base daily: 225,000,000 ÷ 30 = 7,500,000 tokens/day
-- With 10% burst: 7,500,000 × 1.10 = **8,250,000 tokens/day**
+月次 225M、バースト 10% の例：
+- 基本日次: 225,000,000 ÷ 30 = 7,500,000 tokens/day
+- 10% バースト込み: 7,500,000 × 1.10 = **8,250,000 tokens/day**
 
-### Burst Buffer Guidance
+### バーストバッファの目安
 
-The burst buffer allows for legitimate daily variation above the average:
+バーストバッファは、平均を上回る正当な日次の変動を許容します。
 
-| Buffer | Daily (225M/month) | Use Case |
-|--------|-------------------|----------|
-| 5% (strict)  | 7,875,000 tokens | Tight cost control, heavy days blocked quickly |
-| 10% (default)| 8,250,000 tokens | Balanced protection for typical usage |
-| 25% (flexible)| 9,375,000 tokens | Allows 1.25x average days, catches only extreme spikes |
+| バッファ | 日次（225M/月） | 利用場面 |
+|---|---:|---|
+| 5%（厳格） | 7,875,000 tokens | コスト制御を強め、重い日を早く検知したい |
+| 10%（既定） | 8,250,000 tokens | 一般的利用のバランス重視 |
+| 25%（柔軟） | 9,375,000 tokens | 平均の 1.25 倍程度を許容し、極端なスパイクのみ検知 |
 
-### Enforcement Modes
+### 強制モード
 
-Each limit type can be configured with different enforcement:
+上限タイプごとに強制を切り替えられます。
 
-| Mode | Behavior | Use Case |
-|------|----------|----------|
-| **alert** | Send notifications, allow continued use | Monitoring, soft limits |
-| **block** | Deny credential issuance when exceeded | Hard cost control |
+| モード | 挙動 | 利用場面 |
+|---|---|---|
+| **alert** | 通知のみ。利用は継続可 | 監視・ソフト上限 |
+| **block** | 超過時に認証情報発行を拒否 | 厳格なコスト制御 |
 
-**Recommended defaults:**
-- **Daily**: `alert` - Warn about unusual patterns, don't interrupt work
-- **Monthly**: `block` - Hard stop at budget limit
+**推奨既定:**
+- **日次**: `alert` — 逸脱を警告しつつ作業は止めない
+- **月次**: `block` — 予算上限で確実に停止
 
-### Example Configuration
+### 設定例
 
 ```
-Monthly Limit: 225,000,000 tokens (block)
-Daily Limit:   8,250,000 tokens (alert)
-Burst Buffer:  10%
+月次上限: 225,000,000 tokens（block）
+日次上限:   8,250,000 tokens（alert）
+バースト:  10%
 
-Behavior:
-- Day 1: User consumes 9M tokens → Daily alert sent
-- Day 2: User consumes 8.5M tokens → Daily alert sent
-- Day 3-5: Normal usage (~7M/day) → No alerts
-- Day 15: Monthly usage reaches 180M → 80% warning alert
-- Day 20: Monthly usage reaches 225M → Access blocked
+挙動:
+- 1 日目: 9M tokens → 日次アラート
+- 2 日目: 8.5M tokens → 日次アラート
+- 3～5 日目: 通常（約 7M/日）→ アラートなし
+- 15 日目: 月次 180M 到達 → 80% 警告
+- 20 日目: 月次 225M 到達 → アクセスブロック
 ```
 
-## Fine-Grained Quota Policies
+## 細粒度クォータポリシー
 
-Fine-grained quotas allow administrators to set different limits for different users and groups, with a clear precedence hierarchy.
+細粒度クォータにより、ユーザーやグループごとに異なる上限を設定でき、明確な優先順位で解決されます。
 
-### Policy Types
+### ポリシー種別
 
-1. **User Policies**: Apply to a specific user by email address
-2. **Group Policies**: Apply to all users in a group (from JWT claims)
-3. **Default Policy**: Applies to all users without a more specific policy
+1. **ユーザーポリシー**: メールアドレスで特定ユーザーに適用
+2. **グループポリシー**: グループ所属ユーザー全員に適用（JWT クレーム由来）
+3. **デフォルトポリシー**: より具体的なポリシーがないユーザーに適用
 
-### Policy Precedence
+### 優先順位（precedence）
 
-When determining the effective quota for a user:
+ユーザーの有効クォータを決める際は次の順序です。
 
-1. **User-specific policy** (highest priority): If a policy exists for the user's email, use it
-2. **Group policy** (most restrictive): If user belongs to multiple groups with policies, use the **lowest limit** (most restrictive)
-3. **Default policy**: If no user or group policy applies, use the default
-4. **No policy**: If no policies are defined, usage is **unlimited** (quota monitoring disabled for that user)
+1. **ユーザー固有ポリシー**（最優先）: ユーザーのメールにポリシーがあればそれを適用
+2. **グループポリシー**（最も厳しいもの）: 複数グループに所属し各グループにポリシーがある場合、**最も低い上限**（最も厳格）を適用
+3. **デフォルトポリシー**: user / group がなければデフォルトを適用
+4. **ポリシーなし**: どのポリシーも定義されていない場合、利用は **無制限**（そのユーザーに対するクォータ監視は無効）
 
-### Limit Types
+### 上限タイプ
 
-Each policy can configure two types of limits:
+各ポリシーは 2 種類の上限を設定できます。
 
-| Limit Type           | Description                        | Reset Period     |
-| -------------------- | ---------------------------------- | ---------------- |
-| Monthly Token Limit  | Maximum tokens per calendar month  | 1st of each month|
-| Daily Token Limit    | Maximum tokens per day             | UTC midnight     |
+| 上限タイプ | 説明 | リセット周期 |
+| --- | --- | --- |
+| 月次トークン上限 | 暦月あたりの最大トークン | 毎月 1 日 |
+| 日次トークン上限 | 1 日あたりの最大トークン | UTC 0:00 |
 
-### Managing Policies with CLI
+### CLI によるポリシー管理
 
-Use the `ccwb quota` commands to manage policies:
+ポリシー管理には `ccwb quota` コマンドを使用します。
 
 ```bash
-# Set a user-specific policy
+# ユーザー固有ポリシーを設定
 ccwb quota set-user john.doe@company.com --monthly-limit 500M --daily-limit 20M
 
-# Set a group policy
+# グループポリシーを設定
 ccwb quota set-group engineering --monthly-limit 400M
 
-# Set the default policy for all users
+# 全ユーザーのデフォルトポリシーを設定
 ccwb quota set-default --monthly-limit 225M --daily-limit 8M
 
-# List all policies
+# すべてのポリシーを一覧表示
 ccwb quota list
 ccwb quota list --type group
 
-# Show effective policy for a user
+# 特定ユーザーの有効ポリシーを表示
 ccwb quota show john.doe@company.com --groups "engineering,ml-team"
 
-# View current usage against limits
+# 上限に対する現在使用量を表示
 ccwb quota usage john.doe@company.com
 
-# Delete a policy
+# ポリシーを削除
 ccwb quota delete group engineering
 
-# Temporarily unblock a user who exceeded quota (Phase 2)
+# クォータ超過ユーザーを一時的にブロック解除（Phase 2）
 ccwb quota unblock john.doe@company.com --duration 24h
 ```
 
-### Token Value Shortcuts
+### トークン値のショートカット
 
-The CLI supports human-readable token values:
+CLI は読みやすいトークン表記をサポートします。
 
-- `225M` = 225,000,000 (225 million) - default limit
-- `500K` = 500,000 (500 thousand)
-- `1B` = 1,000,000,000 (1 billion)
+- `225M` = 225,000,000（2 億 2,500 万）— 既定上限
+- `500K` = 500,000（50 万）
+- `1B` = 1,000,000,000（10 億）
 
-### Group Membership from JWT Claims
+### JWT クレームからのグループ所属
 
-The system automatically extracts group membership from JWT token claims:
+本システムは JWT トークンのクレームからグループ所属を自動抽出します。
 
-- `groups`: Standard groups claim
-- `cognito:groups`: Amazon Cognito groups
-- `custom:department`: Custom department claim (treated as a group)
+- `groups`: 標準の groups クレーム
+- `cognito:groups`: Amazon Cognito の groups
+- `custom:department`: カスタム部門クレーム（グループとして扱う）
 
-Configure your identity provider to include group claims in the JWT tokens issued to users.
+IdP が発行する JWT にグループクレームを含めるよう、IdP 側設定を行ってください。
 
-## Alert Management
+## アラート管理
 
-After deployment, subscribe to the SNS topic for notifications:
+デプロイ後、通知を受け取るために SNS トピックを購読（subscribe）します。
 
 ```bash
-# Get topic ARN from stack outputs
+# スタック出力からトピック ARN を取得
 aws cloudformation describe-stacks --stack-name <quota-stack-name> \
   --query 'Stacks[0].Outputs[?OutputKey==`QuotaAlertTopicArn`].OutputValue' \
   --output text
 
-# Subscribe (email, SMS, HTTPS webhook, etc.)
+# 購読（email / SMS / HTTPS webhook など）
 aws sns subscribe --topic-arn <arn> --protocol email --notification-endpoint admin@company.com
 ```
 
-### Alert Types
+### アラート種別
 
-The system sends alerts for two limit types, each with three threshold levels:
+本システムは 2 種類の上限タイプについて、各 3 段階のしきい値でアラートを送ります。
 
-#### Monthly Token Alert
+#### 月次トークンアラート
 
-Sent when monthly token usage exceeds 80%, 90%, or 100% of the monthly limit.
+月次トークン使用量が月次上限の 80%／90%／100% を超えた時に送信されます。
 
-#### Daily Token Alert
+#### 日次トークンアラート
 
-Sent when daily token usage exceeds 80%, 90%, or 100% of the daily limit. Daily alerts can be sent each day (they include the date in the deduplication key).
+日次トークン使用量が日次上限の 80%／90%／100% を超えた時に送信されます。日次アラートは日付を重複排除キーに含むため、日ごとに送信され得ます。
 
-### Sample Alert Content
+### アラート内容の例
 
 ```
 Subject: Claude Code CRITICAL - Monthly Token Quota - 92%
@@ -237,33 +237,33 @@ Projected Monthly Total: 282,272,727 tokens
 This alert is sent once per threshold level per month.
 ```
 
-Alerts are deduplicated - each threshold triggers only once per user per period, with history stored in DynamoDB (60-day TTL).
+アラートは重複排除され、しきい値ごとに「ユーザー×期間」あたり 1 回だけ送信されます。履歴は DynamoDB に保存され（TTL 60 日）、自動的にクリーンアップされます。
 
-## User Notifications
+## ユーザー通知
 
-When users approach or exceed their quota limits, they receive visual notifications in both the terminal and browser.
+ユーザーが上限に近づく／超過すると、ターミナルとブラウザの両方で視覚的通知が表示されます。
 
-### Browser Notification
+### ブラウザ通知
 
-The credential provider opens a browser page showing quota status when:
+credential provider は次の場合に、クォータ状態を示すブラウザページを開きます。
 
-| Condition | Browser Opens? | Access Granted? |
-|-----------|----------------|-----------------|
-| Within quota (<80%) | No | Yes |
-| Warning (80-99%) | Yes (yellow) | Yes |
-| Blocked (100%+) | Yes (red) | No |
+| 条件 | ブラウザが開くか | アクセス許可 |
+|---|---|---|
+| 上限内（<80%） | いいえ | はい |
+| 警告（80～99%） | はい（黄色） | はい |
+| ブロック（100%+） | はい（赤） | いいえ |
 
-The browser page displays:
-- **Status header**: Warning (⚠️) or Blocked (🚫)
-- **Monthly usage**: Progress bar with percentage
-- **Daily usage**: Progress bar with percentage (if daily limits configured)
-- **Message**: Explanation and guidance
+ブラウザページの表示内容：
+- **ステータス見出し**: Warning（⚠️）または Blocked（🚫）
+- **月次使用量**: 進捗バー（% 表示）
+- **日次使用量**: 進捗バー（% 表示、日次上限設定時）
+- **メッセージ**: 説明とガイダンス
 
-### Terminal Output
+### ターミナル出力
 
-In addition to browser notifications, the terminal shows:
+ブラウザ通知に加えて、ターミナルにも表示されます。
 
-**Warning (80%+ usage):**
+**警告（使用率 80%+）:**
 ```
 ============================================================
 QUOTA WARNING
@@ -273,7 +273,7 @@ QUOTA WARNING
 ============================================================
 ```
 
-**Blocked (100%+ usage):**
+**ブロック（使用率 100%+）:**
 ```
 ============================================================
 ACCESS BLOCKED - QUOTA EXCEEDED
@@ -291,74 +291,74 @@ To request an unblock, contact your administrator.
 ============================================================
 ```
 
-### Periodic Quota Re-Check
+### 定期的なクォータ再チェック
 
-By default, quota is re-checked every 30 minutes even when credentials are cached. This closes the enforcement gap where users could continue working for up to 12 hours after being blocked (the credential cache duration).
+既定では、認証情報がキャッシュされている場合でも 30 分ごとにクォータを再チェックします。これにより、ユーザーがブロックされた後も最大 12 時間（認証情報キャッシュ期間）作業を続けられてしまうギャップを縮小します。
 
-Configure during `ccwb init`:
+`ccwb init` で設定します。
 
-| Interval | Check Frequency | Max Enforcement Delay | UX Impact |
-|----------|----------------|----------------------|-----------|
-| 0 | Every request | Immediate | ~200ms per request |
-| 15 | Every 15 min | 15 minutes | Minimal |
-| 30 (default) | Every 30 min | 30 minutes | Imperceptible |
-| 60 | Every hour | 1 hour | None |
+| 間隔 | チェック頻度 | 最大の強制遅延 | UX への影響 |
+|---|---|---|---|
+| 0 | 毎リクエスト | 即時 | リクエストあたり約 200ms |
+| 15 | 15 分ごと | 15 分 | 最小 |
+| 30（既定） | 30 分ごと | 30 分 | ほぼ無視できる |
+| 60 | 1 時間ごと | 1 時間 | なし |
 
-**How it works:**
+**動作:**
 
-1. User requests credentials (cached or fresh)
-2. If last quota check was more than `interval` minutes ago:
-   - Call quota API (~200ms)
-   - Update timestamp
-3. If blocked: Show browser notification, deny credentials
-4. If warning (80%+): Show browser notification, issue credentials
-5. If OK: Issue credentials silently
+1. ユーザーが認証情報を要求（キャッシュ／新規）
+2. 前回のクォータチェックから `interval` 分を超えていれば:
+   - クォータ API を呼び出し（約 200ms）
+   - タイムスタンプ更新
+3. ブロックなら: ブラウザ通知を表示し、認証情報を拒否
+4. 警告（80%+）なら: ブラウザ通知を表示し、認証情報を発行
+5. OK なら: 何も表示せず認証情報を発行
 
-**Trade-offs:**
+**トレードオフ:**
 
-- **Interval = 0** (strictest): Every request checks quota. Adds ~200ms latency to each credential request. Use for strict cost control where immediate enforcement is critical.
-- **Interval = 30** (recommended): Balance between enforcement tightness and user experience. Users are blocked within 30 minutes of exceeding quota.
-- **Interval = 60+** (relaxed): Minimal impact but users may work up to an hour after being blocked.
+- **Interval = 0**（最も厳格）: 毎回クォータをチェック。credential 要求ごとに約 200ms の遅延。即時強制が必須な場合に。
+- **Interval = 30**（推奨）: 強制の厳しさと UX のバランス。上限超過から 30 分以内にブロック。
+- **Interval = 60+**（緩め）: 影響は最小だが、超過後 1 時間程度作業できる可能性。
 
-The check happens in the background when returning cached credentials - users only see a browser notification if their quota status changes.
+キャッシュ返却時にもバックグラウンドでチェックし、ステータスが変わった場合のみブラウザ通知が表示されます。
 
-## Bulk Policy Management
+## ポリシーの一括管理
 
-For organizations with many users, the CLI provides import/export commands to manage policies in bulk.
+ユーザー数が多い組織向けに、CLI は import/export でポリシーを一括管理できます。
 
-### Export Policies
+### ポリシーのエクスポート
 
-Export existing policies to JSON or CSV for backup, audit, or migration:
+バックアップ、監査、移行のため、既存ポリシーを JSON または CSV にエクスポートします。
 
 ```bash
-# Export all policies to JSON
+# 全ポリシーを JSON でエクスポート
 ccwb quota export policies.json
 
-# Export to CSV for spreadsheet editing
+# スプレッドシート編集用に CSV でエクスポート
 ccwb quota export policies.csv
 
-# Export only user policies
+# user ポリシーのみエクスポート
 ccwb quota export users.json --type user
 ```
 
-### Import Policies
+### ポリシーのインポート
 
-Import policies from a file:
+ファイルからポリシーをインポートします。
 
 ```bash
-# Import from CSV, creating new and updating existing
+# CSV からインポート（新規作成＋既存更新）
 ccwb quota import users.csv --update
 
-# Preview changes without applying
+# 適用せずにプレビュー
 ccwb quota import users.csv --dry-run
 
-# Auto-calculate daily limits (monthly / 30 + burst buffer)
+# 日次上限を自動算出（月次/30 + バーストバッファ）
 ccwb quota import users.csv --auto-daily --burst 15
 ```
 
-### CSV Template
+### CSV テンプレート
 
-Create a CSV file with these columns:
+次の列を持つ CSV を作成します。
 
 ```csv
 type,identifier,monthly_token_limit,daily_token_limit,enforcement_mode,enabled
@@ -368,192 +368,192 @@ group,engineering,500M,25M,alert,true
 default,default,225M,8M,alert,true
 ```
 
-**Required columns:** `type`, `identifier`, `monthly_token_limit`
+**必須列:** `type`, `identifier`, `monthly_token_limit`
 
-**Token format:** Supports `K` (thousands), `M` (millions), `B` (billions), e.g., `300M` = 300,000,000 tokens
+**トークン形式:** `K`（千）、`M`（百万）、`B`（十億）をサポート。例: `300M` = 300,000,000 tokens
 
-### Typical Workflow
+### 典型的な運用フロー
 
-1. **Initial setup from HR system:**
+1. **人事システムから初期投入:**
    ```bash
-   # Export user list from HR, create CSV
+   # HR からユーザー一覧を出し、CSV を作る
    ccwb quota import users.csv --auto-daily --update
    ```
 
-2. **Backup before changes:**
+2. **変更前のバックアップ:**
    ```bash
    ccwb quota export backup-$(date +%Y%m%d).json
    ```
 
-3. **Cross-environment sync:**
+3. **環境間同期:**
    ```bash
-   # Export from staging
+   # staging からエクスポート
    ccwb quota export policies.json --profile staging
 
-   # Import to production
+   # production にインポート
    ccwb quota import policies.json --profile production --update
    ```
 
-See [CLI Reference](CLI_REFERENCE.md#quota-export---export-policies) for full documentation.
+詳細は [CLI Reference](CLI_REFERENCE.md#quota-export---export-policies) を参照してください。
 
-## Troubleshooting
+## トラブルシューティング
 
-### Quick Checks
+### クイックチェック
 
 ```bash
-# View Lambda logs
+# Lambda ログを確認
 aws logs tail /aws/lambda/claude-code-quota-monitor --follow
 
-# Query user quotas
+# ユーザークォータを照会
 aws dynamodb scan --table-name UserQuotaMetrics \
   --projection-expression "email, total_tokens, daily_tokens"
 
-# List quota policies
+# クォータポリシー一覧
 aws dynamodb scan --table-name QuotaPolicies \
   --filter-expression "sk = :current" \
   --expression-attribute-values '{":current": {"S": "CURRENT"}}'
 ```
 
-### Common Issues
+### よくある問題
 
-- **No alerts**: Verify SNS subscriptions are confirmed and EventBridge rule is enabled
-- **Missing users**: Check JWT tokens include email claim
-- **Wrong policy applied**: Verify group claims are present in JWT tokens
-- **Groups not detected**: Check that `ENABLE_FINEGRAINED_QUOTAS` is set to `true`
+- **アラートが来ない**: SNS 購読が承認済みであること、EventBridge ルールが有効であることを確認
+- **ユーザーが欠ける**: JWT トークンに email クレームが含まれているか確認
+- **誤ったポリシーが適用される**: JWT にグループクレームが入っているか確認
+- **グループが検出されない**: `ENABLE_FINEGRAINED_QUOTAS` が `true` か確認
 
-For detailed monitoring setup, see the [Monitoring Guide](MONITORING.md).
+モニタリング全体の詳細は [Monitoring Guide](MONITORING.md) を参照してください。
 
-## Cost Considerations
+## コスト面の考慮
 
-**Estimated monthly costs for <1000 users: $2-10**
-- Lambda: ~2,880 invocations x $0.0000002 = $0.58
-- DynamoDB: Pay-per-request for user count x 2,880 operations
-- SNS: $0.50 per million notifications
-- CloudWatch Logs: Standard retention pricing
-- QuotaPolicies table: Minimal cost (policies rarely change)
+**1000 ユーザー未満の月額想定: $2～$10**
+- Lambda: 約 2,880 回 × $0.0000002 = $0.58
+- DynamoDB: ユーザー数 × 2,880 操作の従量課金
+- SNS: 通知 100 万件あたり $0.50
+- CloudWatch Logs: 標準保持の料金
+- QuotaPolicies テーブル: ほぼ無視できる（ポリシーは頻繁に変わらない）
 
-## Data Schema
+## データスキーマ
 
-### UserQuotaMetrics Table
+### UserQuotaMetrics テーブル
 
-**User Totals**: `PK: USER#{email}`, `SK: MONTH#{YYYY-MM}`
-- Attributes: `total_tokens`, `daily_tokens`, `daily_date`, `input_tokens`, `output_tokens`, `cache_tokens`, `groups`, `last_updated`, `email`
-- TTL: End of following month
+**ユーザー合計**: `PK: USER#{email}`, `SK: MONTH#{YYYY-MM}`
+- 属性: `total_tokens`, `daily_tokens`, `daily_date`, `input_tokens`, `output_tokens`, `cache_tokens`, `groups`, `last_updated`, `email`
+- TTL: 翌月末
 
-**Alert History**: `PK: ALERTS`, `SK: {YYYY-MM}#ALERT#{email}#{type}#{level}[#{date}]`
-- Attributes: `sent_at`, `alert_type`, `alert_level`, `usage_at_alert`, `policy_info`
-- TTL: 60 days
+**アラート履歴**: `PK: ALERTS`, `SK: {YYYY-MM}#ALERT#{email}#{type}#{level}[#{date}]`
+- 属性: `sent_at`, `alert_type`, `alert_level`, `usage_at_alert`, `policy_info`
+- TTL: 60 日
 
-### QuotaPolicies Table
+### QuotaPolicies テーブル
 
-**Policy Records**: `PK: POLICY#{type}#{identifier}`, `SK: CURRENT`
-- Attributes: `policy_type`, `identifier`, `monthly_token_limit`, `daily_token_limit`, `warning_threshold_80`, `warning_threshold_90`, `enforcement_mode`, `enabled`, `created_at`, `updated_at`, `created_by`
+**ポリシーレコード**: `PK: POLICY#{type}#{identifier}`, `SK: CURRENT`
+- 属性: `policy_type`, `identifier`, `monthly_token_limit`, `daily_token_limit`, `warning_threshold_80`, `warning_threshold_90`, `enforcement_mode`, `enabled`, `created_at`, `updated_at`, `created_by`
 
 **GSI: PolicyTypeIndex**
-- PK: `policy_type` (user, group, default)
+- PK: `policy_type`（user / group / default）
 - SK: `identifier`
-- Enables efficient queries like "list all group policies"
+- 「全 group ポリシー一覧」などの効率的クエリに使用
 
-## Migration from Basic Quotas
+## 基本クォータからの移行
 
-If you're upgrading from the basic quota system (single global limit):
+基本クォータ（単一のグローバル上限）からアップグレードする場合:
 
-1. Deploy the updated CloudFormation stack (adds QuotaPolicies table)
-2. Existing UserQuotaMetrics data continues working (new fields are nullable)
-3. Set `EnableFinegrainedQuotas: true` in stack parameters
-4. Optionally create a default policy to maintain previous behavior:
+1. 更新された CloudFormation スタックをデプロイ（QuotaPolicies テーブルが追加されます）
+2. 既存の UserQuotaMetrics データは引き続き動作（新フィールドは nullable）
+3. スタックパラメータで `EnableFinegrainedQuotas: true` を設定
+4. 必要なら、従来挙動を維持するためデフォルトポリシーを作成:
    ```bash
    ccwb quota set-default --monthly-limit 225M
    ```
-5. Gradually add group/user policies as needed
+5. 必要に応じて group/user ポリシーを段階的に追加
 
-**No breaking changes** - this is an enhancement that's opt-in through policy creation.
+**破壊的変更なし** — これはポリシー作成により opt-in できる拡張です。
 
-## Access Blocking (Phase 2)
+## アクセスブロック（Phase 2）
 
-When `enforcement_mode` is set to `"block"` for a policy, the system will deny credential issuance when a user exceeds their quota limits.
+ポリシーの `enforcement_mode` が `"block"` の場合、ユーザーが上限を超えると認証情報の発行を拒否します。
 
-### How Blocking Works
+### ブロックの仕組み
 
-1. **Quota Check API**: A real-time API endpoint checks user quota before credential issuance
-2. **Enforcement Point**: The credential provider calls the quota check API after OIDC authentication
-3. **Block Triggers**: Access is blocked when:
-   - Monthly token usage ≥ monthly_token_limit
-   - Daily token usage ≥ daily_token_limit (if configured)
+1. **Quota Check API**: 認証情報発行前に、ユーザークォータをリアルタイムに検査する API エンドポイント
+2. **強制ポイント**: credential provider が OIDC 認証後に Quota Check API を呼び出す
+3. **ブロック条件**: 次を満たすとブロック
+   - 月次使用量 ≥ `monthly_token_limit`
+   - 日次使用量 ≥ `daily_token_limit`（設定されている場合）
 
-### Configuring Blocking
+### ブロッキングの設定
 
-Enable blocking for a policy:
+ポリシーに block を設定します。
 
 ```bash
-# Set user policy with blocking enabled
+# user ポリシーを block で設定
 ccwb quota set-user john.doe@company.com --monthly-limit 10M --enforcement block
 
-# Set group policy with blocking
+# group ポリシーを block で設定
 ccwb quota set-group engineering --monthly-limit 50M --enforcement block
 
-# Set default with blocking
+# default を block で設定
 ccwb quota set-default --monthly-limit 225M --enforcement block
 ```
 
-### Admin Override (Unblock)
+### 管理者による上書き（unblock）
 
-Administrators can temporarily unblock users who have exceeded their quota:
+クォータ超過ユーザーを一時的に解除できます。
 
 ```bash
-# Unblock for 24 hours (default)
+# 24 時間（既定）
 ccwb quota unblock john.doe@company.com
 
-# Unblock for 7 days
+# 7 日
 ccwb quota unblock john.doe@company.com --duration 7d
 
-# Unblock until end of month (quota reset)
+# 月末（リセット）まで
 ccwb quota unblock john.doe@company.com --duration until-reset
 
-# With reason
+# 理由付き
 ccwb quota unblock john.doe@company.com --duration 24h --reason "Urgent project deadline"
 ```
 
-The unblock record expires automatically and is cleaned up by DynamoDB TTL.
+unblock レコードは期限切れ後、DynamoDB TTL により自動削除されます。
 
-### Error Handling: Fail-Open vs Fail-Closed
+### エラーハンドリング: フェイルオープン vs フェイルクローズ
 
-By default, the system uses **fail-open** behavior - if the quota check API is unavailable, access is allowed. This prevents service disruptions due to network issues.
+既定では **fail-open**（クォータチェック API が落ちている場合は許可）です。ネットワーク問題で業務が止まることを防ぎます。
 
-Configure fail mode in your profile config:
+プロファイル設定で変更できます。
 
 ```json
 {
-  "quota_fail_mode": "open"   // Allow on error (default)
-  // OR
-  "quota_fail_mode": "closed" // Deny on error (stricter)
+  "quota_fail_mode": "open"   // エラー時に許可（既定）
+  // または
+  "quota_fail_mode": "closed" // エラー時に拒否（より厳格）
 }
 ```
 
-The 15-minute Lambda monitoring job continues to run regardless, so alerts will still be sent even if real-time checks fail.
+15 分ごとの Lambda 監視ジョブは独立して動作するため、リアルタイムチェックが失敗してもアラート送信は継続されます。
 
 ### Quota Check API
 
-The Quota Check API is a secured HTTP endpoint that validates user quotas before credential issuance.
+Quota Check API は、認証情報発行前にユーザーのクォータを検査する保護された HTTP エンドポイントです。
 
-#### API Security
+#### API のセキュリティ
 
-The API requires JWT authentication using your OIDC provider's tokens:
+API は OIDC プロバイダーのトークンを使った JWT 認証を必須とします。
 
-- **Authentication**: JWT token in `Authorization: Bearer <token>` header
-- **Validation**: API Gateway JWT Authorizer validates the token against your OIDC provider
-- **User Identity**: Email and group membership extracted from validated JWT claims (no query parameters)
+- **認証**: `Authorization: Bearer <token>` ヘッダーの JWT
+- **検証**: API Gateway の JWT Authorizer が OIDC プロバイダーに対してトークンを検証
+- **ユーザー識別**: 検証済み JWT クレームから email と group を抽出（クエリパラメータは使わない）
 
-This ensures:
-- Only authenticated users can check quotas
-- User identity cannot be spoofed (claims come from validated JWT)
-- No additional credentials needed (uses same OIDC token from auth flow)
+これにより以下が保証されます。
+- 認証済みユーザーのみがクォータチェック可能
+- ユーザー ID を偽装できない（検証済みクレーム由来）
+- 追加の認証情報が不要（認証フローの同一 OIDC トークンを利用）
 
-#### Deployment Configuration
+#### デプロイ設定
 
-When using `ccwb deploy quota`, the OIDC configuration is **automatically passed** from your profile settings (configured during `ccwb init`). No manual parameter configuration is required.
+`ccwb deploy quota` を使う場合、OIDC 設定は `ccwb init` で設定したプロファイルから **自動的に引き渡される**ため、手動のパラメータ指定は不要です。
 
-For manual CloudFormation deployments, provide your OIDC configuration:
+CloudFormation を手動デプロイする場合は、OIDC 設定を渡します。
 
 ```bash
 aws cloudformation deploy \
@@ -565,20 +565,20 @@ aws cloudformation deploy \
     # ... other parameters
 ```
 
-The OIDC parameters must match your credential provider configuration:
-- `OidcIssuerUrl`: Your identity provider's issuer URL (e.g., `https://company.okta.com` for Okta)
-- `OidcClientId`: The client ID configured in your identity provider
+OIDC パラメータは credential provider の設定と一致している必要があります。
+- `OidcIssuerUrl`: IdP の issuer URL（Okta 例: `https://company.okta.com`）
+- `OidcClientId`: IdP で設定した Client ID
 
-After deploying, get the API endpoint from stack outputs:
+デプロイ後、スタック出力から API エンドポイントを取得します。
 
 ```bash
-# Get quota check API endpoint
+# Quota Check API エンドポイントを取得
 aws cloudformation describe-stacks --stack-name <quota-stack-name> \
   --query 'Stacks[0].Outputs[?OutputKey==`QuotaCheckApiEndpoint`].OutputValue' \
   --output text
 ```
 
-Configure the endpoint in your credential provider config.json:
+credential provider の config.json にエンドポイントを設定します。
 
 ```json
 {
@@ -590,45 +590,45 @@ Configure the endpoint in your credential provider config.json:
 }
 ```
 
-#### API Responses
+#### API 応答
 
-| Scenario | HTTP Status | Response |
-|----------|-------------|----------|
-| No/invalid JWT | 401 | Unauthorized (API Gateway rejects) |
-| Valid JWT, quota OK | 200 | `{"allowed": true, ...}` |
-| Valid JWT, quota exceeded | 200 | `{"allowed": false, "reason": "monthly_exceeded", ...}` |
-| Valid JWT, missing email claim | 200 | `{"allowed": true, "reason": "missing_email_claim"}` (fail-open) |
+| シナリオ | HTTP ステータス | 応答 |
+|---|---:|---|
+| JWT なし／不正 | 401 | Unauthorized（API Gateway が拒否） |
+| JWT 有効、クォータ OK | 200 | `{"allowed": true, ...}` |
+| JWT 有効、クォータ超過 | 200 | `{"allowed": false, "reason": "monthly_exceeded", ...}` |
+| JWT 有効、email クレームなし | 200 | `{"allowed": true, "reason": "missing_email_claim"}`（fail-open） |
 
-### Enforcement Timing
+### 強制のタイミング
 
-**Important**: Quota enforcement only occurs at credential issuance time, not during an active session.
+**重要**: クォータ強制は「認証情報の発行時」にのみ行われ、アクティブセッション中には行われません。
 
-If a user exceeds their quota mid-session, they can continue using Claude Code until their credentials expire and they need to re-authenticate. At that point, the quota check will block access.
+ユーザーがセッション中にクォータを超過した場合でも、認証情報が期限切れになって再認証が必要になるまで、Claude Code を使い続けられます。その時点でクォータチェックによりアクセスがブロックされます。
 
-#### Example Timeline (12-hour session)
+#### タイムライン例（12 時間セッション）
 
 ```
-09:00 - User authenticates, quota check passes (at 50% of limit)
-09:00 - AWS credentials issued, valid for 12 hours
-15:00 - User exceeds 100% of monthly quota
-15:01 - User CONTINUES working (credentials still valid)
-21:00 - Credentials expire, user must re-authenticate
-21:00 - Quota check BLOCKS access (enforcement finally applied)
+09:00 - ユーザーが認証、クォータチェック通過（上限の 50%）
+09:00 - AWS 認証情報発行（12 時間有効）
+15:00 - 月次クォータ 100% 超過
+15:01 - それでも作業は継続（認証情報がまだ有効）
+21:00 - 認証情報期限切れ、再認証が必要
+21:00 - クォータチェックでアクセスをブロック（ここで初めて強制）
 ```
 
-In this scenario, there's a 6-hour gap between exceeding the quota (15:00) and enforcement (21:00).
+この例では、超過（15:00）から強制（21:00）まで 6 時間のギャップがあります。
 
-#### Recommendation for Tight Enforcement
+#### 厳密な強制の推奨
 
-Reduce `max_session_duration` when blocking is enabled:
+ブロックを有効にする場合、`max_session_duration` を短くすることを推奨します。
 
-| Session Duration | Enforcement Gap | Use Case |
-|------------------|-----------------|----------|
-| 12h (default) | Up to 12 hours | Alert-only mode |
-| 4h | Up to 4 hours | Moderate enforcement |
-| 1h (recommended) | Up to 1 hour | Strict cost control |
+| セッション期間 | 強制ギャップ | 利用場面 |
+|---|---|---|
+| 12h（既定） | 最大 12 時間 | alert-only モード |
+| 4h | 最大 4 時間 | 中程度の強制 |
+| 1h（推奨） | 最大 1 時間 | 厳格なコスト制御 |
 
-Configure in your profile:
+プロファイルで設定します。
 
 ```json
 {
@@ -641,25 +641,25 @@ Configure in your profile:
 }
 ```
 
-**Trade-off**: Shorter sessions mean more frequent re-authentication prompts for users, but provide tighter quota enforcement.
+**トレードオフ**: セッションを短くすると再認証が増え、ユーザーのプロンプト表示回数が増えますが、クォータ強制はより厳密になります。
 
-## Current Limitations
+## 現在の制約
 
-- Quotas reset on calendar month/day (UTC timezone)
-- Requires email claim in JWT tokens
-- Group membership requires JWT group claims from identity provider
-- Enforcement only at credential issuance (see [Enforcement Timing](#enforcement-timing) for mitigation)
+- クォータは暦月／日（UTC）でリセットされます
+- JWT に email クレームが必要です
+- グループ所属には IdP からの JWT グループクレームが必要です
+- 強制は認証情報発行時のみ（緩和策は [強制のタイミング](#強制のタイミング) 参照）
 
-## Future Enhancements
+## 今後の拡張
 
-- **Bulk import/export**: Manage policies via JSON files
-- **Quota reporting**: Generate usage reports across all users
+- **一括 import/export**: JSON ファイルでポリシー管理
+- **クォータレポート**: 全ユーザーの使用レポート生成
 
-## Integration Points
+## 統合ポイント
 
-- **Dashboard**: Shares DynamoDB metrics table and OTEL pipeline
-- **Analytics**: Quota data available in Athena queries (see [Analytics Guide](ANALYTICS.md))
-- **External Systems**: SNS topic supports webhooks, Lambda triggers, and third-party integrations
-- **Identity Provider**: Group membership extracted from JWT claims
+- **Dashboard**: DynamoDB のメトリクステーブルと OTEL パイプラインを共有
+- **Analytics**: クォータデータは Athena クエリで利用可能（[Analytics Guide](ANALYTICS.md) 参照）
+- **外部システム**: SNS トピックは webhook、Lambda トリガー、サードパーティ統合をサポート
+- **ID プロバイダー**: グループ所属は JWT クレームから抽出
 
-For complete monitoring setup and general telemetry information, see the [Monitoring Guide](MONITORING.md).
+モニタリングの全体セットアップと一般的なテレメトリ情報は [Monitoring Guide](MONITORING.md) を参照してください。

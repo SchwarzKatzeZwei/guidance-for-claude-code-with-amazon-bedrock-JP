@@ -1,97 +1,97 @@
-# Architecture Diagrams
+# アーキテクチャ図
 
-## 1. Authentication and Credential Flow
+## 1. 認証およびクレデンシャル取得フロー
 
-This diagram shows the complete process for obtaining temporary AWS credentials and using them to access Amazon Bedrock.
+この図は、一時的な AWS 認証情報を取得し、それを使って Amazon Bedrock にアクセスするまでの全プロセスを示します。
 
 ```mermaid
 sequenceDiagram
-    participant Dev as Developer
+    participant Dev as 開発者
     participant CLI as Claude Code CLI
-    participant Cache as Local Credential Cache
-    participant Browser as Web Browser
-    participant OIDC as OIDC Provider<br/>(Okta/Azure AD/Google)
+    participant Cache as ローカル認証情報キャッシュ
+    participant Browser as Web ブラウザ
+    participant OIDC as OIDC プロバイダ<br/>(Okta/Azure AD/Google)
     participant Cognito as AWS Cognito<br/>Identity Pool
     participant STS as AWS STS
     participant Bedrock as Amazon Bedrock
 
     Dev->>CLI: aws bedrock-runtime invoke-model
-    CLI->>Cache: Check for valid credentials
+    CLI->>Cache: 有効な認証情報があるか確認
     
-    alt Credentials not cached or expired
-        Cache-->>CLI: No valid credentials
-        CLI->>Browser: Open auth URL (localhost:8400)
-        Browser->>OIDC: Redirect to OIDC login
-        Dev->>OIDC: Enter credentials + MFA
-        OIDC->>Browser: Return OIDC token
-        Browser->>CLI: Return auth code
-        CLI->>OIDC: Exchange code for ID token
-        OIDC->>CLI: Return ID token
-        CLI->>Cognito: Exchange OIDC token
-        Cognito->>Cognito: Validate OIDC token
+    alt 認証情報が未キャッシュ、または期限切れ
+        Cache-->>CLI: 有効な認証情報なし
+        CLI->>Browser: 認証 URL を開く（localhost:8400）
+        Browser->>OIDC: OIDC ログインへリダイレクト
+        Dev->>OIDC: 資格情報 + MFA を入力
+        OIDC->>Browser: OIDC トークンを返す
+        Browser->>CLI: 認可コードを返す
+        CLI->>OIDC: 認可コードを ID トークンに交換
+        OIDC->>CLI: ID トークンを返す
+        CLI->>Cognito: OIDC トークンを交換
+        Cognito->>Cognito: OIDC トークンを検証
         Cognito->>STS: AssumeRoleWithWebIdentity
-        STS->>Cognito: Return temporary credentials
-        Cognito->>CLI: Return AWS credentials<br/>(AccessKey, SecretKey, SessionToken)
-        CLI->>Cache: Store credentials (8 hours)
-    else Credentials cached and valid
-        Cache-->>CLI: Return cached credentials
+        STS->>Cognito: 一時的な認証情報を返す
+        Cognito->>CLI: AWS 認証情報を返す<br/>(AccessKey, SecretKey, SessionToken)
+        CLI->>Cache: 認証情報を保存（8 時間）
+    else 認証情報がキャッシュ済みで有効
+        Cache-->>CLI: キャッシュ済み認証情報を返す
     end
     
-    CLI->>Bedrock: Invoke model with credentials
-    Bedrock->>Bedrock: Validate IAM permissions
-    Bedrock->>CLI: Return AI response
-    CLI->>Dev: Display response
+    CLI->>Bedrock: 認証情報を用いてモデルを呼び出す
+    Bedrock->>Bedrock: IAM 権限を検証
+    Bedrock->>CLI: AI 応答を返す
+    CLI->>Dev: 応答を表示
 
-    Note over Dev,Bedrock: All credentials are temporary (max 8 hours)<br/>No long-lived API keys are stored
+    Note over Dev,Bedrock: すべての認証情報は一時的（最大 8 時間）<br/>長期的な API キーは保存しない
 ```
 
-## 2. OpenTelemetry Monitoring Architecture
+## 2. OpenTelemetry 監視アーキテクチャ
 
-This diagram illustrates the optional monitoring setup using OpenTelemetry collector on ECS Fargate.
+この図は、ECS Fargate 上の OpenTelemetry Collector を用いた（任意の）監視構成を示します。
 
 ```mermaid
 flowchart TB
-    subgraph "Developer Machines"
+    subgraph "開発者端末"
         CLI1[Claude Code CLI 1]
         CLI2[Claude Code CLI 2]
         CLI3[Claude Code CLI N]
     end
 
-    subgraph "AWS Account"
+    subgraph "AWS アカウント"
         subgraph "ECS Fargate"
-            Collector[OpenTelemetry Collector<br/>Container]
+            Collector[OpenTelemetry Collector<br/>コンテナ]
         end
         
         subgraph "CloudWatch"
-            Metrics[CloudWatch Metrics]
-            Logs[CloudWatch Logs]
-            Dashboard[CloudWatch Dashboard]
-            Alarms[CloudWatch Alarms]
+            Metrics[CloudWatch メトリクス]
+            Logs[CloudWatch ログ]
+            Dashboard[CloudWatch ダッシュボード]
+            Alarms[CloudWatch アラーム]
         end
         
-        subgraph "Storage"
-            S3[S3 Bucket<br/>Log Archive]
+        subgraph "ストレージ"
+            S3[S3 バケット<br/>ログアーカイブ]
         end
     end
 
-    CLI1 -->|OTLP/gRPC<br/>Port 4317| Collector
-    CLI2 -->|OTLP/gRPC<br/>Port 4317| Collector
-    CLI3 -->|OTLP/gRPC<br/>Port 4317| Collector
+    CLI1 -->|OTLP/gRPC<br/>ポート 4317| Collector
+    CLI2 -->|OTLP/gRPC<br/>ポート 4317| Collector
+    CLI3 -->|OTLP/gRPC<br/>ポート 4317| Collector
 
-    Collector -->|Export Metrics| Metrics
-    Collector -->|Export Logs| Logs
-    Collector -->|Export Traces| Logs
+    Collector -->|メトリクスをエクスポート| Metrics
+    Collector -->|ログをエクスポート| Logs
+    Collector -->|トレースをエクスポート| Logs
 
     Metrics --> Dashboard
     Metrics --> Alarms
     Logs --> Dashboard
-    Logs -->|Archive| S3
+    Logs -->|アーカイブ| S3
 
-    Alarms -->|Notify| SNS[SNS Topic<br/>Optional Alerts]
+    Alarms -->|通知| SNS[SNS トピック<br/>任意のアラート]
 
-    Note1[Authentication Metrics:<br/>- Total authentications<br/>- Failed authentications<br/>- Authentication latency<br/>- Active users]
+    Note1[認証メトリクス:<br/>- 認証総数<br/>- 認証失敗数<br/>- 認証レイテンシ<br/>- アクティブユーザー数]
     
-    Note2[Bedrock Usage Metrics:<br/>- API calls by model<br/>- Token usage<br/>- Error rates<br/>- Response times]
+    Note2[Bedrock 利用メトリクス:<br/>- モデル別 API コール数<br/>- トークン使用量<br/>- エラー率<br/>- 応答時間]
 
     style Collector fill:#f9f,stroke:#333,stroke-width:2px
     style Dashboard fill:#9f9,stroke:#333,stroke-width:2px
@@ -99,23 +99,24 @@ flowchart TB
     style Note2 fill:#ffd,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5
 ```
 
-## AWS Architecture Icon Requirements
+## AWS アーキテクチャアイコン要件
 
-For official AWS architecture diagrams (PNG format):
-- Use latest AWS Architecture Icons Toolkit (light background, released 04.28.2023)
-- Service icons ≥0.4"×0.4", grouping icons ≥0.3"×0.3"
-- All icons must have labels at bottom, Arial 9-12pt in black
-- "AWS" or "Amazon" appears in same line as first word of service
-- Solid black arrows (1.25pt width), no diagonal lines
-- No cropping, flipping, or shape modifications allowed
+公式の AWS アーキテクチャ図（PNG 形式）を作成する場合:
 
-## Key Architecture Components
+- AWS Architecture Icons Toolkit の最新版（明るい背景、2023-04-28 リリース）を使用
+- サービスアイコンは 0.4"×0.4" 以上、グルーピング用アイコンは 0.3"×0.3" 以上
+- すべてのアイコンに下部ラベルを付ける（Arial 9〜12pt、黒）
+- サービス名の先頭語と同じ行に "AWS" または "Amazon" を含める
+- 矢印は黒の実線（線幅 1.25pt）、斜め線は使用しない
+- トリミング、反転、形状変更は禁止
 
-1. **Developer Workstation**: Runs Claude Code CLI with local credential caching
-2. **OIDC Provider**: Enterprise identity provider (Okta, Azure AD, Google Workspace)
-3. **Amazon Cognito Identity Pool**: Validates OIDC tokens and manages identity federation
-4. **AWS STS**: Issues temporary credentials via AssumeRoleWithWebIdentity
-5. **Amazon Bedrock**: Target AI service accessed with temporary credentials
-6. **AWS CloudTrail**: Captures all authentication and API access events
-7. **Amazon CloudWatch**: Optional monitoring dashboard and alerting
-8. **Amazon ECS Fargate**: Hosts OpenTelemetry collector for centralized telemetry
+## 主要アーキテクチャ要素
+
+1. **開発者ワークステーション**: Claude Code CLI を実行し、ローカルで認証情報をキャッシュ
+2. **OIDC プロバイダ**: エンタープライズ向け IdP（Okta、Azure AD、Google Workspace）
+3. **Amazon Cognito Identity Pool**: OIDC トークンを検証し、ID フェデレーションを管理
+4. **AWS STS**: AssumeRoleWithWebIdentity により一時的な認証情報を発行
+5. **Amazon Bedrock**: 一時的な認証情報でアクセスする対象 AI サービス
+6. **AWS CloudTrail**: 認証および API アクセスイベントをすべて記録
+7. **Amazon CloudWatch**: （任意）監視ダッシュボードとアラート
+8. **Amazon ECS Fargate**: 集約テレメトリのための OpenTelemetry Collector をホスト

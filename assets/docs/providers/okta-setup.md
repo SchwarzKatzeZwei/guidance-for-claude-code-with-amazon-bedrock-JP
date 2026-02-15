@@ -1,427 +1,426 @@
-# Complete Okta Setup Guide for Amazon Bedrock Integration
+# Amazon Bedrock 連携のための Okta 完全セットアップガイド
 
-This guide walks you through setting up Okta from scratch to work with the AWS Cognito Identity Pool for Bedrock access.
+このガイドでは、Okta をゼロから設定し、Bedrock へのアクセスに使用する AWS Cognito Identity Pool と連携できるようにする手順を説明します。
 
-## Table of Contents
+## 目次
 
-1. [Create Okta Developer Account](#1-create-okta-developer-account)
-2. [Access Admin Console](#2-access-admin-console)
-3. [Create OIDC Application](#3-create-oidc-application)
-4. [Create Test Users](#4-create-test-users)
-5. [Assign Users to Application](#5-assign-users-to-application)
-6. [Collect Required Information](#6-collect-required-information)
-7. [Test the Setup](#7-test-the-setup)
-8. [Quota Monitoring Configuration](#8-quota-monitoring-configuration-optional)
+1. [Okta Developer アカウントを作成する](#1-okta-developer-アカウントを作成する)  
+2. [管理コンソール（Admin Console）にアクセスする](#2-管理コンソールadmin-consoleにアクセスする)  
+3. [OIDC アプリケーションを作成する](#3-oidc-アプリケーションを作成する)  
+4. [テストユーザーを作成する](#4-テストユーザーを作成する)  
+5. [ユーザーをアプリケーションに割り当てる](#5-ユーザーをアプリケーションに割り当てる)  
+6. [必要な情報を収集する](#6-必要な情報を収集する)  
+7. [セットアップをテストする](#7-セットアップをテストする)  
+8. [クォータ監視の設定（任意）](#8-クォータ監視の設定任意)
 
 ---
 
-## 1. Create Okta Developer Account
+## 1. Okta Developer アカウントを作成する
 
-If you don't have an Okta account:
+Okta アカウントがない場合:
 
-1. Go to https://developer.okta.com/signup/
-2. Fill out the registration form:
+1. https://developer.okta.com/signup/ にアクセス
+2. 登録フォームを入力:
    - First Name
    - Last Name
-   - Email (this will be your admin username)
+   - Email（管理者ユーザー名になります）
    - Country
-3. Click **Sign Up**
-4. Check your email for the activation link
-5. Click the activation link and set your password
-6. You'll receive your Okta domain (e.g., `dev-12345678.okta.com`)
+3. **Sign Up** をクリック
+4. メールに届くアクティベーションリンクを確認
+5. リンクをクリックしてパスワードを設定
+6. Okta ドメインが発行されます（例: `dev-12345678.okta.com`）
 
-> **Note**: Save your Okta domain - you'll need it for the CloudFormation parameters!
-
----
-
-## 2. Access Admin Console
-
-1. Log in to your Okta organization at `https://your-domain.okta.com`
-2. Click **Admin** in the top right corner to access the Admin Console
-3. You should see the Dashboard with various menu options on the left
+> **注**: Okta ドメインは CloudFormation パラメータに必要なので必ず控えてください。
 
 ---
 
-## 3. Create OIDC Application
+## 2. 管理コンソール（Admin Console）にアクセスする
 
-### Step 3.1: Start Application Creation
+1. `https://your-domain.okta.com` で Okta 組織にログイン
+2. 右上の **Admin** をクリックして Admin Console を開く
+3. 左側に各種メニューがあるダッシュボードが表示されます
 
-1. In the Admin Console, navigate to **Applications** → **Applications**
-2. Click **Create App Integration** button
-3. Select:
+---
+
+## 3. OIDC アプリケーションを作成する
+
+### 手順 3.1: アプリ作成を開始する
+
+1. Admin Console で **Applications** → **Applications** に移動
+2. **Create App Integration** をクリック
+3. 次を選択:
    - **Sign-in method**: OIDC - OpenID Connect
    - **Application type**: Native Application
-4. Click **Next**
+4. **Next** をクリック
 
-### Step 3.2: Configure Application Settings
+### 手順 3.2: アプリ設定を行う
 
-Fill in the following settings:
+以下の設定を入力します。
 
-#### General Settings
+#### General Settings（一般設定）
 
-- **App integration name**: `Amazon Bedrock CLI Access` (or your preferred name)
-- **Logo**: Optional - you can skip this
+- **App integration name**: `Amazon Bedrock CLI Access`（任意の名前でも可）
+- **Logo**: 任意（スキップ可）
 
-#### Grant Type
+#### Grant Type（グラントタイプ）
 
-Make sure these are checked:
+次にチェックが入っていることを確認:
 
 - ✅ **Authorization Code**
 - ✅ **Refresh Token**
-- ✅ **Resource Owner Password** (optional, for testing)
+- ✅ **Resource Owner Password**（任意、テスト用途）
 
-#### Sign-in Redirect URIs
+#### Sign-in Redirect URIs（サインイン時リダイレクト URI）
 
-Add this exact URI:
+次を **完全に同一** で追加:
 
 ```
 http://localhost:8400/callback
 ```
 
-#### Sign-out Redirect URIs (optional)
+#### Sign-out Redirect URIs（任意）
 
 ```
 http://localhost:8400/logout
 ```
 
-#### Controlled Access
+#### Controlled Access（アクセス制御）
 
-- Select **Allow everyone in your organization to access**
-- Or select **Limit access to selected groups** if you want to restrict access
+- **Allow everyone in your organization to access** を選択  
+  または
+- アクセス制限したい場合は **Limit access to selected groups** を選択
 
-### Step 3.3: Save the Application
+### 手順 3.3: アプリケーションを保存する
 
-1. Click **Save**
-2. You'll be taken to the application settings page
+1. **Save** をクリック
+2. アプリケーションの設定画面に遷移します
 
-### Step 3.4: Note the Client ID
+### 手順 3.4: Client ID を控える
 
-After saving, you'll see:
+保存後、次が表示されます。
 
-- **Client ID**: Something like `0oa1234567890abcde`
-- **Okta domain**: Your domain like `dev-12345678.okta.com`
+- **Client ID**: 例 `0oa1234567890abcde`
+- **Okta domain**: 例 `dev-12345678.okta.com`
 
-> **Important**: Copy the Client ID - you'll need it for the CloudFormation parameters!
+> **重要**: Client ID は CloudFormation パラメータに必要なのでコピーしておいてください。
 
 ---
 
-## 4. Create Test Users
+## 4. テストユーザーを作成する
 
-### Step 4.1: Navigate to Users
+### 手順 4.1: ユーザー管理へ移動する
 
-1. In the Admin Console, go to **Directory** → **People**
-2. Click **Add Person** button
+1. Admin Console で **Directory** → **People**
+2. **Add Person** をクリック
 
-### Step 4.2: Create a Test User
+### 手順 4.2: テストユーザーを作成する
 
-Fill in the form:
+フォームに入力:
 
 - **First name**: Test
 - **Last name**: User
-- **Username**: testuser@example.com (must be email format)
+- **Username**: testuser@example.com（メール形式である必要あり）
 - **Primary email**: testuser@example.com
-- **Password**: Select **Set by admin** and enter a password
-- ✅ **User must change password on first login** (optional)
-- ❌ **Send user activation email now** (uncheck for testing)
+- **Password**: **Set by admin** を選択し、パスワードを設定
+- ✅ **User must change password on first login**（任意）
+- ❌ **Send user activation email now**（テスト用途ならチェックを外す）
 
-Click **Save**
+**Save** をクリックします。
 
-### Step 4.3: Create Additional Users (Optional)
+### 手順 4.3: 追加ユーザー（任意）
 
-Repeat the process to create more test users:
+必要に応じて、次のようなユーザーを同様に追加します。
 
 - `developer1@example.com`
 - `developer2@example.com`
-- etc.
+- など
 
 ---
 
-## 5. Assign Users to Application
+## 5. ユーザーをアプリケーションに割り当てる
 
-### Method 1: From the Application (Recommended)
+### 方法 1: アプリ側から割り当てる（推奨）
 
-1. Go to **Applications** → **Applications**
-2. Click on your **Amazon Bedrock CLI Access** application
-3. Click the **Assignments** tab
-4. Click **Assign** → **Assign to People**
-5. Find your test user(s) in the list
-6. Click **Assign** next to each user
-7. Click **Save and Go Back**
-8. Click **Done**
+1. **Applications** → **Applications**
+2. **Amazon Bedrock CLI Access** アプリをクリック
+3. **Assignments** タブをクリック
+4. **Assign** → **Assign to People**
+5. 一覧からテストユーザーを探す
+6. 各ユーザーの横の **Assign** をクリック
+7. **Save and Go Back** をクリック
+8. **Done** をクリック
 
-### Method 2: From the User Profile
+### 方法 2: ユーザープロファイル側から割り当てる
 
-1. Go to **Directory** → **People**
-2. Click on a user (e.g., `testuser@example.com`)
-3. Click the **Applications** tab
-4. Click **Assign Applications**
-5. Find and select **Amazon Bedrock CLI Access**
-6. Click **Assign**
-7. Click **Save and Go Back**
+1. **Directory** → **People**
+2. ユーザー（例: `testuser@example.com`）をクリック
+3. **Applications** タブをクリック
+4. **Assign Applications** をクリック
+5. **Amazon Bedrock CLI Access** を探して選択
+6. **Assign** をクリック
+7. **Save and Go Back** をクリック
 
 ---
 
-## 6. Collect Required Information
+## 6. 必要な情報を収集する
 
-You now have everything needed for the CloudFormation deployment:
+CloudFormation デプロイに必要な情報は揃いました。
 
-| Parameter        | Your Value       | Example                 |
-| ---------------- | ---------------- | ----------------------- |
-| **OktaDomain**   | Your Okta domain | `dev-12345678.okta.com` |
-| **OktaClientId** | Your Client ID   | `0oa1234567890abcde`    |
+| パラメータ | 値（あなたの環境） | 例 |
+| --- | --- | --- |
+| **OktaDomain** | Okta ドメイン | `dev-12345678.okta.com` |
+| **OktaClientId** | Client ID | `0oa1234567890abcde` |
 
-### Use the values with ccwb init
+### `ccwb init` で値を使用する
 
-When running `poetry run ccwb init`, you'll be prompted for these values:
+`poetry run ccwb init` 実行時に、次の値の入力を求められます。
 
 ```bash
 poetry run ccwb init
 
-# The wizard will ask for:
-# - Okta Domain: dev-12345678.okta.com    (your domain from above)
-# - Client ID: 0oa1234567890abcde         (your Client ID from above)
-# - AWS Region for infrastructure: us-east-1
-# - Bedrock regions: us-east-1,us-west-2
-# - Enable monitoring: Yes/No
+# ウィザードの入力項目:
+# - Okta Domain: dev-12345678.okta.com   （上で控えたドメイン）
+# - Client ID: 0oa1234567890abcde        （上で控えた Client ID）
+# - インフラの AWS リージョン: us-east-1
+# - Bedrock 利用リージョン: us-east-1,us-west-2
+# - 監視を有効化: Yes/No
 ```
 
-The CLI tool will handle all the CloudFormation configuration automatically.
+CLI ツールが CloudFormation の設定を自動で処理します。
 
 ---
 
-## 7. Test the Setup
+## 7. セットアップをテストする
 
-### Step 7.1: Verify Application Settings
+### 手順 7.1: アプリ設定の確認
 
-1. Go back to your application in Okta
-2. Click the **General** tab
-3. Verify:
+1. Okta の対象アプリに戻る
+2. **General** タブを開く
+3. 次を確認:
    - Client authentication: **Use PKCE**
-   - Redirect URIs include: `http://localhost:8400/callback`
-   - Grant types include: Authorization Code and Refresh Token
+   - Redirect URIs に `http://localhost:8400/callback` が含まれる
+   - Grant types に Authorization Code と Refresh Token が含まれる
 
-### Step 7.2: Test User Assignment
+### 手順 7.2: ユーザー割り当てのテスト
 
-1. Go to **Reports** → **System Log**
-2. Look for entries like:
+1. **Reports** → **System Log**
+2. 次のようなログを探します:
    - "User single sign on to app"
    - "Add user to application membership"
-3. These should show **Success** status
+3. いずれも **Success** であることを確認します
 
 ---
 
-## Advanced Configuration (Optional)
+## 高度な設定（任意）
 
-### Enable Refresh Token Rotation
+### Refresh Token Rotation を有効化する
 
-1. In your application, go to **General** tab
-2. Click **Edit** in the General Settings section
-3. Under **Refresh Token**, select:
+1. 対象アプリの **General** タブを開く
+2. General Settings セクションの **Edit** をクリック
+3. **Refresh Token** で次を選択:
    - **Rotate token after every use**
-   - Grace period: **30 seconds** (or your preference)
-4. Click **Save**
+   - Grace period: **30 seconds**（または任意）
+4. **Save** をクリック
 
-### Add Custom Claims (Optional)
+### カスタムクレームを追加する（任意）
 
-If you want to add department or group information:
+部署やグループ情報を追加したい場合:
 
-1. Go to **Security** → **API**
-2. Click on your Authorization Server (usually "default")
-3. Click **Claims** tab
-4. Click **Add Claim**
-5. Configure:
+1. **Security** → **API**
+2. Authorization Server（通常 "default"）をクリック
+3. **Claims** タブをクリック
+4. **Add Claim**
+5. 次のように設定:
    - **Name**: `department`
    - **Include in**: ID Token, Access Token
    - **Value type**: Expression
    - **Value**: `user.department`
-6. Click **Create**
+6. **Create** をクリック
 
-### Set Up Groups (Optional)
+### グループを用意する（任意）
 
-1. Go to **Directory** → **Groups**
-2. Click **Add Group**
+1. **Directory** → **Groups**
+2. **Add Group**
 3. Name: `bedrock-users`
 4. Description: `Users with Amazon Bedrock access`
-5. Add users to this group
-6. Assign the group to your application
+5. ユーザーをこのグループに追加
+6. グループを Bedrock CLI アプリに割り当て
 
 ---
 
-## 8. Quota Monitoring Configuration (Optional)
+## 8. クォータ監視の設定（任意）
 
-If you're using the quota monitoring feature to track and limit user token usage, additional Okta configuration is required.
+クォータ監視機能でユーザーのトークン利用量を追跡・制限する場合、Okta 側で追加設定が必要です。
 
-### Required JWT Scopes
+### 必要な JWT スコープ
 
-The quota monitoring API requires these scopes in your JWT tokens:
+クォータ監視 API は JWT トークン内に以下のスコープを要求します。
 
-| Scope | Required? | Purpose |
-|-------|-----------|---------|
-| `openid` | **Yes** | Base OIDC scope |
-| `email` | **Yes** | User email for quota tracking |
-| `profile` | Recommended | User profile information |
-| `groups` | Optional | Group membership for group-based quotas |
+| スコープ | 必須 | 目的 |
+| --- | --- | --- |
+| `openid` | **必須** | OIDC の基本スコープ |
+| `email` | **必須** | クォータ追跡に使用するユーザー email |
+| `profile` | 推奨 | ユーザープロファイル情報 |
+| `groups` | 任意 | グループ単位クォータに使用 |
 
-> **Note**: The `groups` scope is only needed if you want to use group-based quota policies (e.g., different limits for `engineering` vs `data-science` teams).
+> **注**: `groups` スコープは、`engineering` と `data-science` で上限を変えるなど「グループ単位のクォータポリシー」を使う場合にのみ必要です。
 
-### Adding the Groups Scope
+### `groups` スコープを追加する
 
-1. Go to **Security** → **API** → **Authorization Servers**
-2. Click on your authorization server (usually "default")
-3. Click the **Scopes** tab
-4. Click **Add Scope**
-5. Configure:
+1. **Security** → **API** → **Authorization Servers**
+2. Authorization Server（通常 "default"）をクリック
+3. **Scopes** タブ
+4. **Add Scope**
+5. 設定:
    - **Name**: `groups`
    - **Display phrase**: `Access your group memberships`
    - **Description**: `Allows the app to see your group memberships`
    - **User consent**: `Implicit`
-6. Click **Create**
+6. **Create**
 
-### Configuring the Groups Claim
+### `groups` クレームを設定する
 
-To include group membership in JWT tokens:
+JWT トークンにグループ情報を含めるには:
 
-1. Go to **Security** → **API** → **Authorization Servers**
-2. Click on your authorization server (usually "default")
-3. Click the **Claims** tab
-4. Click **Add Claim**
-5. Configure:
+1. **Security** → **API** → **Authorization Servers**
+2. Authorization Server（通常 "default"）をクリック
+3. **Claims** タブ
+4. **Add Claim**
+5. 設定:
    - **Name**: `groups`
    - **Include in token type**: `ID Token` → `Always`
    - **Value type**: `Groups`
-   - **Filter**: `Matches regex` → `.*` (includes all groups)
-   - **Include in**: `Any scope` (or select specific scopes)
-6. Click **Create**
+   - **Filter**: `Matches regex` → `.*`（全グループを含める）
+   - **Include in**: `Any scope`（または特定スコープ）
+6. **Create**
 
-### Token Lifetime Settings
+### トークン有効期限の設定
 
-Token lifetimes affect how often quota checks occur:
+トークンの有効期限は、クォータチェックの頻度に影響します。
 
-1. Go to **Security** → **API** → **Authorization Servers**
-2. Click on your authorization server
-3. Click the **Access Policies** tab
-4. Click on your policy, then edit the rule
-5. Configure token lifetimes:
-   - **Access token lifetime**: `1 hour` (default, works well)
-   - **ID token lifetime**: `1 hour` (default)
-   - **Refresh token lifetime**: As needed for your use case
+1. **Security** → **API** → **Authorization Servers**
+2. Authorization Server をクリック
+3. **Access Policies** タブ
+4. ポリシーを開き、ルールを編集
+5. トークン有効期限を設定:
+   - **Access token lifetime**: `1 hour`（既定。多くのケースで十分）
+   - **ID token lifetime**: `1 hour`（既定）
+   - **Refresh token lifetime**: 要件に合わせて設定
 
-> **Tip**: Shorter token lifetimes mean more frequent quota checks but more re-authentication. The defaults work well for most use cases.
+> **ヒント**: トークン期限を短くするとクォータチェック頻度は上がりますが、再認証も増えます。多くの場合は既定値で問題ありません。
 
-### Creating Groups for Quota Policies
+### クォータポリシー用のグループ作成
 
-If using group-based quotas:
+グループベースのクォータを使う場合:
 
-1. Go to **Directory** → **Groups**
-2. Click **Add Group**
-3. Create groups matching your quota policy needs:
-   - `engineering` - Engineering team
-   - `data-science` - Data science team
-   - `power-users` - Users with higher limits
-4. Assign users to appropriate groups
-5. Assign groups to your Bedrock CLI application
+1. **Directory** → **Groups**
+2. **Add Group**
+3. クォータポリシーに合わせてグループを作成:
+   - `engineering` — エンジニアリング
+   - `data-science` — データサイエンス
+   - `power-users` — 上限が高いユーザー
+4. ユーザーを適切なグループに追加
+5. グループを Bedrock CLI アプリに割り当て
 
-### Deploy and Configure Quota Monitoring
+### クォータ監視のデプロイと設定
 
-After completing Okta configuration:
+Okta 設定後:
 
 ```bash
-# Deploy the quota monitoring stack
+# クォータ監視スタックをデプロイ
 poetry run ccwb deploy quota
 
-# Set a default quota for all users (required)
+# 全ユーザーの既定クォータを設定（必須）
 poetry run ccwb quota set-default --monthly-limit 225M
 
-# Optional: Set group-based quotas (requires groups claim)
+# 任意: グループ別クォータ（groups claim が必要）
 poetry run ccwb quota set-group engineering --monthly-limit 500M
 poetry run ccwb quota set-group data-science --monthly-limit 1B
 
-# Optional: Set user-specific quotas
+# 任意: ユーザー個別クォータ
 poetry run ccwb quota set-user power.user@company.com --monthly-limit 500M
 
-# Test the quota API
+# クォータ API のテスト
 poetry run ccwb test quota-api
 ```
 
-### Verifying Your Configuration
+### 設定の確認方法
 
-Test that your JWT includes the expected claims:
+JWT に期待するクレームが入っているかを確認します。
 
-1. Complete an authentication flow with your application
-2. Decode the ID token at [jwt.io](https://jwt.io)
-3. Verify these claims are present:
-   - `email` - Your user's email address
-   - `groups` - Array of group names (if configured)
+1. 対象アプリで認証フローを完了
+2. [jwt.io](https://jwt.io) で ID トークンをデコード
+3. 次のクレームが存在することを確認:
+   - `email` — ユーザーのメールアドレス
+   - `groups` — グループ名配列（設定した場合）
 
-For complete quota monitoring documentation, see [Quota Monitoring Guide](../QUOTA_MONITORING.md).
-
----
-
-## Troubleshooting
-
-### "Invalid redirect URI" Error
-
-- Ensure the redirect URI is exactly: `http://localhost:8400/callback`
-- Check for trailing slashes or typos
-
-### User Can't Sign In
-
-- Verify the user is assigned to the application
-- Check if the user's account is active
-- Ensure password meets Okta's policy requirements
-
-### Can't Find Client ID
-
-1. Go to **Applications** → **Applications**
-2. Click on your application
-3. The Client ID is on the **General** tab under "Client Credentials"
+クォータ監視の詳細は [Quota Monitoring Guide](../QUOTA_MONITORING.md) を参照してください。
 
 ---
 
-## Next Steps
+## トラブルシューティング
 
-Once you've completed this Okta setup:
+### 「Invalid redirect URI」エラー
 
-1. Clone the repository:
+- redirect URI が `http://localhost:8400/callback` と完全一致しているか確認
+- 末尾スラッシュやタイプミスがないか確認
+
+### ユーザーがサインインできない
+
+- ユーザーがアプリに割り当てられているか確認
+- ユーザーアカウントがアクティブか確認
+- パスワードが Okta のポリシー要件を満たしているか確認
+
+### Client ID が見つからない
+
+1. **Applications** → **Applications**
+2. 対象アプリをクリック
+3. **General** タブの「Client Credentials」に Client ID があります
+
+---
+
+## 次のステップ
+
+Okta のセットアップが完了したら:
+
+1. リポジトリをクローン:
    ```bash
    git clone https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock.git
    cd claude-code-setup
    poetry install
    ```
-2. Run the setup wizard: `poetry run ccwb init`
-3. Create a distribution package: `poetry run ccwb package`
-4. Test the deployment: `poetry run ccwb test --api`
-5. Distribute the `dist/` folder to your users
+2. セットアップウィザードを実行: `poetry run ccwb init`
+3. 配布パッケージを作成: `poetry run ccwb package`
+4. デプロイをテスト: `poetry run ccwb test --api`
+5. `dist/` フォルダをユーザーに配布
 
 ---
 
-## Security Best Practices
+## セキュリティのベストプラクティス
 
-1. **Production Considerations**:
+1. **本番運用の考慮事項**:
+   - グループを使ってスケールするアクセス管理を行う
+   - 全ユーザーに MFA を有効化
+   - 適切なセッションタイムアウトを設定
+   - System Log を定期的に監視
 
-   - Use groups to manage access at scale
-   - Enable MFA for all users
-   - Set appropriate session timeouts
-   - Monitor the System Log regularly
+2. **トークン設定**:
+   - refresh token rotation を有効化
+   - 適切なトークン有効期限を設定
+   - PKCE を使用（ネイティブアプリではデフォルトで有効）
 
-2. **Token Settings**:
-
-   - Enable refresh token rotation
-   - Set reasonable token lifetimes
-   - Use PKCE (enabled by default for native apps)
-
-3. **User Management**:
-   - Use Okta's password policies
-   - Implement account lockout policies
-   - Regular access reviews
+3. **ユーザー管理**:
+   - Okta のパスワードポリシーを使用
+   - アカウントロックアウトポリシーを実装
+   - 定期的なアクセスレビュー
 
 ---
 
-## Useful Okta Admin URLs
+## 便利な Okta 管理 URL
 
 - Dashboard: `https://your-domain.okta.com/admin/dashboard`
 - Applications: `https://your-domain.okta.com/admin/apps/active`
 - Users: `https://your-domain.okta.com/admin/users`
 - System Log: `https://your-domain.okta.com/admin/reports/system_log`
 
-Remember to replace `your-domain` with your actual Okta domain!
+`your-domain` は実際の Okta ドメインに置き換えてください。

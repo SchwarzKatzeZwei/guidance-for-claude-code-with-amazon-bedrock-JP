@@ -1,53 +1,53 @@
-# User Documentation
+# ユーザー向けドキュメント
 
-This folder contains documentation for users implementing and operating Claude Code on AWS infrastructure, with focus on the Enterprise Authentication deployment pattern.
+このフォルダには、AWS インフラ上で Claude Code を実装・運用するユーザー向けのドキュメントが含まれています。特に、エンタープライズ認証のデプロイパターンに重点を置いています。
 
-## Getting Started
+## はじめに
 
-### CLI Reference
+### CLI リファレンス
 
-- **File**: [CLI_REFERENCE.md](./CLI_REFERENCE.md)
-- **Purpose**: Complete command reference for ccwb
-- **Audience**: IT administrators deploying the solution
+- **ファイル**: [CLI_REFERENCE.md](./CLI_REFERENCE.md)
+- **目的**: ccwb の完全なコマンドリファレンス
+- **対象読者**: ソリューションをデプロイする IT 管理者
 
-### Deployment Guide
+### デプロイガイド
 
-- **File**: [DEPLOYMENT.md](./DEPLOYMENT.md)
-- **Purpose**: Step-by-step deployment instructions
-- **Audience**: IT administrators
+- **ファイル**: [DEPLOYMENT.md](./DEPLOYMENT.md)
+- **目的**: ステップバイステップのデプロイ手順
+- **対象読者**: IT 管理者
 
-### Architecture Overview
+### アーキテクチャ概要
 
-- **File**: [ARCHITECTURE.md](./ARCHITECTURE.md)
-- **Purpose**: Technical architecture details
-- **Audience**: Technical teams and architects
+- **ファイル**: [ARCHITECTURE.md](./ARCHITECTURE.md)
+- **目的**: 技術アーキテクチャの詳細
+- **対象読者**: 技術チームおよびアーキテクト
 
-### Local Testing
+### ローカルテスト
 
-- **File**: [LOCAL_TESTING.md](./LOCAL_TESTING.md)
-- **Purpose**: Testing the solution before full deployment
-- **Audience**: IT administrators
+- **ファイル**: [LOCAL_TESTING.md](./LOCAL_TESTING.md)
+- **目的**: 本番展開前にソリューションをテストする方法
+- **対象読者**: IT 管理者
 
-## Operations
+## 運用
 
-### Monitoring Setup
+### モニタリング設定
 
-- **File**: [MONITORING.md](./MONITORING.md)
-- **Purpose**: CloudWatch monitoring configuration and OpenTelemetry setup
-- **Audience**: IT administrators managing monitoring
+- **ファイル**: [MONITORING.md](./MONITORING.md)
+- **目的**: CloudWatch モニタリング設定および OpenTelemetry セットアップ
+- **対象読者**: モニタリングを管理する IT 管理者
 
-### Analytics Pipeline
+### 分析パイプライン
 
-- **File**: [ANALYTICS.md](./ANALYTICS.md)
-- **Purpose**: Setup and usage of the analytics pipeline for tracking Claude Code metrics
-- **Audience**: IT administrators managing usage analytics
+- **ファイル**: [ANALYTICS.md](./ANALYTICS.md)
+- **目的**: Claude Code メトリクス追跡のための分析パイプラインのセットアップと利用方法
+- **対象読者**: 利用状況分析を管理する IT 管理者
 
-## Provider Configuration
+## プロバイダー設定
 
-### OIDC Provider Setup Guides
+### OIDC プロバイダー設定ガイド
 
-- **Folder**: [providers/](./providers/)
+- **フォルダ**: [providers/](./providers/)
 - **Okta**: [okta-setup.md](./providers/okta-setup.md)
-- **Microsoft Entra ID (Azure AD)**: [microsoft-entra-id-setup.md](./providers/microsoft-entra-id-setup.md)
+- **Microsoft Entra ID（Azure AD）**: [microsoft-entra-id-setup.md](./providers/microsoft-entra-id-setup.md)
 - **Auth0**: [auth0-setup.md](./providers/auth0-setup.md)
 - **AWS Cognito User Pool**: [cognito-user-pool-setup.md](./providers/cognito-user-pool-setup.md)

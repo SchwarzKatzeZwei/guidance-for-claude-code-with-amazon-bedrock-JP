@@ -1,175 +1,175 @@
-# Claude Code Analytics Pipeline
+# Claude Code 分析パイプライン
 
-This directory contains the CloudFormation templates for setting up an analytics pipeline to track Claude Code usage metrics.
+このディレクトリには、Claude Code の利用メトリクスを追跡するための分析パイプラインをセットアップする CloudFormation テンプレートが含まれています。
 
-## Overview
+## 概要
 
-The analytics pipeline consists of:
+分析パイプラインは、次のコンポーネントで構成されます。
 
-- **Kinesis Data Firehose**: Streams CloudWatch Logs to S3 in Parquet format
-- **S3 Data Lake**: Stores historical metrics data with automatic archival
-- **AWS Athena**: Enables SQL queries on the metrics data
-- **Partition Projection**: Eliminates the need for Glue crawlers
+- **Kinesis Data Firehose**: CloudWatch Logs を Parquet 形式で S3 にストリーミング
+- **S3 データレイク**: 履歴メトリクスデータを保存し、自動アーカイブを実施
+- **AWS Athena**: メトリクスデータに対する SQL クエリを可能にする
+- **パーティションプロジェクション（Partition Projection）**: Glue クローラーを不要にする
 
-![Overview](../images/otel-monitoring-flow.png)
+![概要](../images/otel-monitoring-flow.png)
 
-## Deployment
+## デプロイ
 
-### Prerequisites
+### 前提条件
 
-1. AWS CLI configured with appropriate credentials
-2. Claude Code OTEL collector already deployed and sending metrics to CloudWatch Logs
+1. 適切な認証情報で設定済みの AWS CLI
+2. Claude Code の OTEL コレクターがすでにデプロイされ、メトリクスを CloudWatch Logs に送信していること
 
-### Deploy the Analytics Pipeline
+### 分析パイプラインをデプロイ
 
 ```bash
-# Deploy the analytics pipeline
+# 分析パイプラインをデプロイ
 aws cloudformation deploy \
   --template-file analytics-pipeline.yaml \
   --stack-name claude-code-analytics \
   --capabilities CAPABILITY_IAM
 
-# Get the Athena console URL
+# Athena コンソール URL を取得
 aws cloudformation describe-stacks \
   --stack-name claude-code-analytics \
   --query 'Stacks[0].Outputs[?OutputKey==`AthenaConsoleUrl`].OutputValue' \
   --output text
 ```
 
-### Update the Monitoring Dashboard
+### モニタリングダッシュボードを更新
 
 ```bash
-# Update the dashboard to remove hard-coded users
+# ダッシュボードを更新し、ハードコードされたユーザーを削除
 aws cloudformation deploy \
   --template-file monitoring-dashboard.yaml \
   --stack-name claude-code-auth-dashboard \
   --parameter-overrides TokenCostPerMillion=15.0
 ```
 
-## Using Athena for User Analytics
+## Athena を使ったユーザー分析
 
-### Access Athena Console
+### Athena コンソールへのアクセス
 
-1. Navigate to the Athena console URL provided in the stack outputs
-2. Select the workgroup created by the stack (e.g., `claude-code-analytics-workgroup`)
-3. Select the database (e.g., `claude_code_analytics_analytics`)
-4. Access the saved queries from the "Saved queries" tab in the Athena console
+1. スタック出力で提供される Athena コンソール URL に移動します
+2. スタックが作成したワークグループ（例: `claude-code-analytics-workgroup`）を選択します
+3. データベース（例: `claude_code_analytics_analytics`）を選択します
+4. Athena コンソールの「Saved queries」タブから保存済みクエリにアクセスします
 
-### Pre-Built Named Queries
+### 事前作成済みの名前付きクエリ
 
-The stack automatically creates 10 named queries associated with your workgroup. These queries provide comprehensive analytics capabilities:
+このスタックは、ワークグループに紐づく **10 個の名前付きクエリ**を自動作成します。これらのクエリにより、包括的な分析が可能になります。
 
-#### 1. Top Users by Token Usage
-Identifies your top 10 users by token consumption over the last 7 days, including user email, organization, session count, and estimated costs.
+#### 1. トークン使用量に基づく上位ユーザー
+直近 7 日間におけるトークン消費量上位 10 ユーザーを特定し、ユーザーのメールアドレス、組織、セッション数、推定コストを含めて表示します。
 
-**Use Case:** Understand who your power users are and track usage patterns.
+**利用場面:** パワーユーザーの把握と利用パターンの追跡。
 
-#### 2. Token Usage by Model and Type
-Analyzes token usage patterns across different models (Opus, Sonnet, Haiku) and token types (input/output) with cost estimates.
+#### 2. モデル別・種別別のトークン使用量
+モデル（Opus / Sonnet / Haiku）およびトークン種別（入力／出力）ごとにトークン使用状況を分析し、推定コストも算出します。
 
-**Use Case:** Optimize model selection and understand cost distribution.
+**利用場面:** モデル選択の最適化、コスト分布の把握。
 
-#### 3. User Activity Pattern
-Shows user activity patterns by hour of day to identify peak usage times.
+#### 3. ユーザー活動パターン
+ユーザー活動を「時刻（時間帯）」別に示し、ピーク利用時間を特定します。
 
-**Use Case:** Capacity planning and understanding when your users are most active.
+**利用場面:** キャパシティ計画、ユーザーが最も活動的な時間帯の把握。
 
-#### 4. Token Usage by Organization
-Tracks token usage across different organizations with user counts and cost attribution.
+#### 4. 組織別のトークン使用量
+組織ごとのトークン使用量を、ユーザー数およびコスト配賦とともに追跡します。
 
-**Use Case:** Organizational billing and chargeback.
+**利用場面:** 組織単位の請求／チャージバック。
 
-#### 5. Token Usage by Email Domain
-Analyzes usage patterns by email domain to understand user demographics.
+#### 5. メールドメイン別のトークン使用量
+メールドメイン別に利用状況を分析し、ユーザー属性（所属傾向）を把握します。
 
-**Use Case:** Identify which teams or departments are using the service.
+**利用場面:** どのチーム／部門が利用しているかの把握。
 
-#### 6. Detailed TPM and RPM Analysis
-Calculates tokens per minute (TPM) and requests per minute (RPM) metrics for rate limit monitoring.
+#### 6. 詳細 TPM / RPM 分析
+レートリミット監視のために、Tokens Per Minute（TPM）および Requests Per Minute（RPM）を算出します。
 
-**Use Case:** Monitor API usage patterns and prevent rate limiting issues.
+**利用場面:** API 利用パターンの監視、レート制限問題の予防。
 
-#### 7. User Session Analysis
-Analyzes user sessions including duration, intensity, models used, and per-session costs.
+#### 7. ユーザーセッション分析
+セッション継続時間、強度、使用モデル、セッション単位のコストを含めてユーザーセッションを分析します。
 
-**Use Case:** Understand user behavior and session patterns.
+**利用場面:** ユーザー行動とセッション特性の理解。
 
-#### 8. Detailed Cost Attribution
-Provides precise cost calculations by user, organization, and model with cumulative tracking.
+#### 8. 詳細コスト配賦
+ユーザー／組織／モデル別の正確なコスト計算を提供し、累積追跡を行います。
 
-**Use Case:** Accurate billing and cost management.
+**利用場面:** 正確な課金とコスト管理。
 
-#### 9. Peak Usage and Rate Limit Analysis
-Identifies peak usage periods and highlights when you're approaching rate limits.
+#### 9. ピーク利用とレートリミット分析
+ピーク利用期間を特定し、レートリミットに近づいているタイミングを可視化します。
 
-**Use Case:** Proactive monitoring to prevent service disruptions.
+**利用場面:** サービス中断を防ぐための予防的監視。
 
-#### 10. Usage Analysis by Identity Provider
-Compares usage patterns across different identity providers (Okta, Auth0, Cognito).
+#### 10. ID プロバイダー別の利用分析
+異なる ID プロバイダー（Okta / Auth0 / Cognito）間で利用パターンを比較します。
 
-**Use Case:** Understand usage by authentication method.
+**利用場面:** 認証方式別の利用状況把握。
 
-### Working with the Queries
+### クエリの使い方
 
-Once you've selected your workgroup and database in the Athena console:
+Athena コンソールでワークグループとデータベースを選択したら、次の手順で実行します。
 
-1. **Access Saved Queries**: Click on the "Saved queries" tab
-2. **Load a Query**: Select any of the 10 pre-built queries to load it into the query editor
-3. **Run the Query**: Click "Run" to execute the query with your current data
-4. **Export Results**: Download results as CSV for further analysis
+1. **保存済みクエリにアクセス**: 「Saved queries」タブをクリック
+2. **クエリを読み込み**: 10 個の事前作成済みクエリのいずれかを選択し、クエリエディタに読み込む
+3. **クエリを実行**: 「Run」をクリックして、現在のデータに対して実行
+4. **結果をエクスポート**: 追加分析のために CSV としてダウンロード
 
-### Customizing Queries
+### クエリのカスタマイズ
 
-#### Adjusting Time Ranges
+#### 期間（タイムレンジ）の調整
 
-Modify the WHERE clause in any query to change the time range:
+任意のクエリの WHERE 句を修正して、対象期間を変更します。
 
 ```sql
--- Last 24 hours
+-- 直近 24 時間
 WHERE from_unixtime(timestamp/1000) >= CURRENT_TIMESTAMP - INTERVAL '24' HOUR
 
--- Last 7 days
+-- 直近 7 日
 WHERE year >= YEAR(CURRENT_DATE - INTERVAL '7' DAY)
     AND from_unixtime(timestamp/1000) >= CURRENT_TIMESTAMP - INTERVAL '7' DAY
 
--- Last 30 days
+-- 直近 30 日
 WHERE year >= YEAR(CURRENT_DATE - INTERVAL '30' DAY)
     AND from_unixtime(timestamp/1000) >= CURRENT_TIMESTAMP - INTERVAL '30' DAY
 
--- Specific date range
+-- 特定期間
 WHERE from_unixtime(timestamp/1000) BETWEEN TIMESTAMP '2024-01-01' AND TIMESTAMP '2024-01-31'
 ```
 
-#### Filtering by Specific Users or Organizations
+#### 特定ユーザー／組織でフィルタする
 
-Add additional WHERE conditions to focus on specific users:
+追加の WHERE 条件で対象を絞り込みます。
 
 ```sql
--- Filter by email domain
+-- メールドメインでフィルタ
 AND user_email LIKE '%@example.com'
 
--- Filter by organization
+-- 組織でフィルタ
 AND organization_id = 'your-org-id'
 
--- Filter by specific model
+-- 特定モデルでフィルタ
 AND model LIKE '%opus%'
 ```
 
-## Data Retention
+## データ保持（リテンション）
 
-- **S3 Standard**: 90 days (configurable via `DataRetentionDays` parameter)
-- **S3 Glacier**: After 90 days (automatic transition)
-- **Athena Query Results**: 7 days (auto-deleted)
+- **S3 Standard**: 90 日（`DataRetentionDays` パラメータで変更可能）
+- **S3 Glacier**: 90 日後（自動移行）
+- **Athena クエリ結果**: 7 日（自動削除）
 
-## Cost Optimization
+## コスト最適化
 
-1. **Partition Projection**: No need to run Glue crawlers
-2. **Parquet Format**: Columnar storage reduces query costs
-3. **S3 Lifecycle**: Automatic archival to Glacier
-4. **Query Result Caching**: Athena caches results for 7 days
+1. **パーティションプロジェクション**: Glue クローラー実行が不要
+2. **Parquet 形式**: 列指向ストレージによりクエリコストを削減
+3. **S3 ライフサイクル**: Glacier への自動アーカイブ
+4. **クエリ結果キャッシュ**: Athena が結果を 7 日間キャッシュ
 
-### Query Performance
+### クエリ性能
 
-- Use partition columns (year, month, day, hour) in WHERE clauses
-- Limit time ranges to reduce data scanned
-- Use LIMIT for exploratory queries
+- WHERE 句でパーティション列（year, month, day, hour）を使用する
+- 対象期間を絞ってスキャン量を減らす
+- 探索的クエリでは LIMIT を使用する

@@ -1,243 +1,243 @@
-# Distribution Platform Comparison
+# 配布プラットフォーム比較
 
-## Overview
+## 概要
 
-Claude Code with Bedrock supports two distribution methods for sharing packaged binaries and settings with end users:
+Bedrock 版 Claude Code は、パッケージ化したバイナリと設定をエンドユーザーへ配布する方法として、次の 2 つの方式をサポートしています。
 
-1. **Presigned S3 URLs** - Simple, no authentication required
-2. **Authenticated Landing Page** - Enterprise-grade with IdP integration
+1. **S3 の事前署名付き URL（Presigned S3 URL）** — 簡単で、認証不要  
+2. **認証付きランディングページ** — IdP 連携を備えたエンタープライズ向け
 
-This guide helps you choose the right option for your organization.
-
----
-
-## Quick Comparison
-
-| Feature             | Presigned S3 URLs                  | Landing Page                            |
-| ------------------- | ---------------------------------- | --------------------------------------- |
-| **Best For**        | Small teams (< 20 users)           | Large teams (20-100 users)              |
-| **Authentication**  | None (URLs shared via Slack/email) | IdP (Okta/Azure/Auth0/Cognito)          |
-| **Setup Time**      | 5 minutes                          | 30 minutes                              |
-| **Security**        | URL expiry (7 days)                | IdP auth + URL expiry (1 hour)          |
-| **Compliance**      | Basic                              | Enterprise-grade                        |
-| **User Experience** | Copy/paste URL                     | Navigate to URL, authenticate, download |
-| **Admin Overhead**  | Generate new URLs when needed      | Set up once, no maintenance             |
-| **Access Control**  | Anyone with URL                    | IdP groups/users                        |
+本ガイドは、組織にとって適切な選択肢を選ぶための助けとなるものです。
 
 ---
 
-## Architecture Comparison
+## 早見比較
 
-### Presigned S3 URLs
-
-```
-Admin Machine → S3 → Presigned URL (7 days) → User downloads directly
-```
-
-**How it works:**
-
-1. Admin runs `poetry run ccwb distribute`
-2. Package uploaded to S3
-3. Presigned URL generated (expires in 7 days)
-4. Admin shares URL via Slack/email
-5. Users download directly from S3 (no authentication)
-
-**Pros:**
-
-- Simple setup (no VPC, no IdP web app configuration)
-- Works immediately after deployment
-- No user authentication required
-
-**Cons:**
-
-- URL can be shared with anyone
-- URLs expire after 7 days (need to regenerate)
-- No audit trail of who downloaded
-- Not suitable for compliance requirements
+| 項目 | S3 事前署名付き URL | ランディングページ |
+| --- | --- | --- |
+| **最適な対象** | 小規模チーム（20 名未満） | 大規模チーム（20〜100 名） |
+| **認証** | なし（Slack/メールで URL を共有） | IdP（Okta / Azure / Auth0 / Cognito） |
+| **構築時間** | 5 分 | 30 分 |
+| **セキュリティ** | URL の有効期限（7 日） | IdP 認証 + URL の有効期限（1 時間） |
+| **コンプライアンス** | 基本レベル | エンタープライズ水準 |
+| **ユーザー体験** | URL をコピー＆ペースト | URL にアクセス → 認証 → ダウンロード |
+| **管理負荷** | 必要に応じて新しい URL を発行 | 一度セットアップすれば基本的にメンテ不要 |
+| **アクセス制御** | URL を知っている人は誰でも可 | IdP のグループ/ユーザーで制御 |
 
 ---
 
-### Authenticated Landing Page
+## アーキテクチャ比較
+
+### S3 事前署名付き URL
 
 ```
-Admin Machine → S3 → Lambda (generates presigned URLs) → User authenticates via IdP → Downloads from S3
+管理者端末 → S3 → 事前署名付き URL（7 日） → ユーザーが直接ダウンロード
+```
+
+**仕組み：**
+
+1. 管理者が `poetry run ccwb distribute` を実行  
+2. パッケージが S3 にアップロードされる  
+3. 事前署名付き URL が生成される（有効期限は 7 日）  
+4. 管理者が Slack/メールで URL を共有する  
+5. ユーザーは S3 から直接ダウンロードする（認証なし）
+
+**メリット：**
+
+- セットアップが簡単（VPC 不要、IdP の Web アプリ設定不要）
+- デプロイ直後から利用可能
+- ユーザー認証が不要
+
+**デメリット：**
+
+- URL が第三者に共有され得る
+- URL は 7 日で失効（再生成が必要）
+- 誰がダウンロードしたかの監査証跡が残らない
+- コンプライアンス要件がある場合には不向き
+
+---
+
+### 認証付きランディングページ
+
+```
+管理者端末 → S3 → Lambda（事前署名付き URL を生成） → ユーザーが IdP で認証 → S3 からダウンロード
                        ↑
-                      ALB (OIDC)
+                      ALB（OIDC）
 ```
 
-**How it works:**
+**仕組み：**
 
-1. Admin runs `poetry run ccwb distribute`
-2. Package uploaded to S3
-3. Admin shares landing page URL via Slack/email
-4. Users navigate to landing page
-5. ALB redirects to IdP for authentication
-6. After authentication, Lambda generates presigned URLs
-7. Users download from S3 (authenticated)
+1. 管理者が `poetry run ccwb distribute` を実行  
+2. パッケージが S3 にアップロードされる  
+3. 管理者が Slack/メールでランディングページの URL を共有する  
+4. ユーザーがランディングページにアクセスする  
+5. ALB が IdP へリダイレクトして認証を行う  
+6. 認証後、Lambda が事前署名付き URL を生成する  
+7. ユーザーは S3 からダウンロードする（認証済み）
 
-**Pros:**
+**メリット：**
 
-- Enterprise-grade security (IdP authentication)
-- Access control via IdP groups
-- Professional landing page UI
-- Presigned URLs expire after 1 hour (limited sharing)
-- Suitable for compliance requirements
-- No need to regenerate URLs (landing page always available)
+- エンタープライズ水準のセキュリティ（IdP 認証）
+- IdP グループによるアクセス制御が可能
+- プロフェッショナルなランディングページ UI
+- 事前署名付き URL は 1 時間で失効（拡散リスクを抑制）
+- コンプライアンス要件に適合しやすい
+- URL の再生成が不要（ランディングページは常時利用可能）
 
-**Cons:**
+**デメリット：**
 
-- More complex setup (VPC, IdP web app configuration)
-- Requires IdP web application configuration
-- Requires networking stack (VPC, subnets)
-
----
-
-## Decision Matrix
-
-### Use Presigned S3 URLs when:
-
-- ✅ Team size < 20 users
-- ✅ Internal/trusted users only
-- ✅ No compliance requirements
-- ✅ Simple setup preferred
-- ✅ Users can safely share URLs
-- ✅ Cost is a primary concern
-- ✅ No IdP infrastructure available
-
-### Use Landing Page when:
-
-- ✅ Team size 20-100 users
-- ✅ External or untrusted users
-- ✅ Compliance requirements (SOC2, audit trails)
-- ✅ Already using IdP for other systems
-- ✅ Need tight access control
-- ✅ Professional UI preferred
-- ✅ Want permanent distribution URL
+- 構成が複雑（VPC、IdP の Web アプリ設定が必要）
+- IdP の Web アプリケーション設定が必須
+- ネットワークスタック（VPC、サブネット）が必要
 
 ---
 
-## Setup Process Comparison
+## 判断の目安（Decision Matrix）
 
-### Presigned S3 URLs Setup
+### S3 事前署名付き URL を選ぶべき場合：
 
-1. Run `poetry run ccwb init`
-2. Select "Presigned S3 URLs (simple, no authentication)"
-3. Run `poetry run ccwb deploy distribution`
-4. Wait 2-3 minutes for deployment
-5. **Ready to use!**
+- ✅ チーム規模が 20 名未満  
+- ✅ 社内・信頼できるユーザーのみ  
+- ✅ コンプライアンス要件がない  
+- ✅ とにかく簡単に構築したい  
+- ✅ URL を安全に取り扱える（不用意に共有されない）  
+- ✅ コストを最優先したい  
+- ✅ IdP 基盤がない  
 
-### Landing Page Setup
+### ランディングページを選ぶべき場合：
 
-1. Create web application in your IdP:
-   - Okta: Create "Web Application"
-   - Azure AD: Register application with "Web" platform
-   - Auth0: Create "Regular Web Application"
-   - Cognito: Create app client with "Authorization code" grant
-2. Run `poetry run ccwb init`
-3. Select "Authenticated Landing Page (IdP + ALB)"
-4. Enter IdP details (domain, client ID, client secret)
-5. Run `poetry run ccwb deploy distribution`
-6. Wait 5-10 minutes for deployment
-7. Configure IdP redirect URI (displayed after deployment)
-8. **Ready to use!**
+- ✅ チーム規模が 20〜100 名  
+- ✅ 外部ユーザー、または信頼できないユーザーが含まれる  
+- ✅ コンプライアンス要件がある（SOC2、監査証跡など）  
+- ✅ 他システムで既に IdP を利用している  
+- ✅ 厳密なアクセス制御が必要  
+- ✅ プロ向けの UI/UX を求める  
+- ✅ 恒久的な配布 URL が欲しい  
 
 ---
 
-## Security Comparison
+## セットアップ手順の比較
 
-### Presigned S3 URLs
+### S3 事前署名付き URL のセットアップ
 
-**Security Features:**
+1. `poetry run ccwb init` を実行  
+2. 「Presigned S3 URLs（simple, no authentication）」を選択  
+3. `poetry run ccwb deploy distribution` を実行  
+4. デプロイ完了まで 2〜3 分待つ  
+5. **利用準備完了！**
 
-- Presigned URL with time-based expiry (7 days max)
-- S3 bucket not publicly accessible
-- IAM user with read-only permissions
-- Package integrity via SHA256 checksum
+### ランディングページのセットアップ
 
-**Security Limitations:**
-
-- No authentication required (anyone with URL can download)
-- URLs can be shared/leaked
-- No audit trail of downloads
-- Need to regenerate URLs regularly
-
-**Risk Level:** Medium (suitable for internal trusted users)
-
-### Landing Page
-
-**Security Features:**
-
-- IdP authentication required (corporate credentials)
-- ALB OIDC integration (OAuth 2.0 standard)
-- Presigned URLs with short expiry (1 hour)
-- Access control via IdP groups
-- S3 bucket not publicly accessible
-- CloudWatch logging for troubleshooting
-
-**Security Limitations:**
-
-- Presigned URLs valid for 1 hour (limited window for sharing)
-- Requires users to have IdP access
-
-**Risk Level:** Low (suitable for enterprise compliance)
+1. IdP で Web アプリケーションを作成する  
+   - Okta: 「Web Application」を作成  
+   - Azure AD: 「Web」プラットフォームでアプリ登録  
+   - Auth0: 「Regular Web Application」を作成  
+   - Cognito: 「Authorization code」グラントでアプリクライアントを作成  
+2. `poetry run ccwb init` を実行  
+3. 「Authenticated Landing Page（IdP + ALB）」を選択  
+4. IdP 情報（ドメイン、クライアント ID、クライアントシークレット）を入力  
+5. `poetry run ccwb deploy distribution` を実行  
+6. デプロイ完了まで 5〜10 分待つ  
+7. IdP のリダイレクト URI を設定する（デプロイ後に表示される）  
+8. **利用準備完了！**
 
 ---
 
-## Switching Between Types
+## セキュリティ比較
 
-You can switch between distribution types by:
+### S3 事前署名付き URL
 
-1. Run `poetry run ccwb init` (reconfigure)
-2. Select different distribution type
-3. Run `poetry run ccwb deploy distribution`
-4. CloudFormation will replace the stack with new type
+**セキュリティ機能：**
 
-**Note:** Same stack name used for both types, so you can't have both deployed simultaneously.
+- 時間制限付きの事前署名 URL（最大 7 日）
+- S3 バケット自体はパブリック公開しない
+- 読み取り専用権限の IAM ユーザー
+- SHA256 チェックサムによるパッケージ整合性確認
+
+**セキュリティ上の制約：**
+
+- 認証不要（URL を知っていれば誰でもダウンロード可能）
+- URL が共有・漏洩する可能性がある
+- ダウンロードの監査証跡が残らない
+- 定期的に URL の再生成が必要
+
+**リスクレベル：** 中（社内の信頼できるユーザー向け）
+
+### ランディングページ
+
+**セキュリティ機能：**
+
+- IdP 認証が必須（社内資格情報）
+- ALB の OIDC 連携（OAuth 2.0 標準）
+- 短時間で失効する事前署名 URL（1 時間）
+- IdP グループによるアクセス制御
+- S3 バケット自体はパブリック公開しない
+- トラブルシュート用の CloudWatch ログ
+
+**セキュリティ上の制約：**
+
+- 事前署名 URL は 1 時間有効（共有できる時間が限定される）
+- ユーザー側に IdP へのアクセス権が必要
+
+**リスクレベル：** 低（エンタープライズのコンプライアンス向け）
 
 ---
 
-## Recommendations
+## 配布方式の切り替え
 
-### Start with Presigned S3 if:
+次の手順で配布方式を切り替えられます。
 
-- You're testing/prototyping
-- Team is small and internal
-- You want immediate setup
-- Cost is critical
+1. `poetry run ccwb init` を実行（再設定）  
+2. 別の配布方式を選択  
+3. `poetry run ccwb deploy distribution` を実行  
+4. CloudFormation が新しい方式のスタックに置き換える  
 
-### Upgrade to Landing Page when:
+**注記：** どちらの方式も同じ CloudFormation スタック名を使用するため、同時に 2 種類を併用してデプロイすることはできません。
 
-- Team grows beyond 20 users
-- You need compliance/audit trails
-- You need access control
-- You want professional UX
+---
+
+## 推奨
+
+### 次の場合は S3 事前署名付き URL から始める：
+
+- テスト/プロトタイピング段階
+- チームが小規模で社内向け
+- すぐに使い始めたい
+- コストが最重要
+
+### 次の場合はランディングページへ移行する：
+
+- チームが 20 名を超えて拡大した
+- コンプライアンス/監査証跡が必要になった
+- アクセス制御が必要になった
+- よりプロフェッショナルな UX が必要
 
 ---
 
 ## FAQ
 
-**Q: Can I have both types deployed at once?**
-A: No, they use the same CloudFormation stack name. Choose one per deployment.
+**Q: 2 種類を同時にデプロイできますか？**  
+A: できません。同じ CloudFormation スタック名を使うため、デプロイごとにどちらか一方を選択してください。
 
-**Q: How do I switch from Presigned S3 to Landing Page?**
-A: Run `ccwb init` to reconfigure, then `ccwb deploy distribution` to update the stack.
+**Q: S3 事前署名付き URL からランディングページへ切り替えるには？**  
+A: `ccwb init` で再設定し、`ccwb deploy distribution` でスタックを更新します。
 
-**Q: Do both types work with the same `ccwb distribute` command?**
-A: Yes! The publish process is identical. Only the download method differs.
+**Q: どちらも同じ `ccwb distribute` コマンドで配布できますか？**  
+A: はい。公開（publish）手順は同一で、異なるのはダウンロード方法だけです。
 
-**Q: Can users download without authentication on the landing page?**
-A: No, ALB requires IdP authentication before users can access the landing page.
+**Q: ランディングページで、認証なしでダウンロードできますか？**  
+A: できません。ALB は、ユーザーがランディングページへアクセスする前に IdP 認証を必須とします。
 
-**Q: What happens if presigned URLs expire?**
-A: For presigned-s3: Generate new URLs with `ccwb distribute`. For landing-page: URLs regenerate automatically when users visit.
+**Q: 事前署名 URL が失効したらどうなりますか？**  
+A: presigned-s3 の場合は `ccwb distribute` で新しい URL を生成します。landing-page の場合は、ユーザーがアクセスするたびに自動的に URL が再生成されます。
 
-**Q: Can I use a custom domain?**
-A: Landing page supports custom domains via Route53. Presigned-s3 uses S3 URLs directly.
+**Q: カスタムドメインは使えますか？**  
+A: ランディングページは Route53 経由でカスタムドメインをサポートします。presigned-s3 は S3 の URL を直接利用します。
 
 ---
 
-## Next Steps
+## 次のステップ
 
-- For setup instructions, see distribution setup guides
-- For publishing packages, see [Publishing Guide](publishing.md)
-- For user instructions, see [User Guide](user-guide.md)
+- セットアップ手順は配布セットアップガイドを参照  
+- パッケージの公開方法は [Publishing Guide](publishing.md) を参照  
+- ユーザー向け手順は [User Guide](user-guide.md) を参照

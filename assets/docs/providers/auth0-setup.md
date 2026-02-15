@@ -1,279 +1,280 @@
-# Complete Auth0 Setup Guide for Amazon Bedrock Integration
+# Amazon Bedrock 連携のための Auth0 完全セットアップガイド
 
-This guide walks you through setting up Auth0 from scratch to work with the AWS Cognito Identity Pool for Bedrock access.
+このガイドでは、Auth0 をゼロから設定し、Bedrock へのアクセスに使用する AWS Cognito Identity Pool と連携できるようにする手順を説明します。
 
-## Table of Contents
+## 目次
 
-1. [Create Auth0 Account](#1-create-auth0-account)
-2. [Access Dashboard](#2-access-dashboard)
-3. [Create Native Application](#3-create-native-application)
-4. [Configure Application](#4-configure-application)
-5. [Create Test Users](#5-create-test-users)
-6. [Assign Users to Application](#6-assign-users-to-application)
-7. [Collect Required Information](#7-collect-required-information)
-8. [Test the Setup](#8-test-the-setup)
-
----
-
-## 1. Create Auth0 Account
-
-If you don't have an Auth0 account:
-
-1. Go to https://auth0.com/signup
-2. Fill out the registration form:
-   - Email address
-   - Password
-   - Company (optional)
-3. Click **Sign Up**
-4. Choose your region (US, EU, AU, or JP)
-5. Create your tenant:
-   - Tenant Domain: `your-name` (becomes `your-name.auth0.com`)
-   - Region: Select based on your location
-6. Click **Create Account**
-
-> **Note**: Save your tenant domain - you'll need it for configuration!
+1. [Auth0 アカウントを作成する](#1-auth0-アカウントを作成する)  
+2. [ダッシュボードにアクセスする](#2-ダッシュボードにアクセスする)  
+3. [ネイティブアプリケーションを作成する](#3-ネイティブアプリケーションを作成する)  
+4. [アプリケーションを設定する](#4-アプリケーションを設定する)  
+5. [テストユーザーを作成する](#5-テストユーザーを作成する)  
+6. [ユーザーをアプリケーションに割り当てる](#6-ユーザーをアプリケーションに割り当てる)  
+7. [必要な情報を収集する](#7-必要な情報を収集する)  
+8. [セットアップをテストする](#8-セットアップをテストする)
 
 ---
 
-## 2. Access Dashboard
+## 1. Auth0 アカウントを作成する
 
-1. Log in to your Auth0 Dashboard at `https://manage.auth0.com`
-2. You'll see the main dashboard with navigation on the left
-3. Your tenant name is displayed in the top left
+Auth0 アカウントを持っていない場合は次を行います。
+
+1. https://auth0.com/signup にアクセス
+2. 登録フォームを入力:
+   - メールアドレス
+   - パスワード
+   - 会社名（任意）
+3. **Sign Up** をクリック
+4. リージョン（US / EU / AU / JP）を選択
+5. テナントを作成:
+   - Tenant Domain: `your-name`（`your-name.auth0.com` になります）
+   - Region: 所在地に合わせて選択
+6. **Create Account** をクリック
+
+> **注**: テナントドメインは必ず控えてください。後の設定で必要になります。
 
 ---
 
-## 3. Create Native Application
+## 2. ダッシュボードにアクセスする
 
-### Step 3.1: Start Application Creation
+1. `https://manage.auth0.com` で Auth0 ダッシュボードにログイン
+2. 左側にナビゲーションがあるメインダッシュボードが表示されます
+3. 左上にテナント名が表示されます
 
-1. In the Dashboard, navigate to **Applications** → **Applications**
-2. Click **+ Create Application** button
-3. Enter:
+---
+
+## 3. ネイティブアプリケーションを作成する
+
+### 手順 3.1: アプリ作成を開始
+
+1. ダッシュボードで **Applications** → **Applications** を開く
+2. **+ Create Application** をクリック
+3. 次を入力:
    - **Name**: `Amazon Bedrock CLI Access`
-   - **Choose an application type**: Select **Native**
-4. Click **Create**
+   - **Choose an application type**: **Native** を選択
+4. **Create** をクリック
 
 ---
 
-## 4. Configure Application
+## 4. アプリケーションを設定する
 
-### Step 4.1: Note the Client ID
+### 手順 4.1: Client ID を控える
 
-After creation, you'll see:
+作成後に以下が表示されます。
 
-- **Client ID**: Something like `aBcDeFgHiJkLmNoPqRsTuVwXyZ123456`
-- **Domain**: Your tenant domain like `your-name.auth0.com`
+- **Client ID**: 例 `aBcDeFgHiJkLmNoPqRsTuVwXyZ123456`
+- **Domain**: 例 `your-name.auth0.com`
 
-> **Important**: Copy the Client ID - you'll need it for the configuration!
+> **重要**: Client ID は設定に必要なのでコピーしておいてください。
 
-### Step 4.2: Configure Callback URLs
+### 手順 4.2: コールバック URL を設定する
 
-1. In your application settings, find **Application URIs**
-2. Set **Allowed Callback URLs**:
+1. アプリの設定画面で **Application URIs** を探す
+2. **Allowed Callback URLs** を次のように設定:
    ```
    http://localhost:8400/callback
    ```
-3. Set **Allowed Logout URLs** (optional):
+3. **Allowed Logout URLs**（任意）を次のように設定:
    ```
    http://localhost:8400/logout
    ```
 
-### Step 4.3: Configure Refresh Token
+### 手順 4.3: リフレッシュトークンを設定する
 
-1. Scroll to **Refresh Token Rotation**
-2. Enable **Rotation**
-3. Enable **Rotation Reuse Interval** (recommended: 30 seconds)
+1. **Refresh Token Rotation** までスクロール
+2. **Rotation** を有効化
+3. **Rotation Reuse Interval** を有効化（推奨: 30 秒）
 
-### Step 4.4: Configure Grant Types
+### 手順 4.4: グラントタイプを設定する
 
-1. In **Advanced Settings** → **Grant Types**
-2. Ensure these are enabled:
+1. **Advanced Settings** → **Grant Types**
+2. 次が有効になっていることを確認:
    - ✅ **Authorization Code**
    - ✅ **Refresh Token**
 
-### Step 4.5: Save Changes
+### 手順 4.5: 変更を保存する
 
-Click **Save Changes** at the bottom of the page
+ページ下部の **Save Changes** をクリックします。
 
 ---
 
-## 5. Create Test Users
+## 5. テストユーザーを作成する
 
-### Step 5.1: Navigate to User Management
+### 手順 5.1: ユーザー管理へ移動
 
-1. In the Dashboard, go to **User Management** → **Users**
-2. Click **+ Create User** button
+1. ダッシュボードで **User Management** → **Users**
+2. **+ Create User** をクリック
 
-### Step 5.2: Create a Test User
+### 手順 5.2: テストユーザーを作成する
 
-Fill in the form:
+フォームに入力:
 
 - **Email**: `testuser@example.com`
-- **Password**: Enter a secure password
-- **Repeat Password**: Confirm the password
-- **Connection**: Username-Password-Authentication (default)
+- **Password**: 強固なパスワードを入力
+- **Repeat Password**: パスワードを再入力
+- **Connection**: Username-Password-Authentication（既定）
 
-Click **Create**
+**Create** をクリックします。
 
-### Step 5.3: Create Additional Users (Optional)
+### 手順 5.3: 追加ユーザー（任意）
 
-Repeat to create more test users:
+必要であれば、以下のテストユーザーも同様に作成します。
 
 - `developer1@example.com`
 - `developer2@example.com`
 
 ---
 
-## 6. Assign Users to Application
+## 6. ユーザーをアプリケーションに割り当てる
 
-By default, all users have access to all applications in Auth0. To restrict access:
+Auth0 ではデフォルトで全ユーザーが全アプリにアクセスできます。アクセス制限したい場合は次を行います。
 
-### Step 6.1: Create an Action (Optional)
+### 手順 6.1: Action を作成する（任意）
 
-1. Go to **Actions** → **Flows** → **Login**
-2. Click **+** → **Build Custom**
-3. Name: `Restrict Bedrock Access`
-4. Add code to check user email/metadata
-5. Deploy the Action
+1. **Actions** → **Flows** → **Login**
+2. **+** → **Build Custom**
+3. 名前: `Restrict Bedrock Access`
+4. ユーザーのメール/メタデータをチェックするコードを追加
+5. Action を Deploy
 
-### Step 6.2: Enable Organizations (Optional)
+### 手順 6.2: Organizations を有効化する（任意）
 
-For enterprise deployments:
+エンタープライズ運用向け:
 
-1. Go to **Organizations**
-2. Create an organization
-3. Add users to the organization
-4. Enable the organization for your application
+1. **Organizations** を開く
+2. 組織（organization）を作成
+3. 組織にユーザーを追加
+4. 対象アプリで organization を有効化
 
 ---
 
-## 7. Collect Required Information
+## 7. 必要な情報を収集する
 
-You now have everything needed for deployment:
+デプロイに必要な情報は揃いました。
 
-| Parameter         | Your Value        | Example                            |
-| ----------------- | ----------------- | ---------------------------------- |
-| **Auth0Domain**   | Your Auth0 domain | `your-name.auth0.com`              |
-| **Auth0ClientId** | Your Client ID    | `aBcDeFgHiJkLmNoPqRsTuVwXyZ123456` |
+| パラメータ | 値（あなたの環境） | 例 |
+| --- | --- | --- |
+| **Auth0Domain** | Auth0 ドメイン | `your-name.auth0.com` |
+| **Auth0ClientId** | Client ID | `aBcDeFgHiJkLmNoPqRsTuVwXyZ123456` |
 
-### Supported Provider Domain Formats
+### サポートされる Provider Domain の形式
 
-The CLI accepts multiple formats for the Auth0 provider domain:
+CLI は Auth0 の provider domain を複数形式で受け付けます。
 
-| Format | Example | Notes |
-|--------|---------|-------|
-| **Standard domain** | `company.auth0.com` | **Recommended** - Standard Auth0 domain |
-| **Regional domain (US)** | `company.us.auth0.com` | US-based Auth0 tenant |
-| **Regional domain (EU)** | `company.eu.auth0.com` | European Auth0 tenant |
-| **Regional domain (AU)** | `company.au.auth0.com` | Australia Auth0 tenant |
-| **Regional domain (JP)** | `company.jp.auth0.com` | Japan Auth0 tenant |
+| 形式 | 例 | 備考 |
+| --- | --- | --- |
+| **標準ドメイン** | `company.auth0.com` | **推奨**（標準の Auth0 ドメイン） |
+| **リージョナル（US）** | `company.us.auth0.com` | US テナント |
+| **リージョナル（EU）** | `company.eu.auth0.com` | EU テナント |
+| **リージョナル（AU）** | `company.au.auth0.com` | AU テナント |
+| **リージョナル（JP）** | `company.jp.auth0.com` | JP テナント |
 
-**Important**:
-- Do NOT include `https://` prefix - the system adds this automatically
-- Do NOT include trailing slash - the OIDC provider URL is constructed automatically
-- Just provide the domain name (e.g., `company.auth0.com`)
+**重要**:
+- `https://` は付けないでください（システム側で自動付与されます）
+- 末尾の `/` は付けないでください（OIDC の provider URL は自動生成されます）
+- ドメイン名のみを指定してください（例: `company.auth0.com`）
 
-### Use the values with ccwb init
+### `ccwb init` で値を使用する
 
-When running `poetry run ccwb init`, you'll be prompted for these values:
+`poetry run ccwb init` 実行時に、次の値の入力を求められます。
 
 ```bash
 poetry run ccwb init
 
-# The wizard will ask for:
-# - Auth0 Domain: your-name.auth0.com       (your domain from above)
-# - Client ID: aBcDeFgHiJkLmNoPqRsTuVwXyZ123456  (your Client ID from above)
-# - AWS Region for infrastructure: us-east-1
-# - Bedrock regions: us-east-1,us-west-2
-# - Enable monitoring: Yes/No
+# ウィザードの入力項目:
+# - Auth0 Domain: your-name.auth0.com            （上で控えたドメイン）
+# - Client ID: aBcDeFgHiJkLmNoPqRsTuVwXyZ123456  （上で控えた Client ID）
+# - インフラの AWS リージョン: us-east-1
+# - Bedrock 利用リージョン: us-east-1,us-west-2
+# - 監視を有効化: Yes/No
 ```
 
-The CLI tool will handle all the CloudFormation configuration automatically.
+CLI ツールが CloudFormation の設定を自動で処理します。
 
 ---
 
-## 8. Test the Setup
+## 8. セットアップをテストする
 
-### Step 8.1: Verify Application Settings
+### 手順 8.1: アプリ設定の確認
 
-1. Go back to your application in Auth0
-2. Check the **Settings** tab
-3. Verify:
+1. Auth0 で対象アプリを開く
+2. **Settings** タブを確認
+3. 次を検証:
    - Application Type: Native
    - Allowed Callback URLs: `http://localhost:8400/callback`
    - Token Endpoint Authentication Method: None
 
-### Step 8.2: Test OIDC Discovery
+### 手順 8.2: OIDC Discovery のテスト
 
 ```bash
 curl https://your-name.auth0.com/.well-known/openid-configuration
 ```
 
-Should return a JSON response with OIDC endpoints.
+OIDC エンドポイント情報を含む JSON が返ってくるはずです。
 
-### Step 8.3: Check Logs
+### 手順 8.3: ログの確認
 
-1. Go to **Monitoring** → **Logs**
-2. Look for:
+1. **Monitoring** → **Logs**
+2. 次を確認:
    - Successful Login
-   - Failed Login (for troubleshooting)
+   - Failed Login（トラブルシュート用）
 
 ---
 
-## Troubleshooting
+## トラブルシューティング
 
-### "Invalid redirect URI" Error
+### 「Invalid redirect URI」エラー
 
-- Ensure the callback URL is exactly: `http://localhost:8400/callback`
-- No trailing slashes or HTTPS
+- callback URL が次と完全一致しているか確認: `http://localhost:8400/callback`
+- 末尾のスラッシュや HTTPS を付けない
 
-### "Unauthorized" Error
+### 「Unauthorized」エラー
 
-- Check if user exists and password is correct
-- Verify application is active
-- Check for any Rules or Actions blocking access
+- ユーザーが存在し、パスワードが正しいか確認
+- アプリが有効化されているか確認
+- アクセスをブロックする Rules / Actions がないか確認
 
-### Can't Find Client ID
+### Client ID が見つからない
 
-1. Go to **Applications** → **Applications**
-2. Click on your application
-3. Client ID is at the top of the Settings tab
+1. **Applications** → **Applications**
+2. 対象アプリをクリック
+3. Settings タブ上部に Client ID が表示されます
 
-### Token Issues
+### トークン関連の問題
 
-- Ensure Authorization Code grant type is enabled
-- Check that PKCE is not explicitly disabled
-- Verify refresh token settings
+- Authorization Code グラントが有効か確認
+- PKCE が明示的に無効化されていないか確認
+- refresh token の設定を確認
 
-### "AssumeRoleWithWebIdentity" Validation Error
+### 「AssumeRoleWithWebIdentity」バリデーションエラー
 
-If you encounter errors like:
+次のようなエラーが出る場合:
+
 ```
 Member must satisfy regular expression pattern: [\w+=,.@-]*
 ```
 
-This is automatically handled by the credential provider. Auth0 commonly uses pipe-delimited format in user IDs (e.g., `auth0|12345`), which AWS doesn't allow in session names. The credential provider sanitizes these characters automatically by replacing them with hyphens.
+これは credential provider 側で自動的に処理されます。Auth0 の user ID は `auth0|12345` のようにパイプ区切り（`|`）形式を使うことが多い一方、AWS はセッション名にその文字を許可しません。そのため credential provider が該当文字をハイフンへ置換してサニタイズします。
 
-**What this means for you:**
-- This is a known Auth0 characteristic and is handled automatically
-- No configuration changes needed
-- Session names are automatically sanitized to meet AWS requirements
-- User authentication will work seamlessly
+**つまり:**
+- Auth0 固有の既知の挙動であり、自動的に吸収されます
+- 設定変更は不要です
+- セッション名は AWS 要件を満たすよう自動整形されます
+- ユーザー認証は問題なく動作します
 
-### "Parameter Auth0Domain failed to satisfy constraint" Error
+### 「Parameter Auth0Domain failed to satisfy constraint」エラー
 
-If you encounter deployment errors related to the Auth0Domain parameter:
+Auth0Domain パラメータに関連するデプロイエラーが出る場合:
 
-**Cause**: The Auth0 domain format doesn't match the expected pattern.
+**原因**: Auth0 ドメイン形式が期待するパターンに一致していません。
 
-**Solution**:
-1. Ensure you're using just the domain name: `company.auth0.com`
-2. Don't include `https://` or trailing slash
-3. Verify the regional suffix if using a regional tenant (`.us`, `.eu`, `.au`, `.jp`)
-4. The domain must be a valid Auth0 domain
+**解決策**:
+1. ドメイン名のみ（例: `company.auth0.com`）になっているか確認
+2. `https://` や末尾 `/` を含めない
+3. リージョナルテナントならサフィックス（`.us` `.eu` `.au` `.jp`）が正しいか確認
+4. Auth0 として正しいドメインであることを確認
 
-**Valid examples:**
+**有効な例:**
 - ✅ `company.auth0.com`
 - ✅ `company.us.auth0.com`
 - ❌ `https://company.auth0.com`
@@ -281,64 +282,62 @@ If you encounter deployment errors related to the Auth0Domain parameter:
 
 ---
 
-## Next Steps
+## 次のステップ
 
-Once you've completed this Auth0 setup:
+Auth0 のセットアップが完了したら:
 
-1. Clone the repository:
+1. リポジトリをクローン:
    ```bash
    git clone https://github.com/aws-solutions-library-samples/guidance-for-claude-code-with-amazon-bedrock.git
    cd claude-code-setup
    poetry install
    ```
-2. Run the setup wizard: `poetry run ccwb init`
-3. Create a distribution package: `poetry run ccwb package`
-4. Test the deployment: `poetry run ccwb test --api`
-5. Distribute the `dist/` folder to your users
+2. セットアップウィザードを実行: `poetry run ccwb init`
+3. 配布パッケージを作成: `poetry run ccwb package`
+4. デプロイをテスト: `poetry run ccwb test --api`
+5. `dist/` フォルダをユーザーに配布
 
 ---
 
-## Security Best Practices
+## セキュリティのベストプラクティス
 
-1. **Production Considerations**:
+1. **本番運用の考慮事項**:
+   - 全ユーザーに MFA を有効化
+   - エンタープライズ運用では Auth0 Organizations を利用
+   - セッション/トークンの有効期限を適切に設定
+   - ログを定期的に監視
 
-   - Enable MFA for all users
-   - Use Auth0 Organizations for enterprise deployments
-   - Set appropriate session and token lifetimes
-   - Monitor logs regularly
+2. **トークン設定**:
+   - refresh token rotation を有効化
+   - トークン有効期限は 8 時間以下に設定
+   - ネイティブアプリでは PKCE は自動で有効化されます
 
-2. **Token Settings**:
-
-   - Enable refresh token rotation
-   - Set token expiration to 8 hours or less
-   - PKCE is automatically enabled for native apps
-
-3. **User Management**:
-   - Use Auth0's password policies
-   - Enable brute-force protection
-   - Set up anomaly detection
-   - Regular access reviews
+3. **ユーザー管理**:
+   - Auth0 のパスワードポリシーを利用
+   - ブルートフォース保護を有効化
+   - 異常検知（anomaly detection）を設定
+   - 定期的なアクセスレビューを実施
 
 ---
 
-## Advanced Configuration (Optional)
+## 高度な設定（任意）
 
-### Custom Domain
+### カスタムドメイン
 
-For production environments:
+本番環境向け:
 
-1. Go to **Settings** → **Custom Domains**
-2. Add your domain (e.g., `auth.company.com`)
-3. Verify DNS settings
-4. Update your application configuration
+1. **Settings** → **Custom Domains**
+2. ドメイン（例: `auth.company.com`）を追加
+3. DNS 設定を検証
+4. アプリ設定を更新
 
-### Add Custom Claims
+### カスタムクレームの追加
 
-To include user metadata in tokens:
+トークンにユーザーメタデータを含めるには:
 
-1. Go to **Actions** → **Flows** → **Login**
-2. Create a custom Action
-3. Add claims to the ID token:
+1. **Actions** → **Flows** → **Login**
+2. カスタム Action を作成
+3. ID トークンへクレームを追加:
    ```javascript
    exports.onExecutePostLogin = async (event, api) => {
      api.idToken.setCustomClaim('email', event.user.email);
@@ -349,22 +348,22 @@ To include user metadata in tokens:
    };
    ```
 
-### Enable Enterprise Connections
+### エンタープライズ接続の有効化
 
-For SSO with corporate identity providers:
+企業 IdP と SSO 連携する場合:
 
-1. Go to **Authentication** → **Enterprise**
-2. Choose your connection type (SAML, OIDC, etc.)
-3. Configure according to your IdP requirements
-4. Enable for your application
+1. **Authentication** → **Enterprise**
+2. 接続タイプ（SAML / OIDC など）を選択
+3. IdP 要件に従って設定
+4. 対象アプリで有効化
 
 ---
 
-## Useful Auth0 Dashboard URLs
+## Auth0 ダッシュボードの便利な URL
 
-- Dashboard: `https://manage.auth0.com/dashboard`
-- Applications: `https://manage.auth0.com/dashboard/applications`
-- Users: `https://manage.auth0.com/dashboard/users`
-- Logs: `https://manage.auth0.com/dashboard/logs`
+- ダッシュボード: `https://manage.auth0.com/dashboard`
+- アプリ一覧: `https://manage.auth0.com/dashboard/applications`
+- ユーザー: `https://manage.auth0.com/dashboard/users`
+- ログ: `https://manage.auth0.com/dashboard/logs`
 
-Remember to navigate to the correct tenant if you have multiple!
+テナントを複数持っている場合は、正しいテナントに切り替えて操作してください。
