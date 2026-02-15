@@ -1670,7 +1670,8 @@ RUN pyinstaller \
         """
         config = {
             profile_name: {
-                "provider_domain": profile.provider_domain,
+                # "provider_domain": profile.provider_domain,
+                "provider_domain": "generative-ai-center.auth.ap-northeast-1.amazoncognito.com",
                 "client_id": profile.client_id,
                 "aws_region": profile.aws_region,
                 "provider_type": profile.provider_type or self._detect_provider_type(profile.provider_domain),
@@ -1749,159 +1750,159 @@ RUN pyinstaller \
         [platform for platform, _ in built_otel_helpers] if built_otel_helpers else []
 
         installer_content = f"""#!/bin/bash
-# Claude Code Authentication Installer
-# Organization: {profile.provider_domain}
-# Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+# Claude Code 認証インストーラー
+# 組織: {profile.provider_domain}
+# 生成日時: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 set -e
 
 echo "======================================"
-echo "Claude Code Authentication Installer"
+echo "Claude Code 認証インストーラー"
 echo "======================================"
 echo
-echo "Organization: {profile.provider_domain}"
+echo "組織: {profile.provider_domain}"
 echo
 
 
-# Check prerequisites
-echo "Checking prerequisites..."
+# 前提条件の確認
+echo "前提条件を確認しています..."
 
 if ! command -v aws &> /dev/null; then
-    echo "❌ AWS CLI is not installed"
-    echo "   Please install from https://aws.amazon.com/cli/"
+    echo "❌ AWS CLI がインストールされていません"
+    echo "   https://aws.amazon.com/cli/ からインストールしてください"
     exit 1
 fi
 
-echo "✓ Prerequisites found"
+echo "✓ 前提条件を確認しました"
 
-# Detect platform and architecture
+# プラットフォームとアーキテクチャの判定
 echo
-echo "Detecting platform and architecture..."
+echo "プラットフォームとアーキテクチャを判定しています..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
     PLATFORM="macos"
     ARCH=$(uname -m)
     if [[ "$ARCH" == "arm64" ]]; then
-        echo "✓ Detected macOS ARM64 (Apple Silicon)"
+        echo "✓ macOS ARM64（Apple Silicon）を検出しました"
         BINARY_SUFFIX="macos-arm64"
     else
-        echo "✓ Detected macOS Intel"
+        echo "✓ macOS Intel を検出しました"
         BINARY_SUFFIX="macos-intel"
     fi
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     PLATFORM="linux"
     ARCH=$(uname -m)
     if [[ "$ARCH" == "aarch64" ]] || [[ "$ARCH" == "arm64" ]]; then
-        echo "✓ Detected Linux ARM64"
+        echo "✓ Linux ARM64 を検出しました"
         BINARY_SUFFIX="linux-arm64"
     else
-        echo "✓ Detected Linux x64"
+        echo "✓ Linux x64 を検出しました"
         BINARY_SUFFIX="linux-x64"
     fi
 else
-    echo "❌ Unsupported platform: $OSTYPE"
-    echo "   This installer supports macOS and Linux only."
+    echo "❌ 未対応のプラットフォームです: $OSTYPE"
+    echo "   このインストーラーは macOS と Linux のみ対応しています。"
     exit 1
 fi
 
-# Check if binary for platform exists
+# 対象プラットフォーム用のバイナリが存在するか確認
 CREDENTIAL_BINARY="credential-process-$BINARY_SUFFIX"
 OTEL_BINARY="otel-helper-$BINARY_SUFFIX"
 
 if [ ! -f "$CREDENTIAL_BINARY" ]; then
-    echo "❌ Binary not found for your platform: $CREDENTIAL_BINARY"
-    echo "   Please ensure you have the correct package for your architecture."
+    echo "❌ この環境向けのバイナリが見つかりません: $CREDENTIAL_BINARY"
+    echo "   お使いのアーキテクチャに合ったパッケージであることを確認してください。"
     exit 1
 fi
 """
 
         installer_content += f"""
-# Create directory
+# ディレクトリ作成
 echo
-echo "Installing authentication tools..."
+echo "認証ツールをインストールしています..."
 mkdir -p ~/claude-code-with-bedrock
 
-# Copy appropriate binary
+# 対応するバイナリをコピー
 cp "$CREDENTIAL_BINARY" ~/claude-code-with-bedrock/credential-process
 
-# Copy config
+# 設定ファイルをコピー
 cp config.json ~/claude-code-with-bedrock/
 chmod +x ~/claude-code-with-bedrock/credential-process
 
-# macOS Keychain Notice
+# macOS キーチェーンに関する注意
 if [[ "$OSTYPE" == "darwin"* ]]; then
     echo
-    echo "⚠️  macOS Keychain Access:"
-    echo "   On first use, macOS will ask for permission to access the keychain."
-    echo "   This is normal and required for secure credential storage."
-    echo "   Click 'Always Allow' when prompted."
+    echo "⚠️  macOS キーチェーンアクセス:"
+    echo "   初回利用時、macOS がキーチェーンへのアクセス許可を求めます。"
+    echo "   これは正常な挙動であり、認証情報を安全に保存するために必要です。"
+    echo "   表示されたら「常に許可」をクリックしてください。"
 fi
 
-# Copy Claude Code settings if present
+# Claude Code の設定が同梱されている場合はコピー
 if [ -d "claude-settings" ]; then
     echo
-    echo "Installing Claude Code settings..."
+    echo "Claude Code の設定をインストールしています..."
     mkdir -p ~/.claude
 
-    # Copy settings and replace placeholders
+    # 設定をコピーし、プレースホルダーを置換
     if [ -f "claude-settings/settings.json" ]; then
-        # Check if settings file already exists
+        # 既存の設定ファイルがあるか確認
         if [ -f ~/.claude/settings.json ]; then
-            echo "Existing Claude Code settings found"
-            read -p "Overwrite with new settings? (Y/n): " -n 1 -r
+            echo "既存の Claude Code 設定が見つかりました"
+            read -p "新しい設定で上書きしますか？ (Y/n): " -n 1 -r
             echo
-            # Default to Yes if user just presses enter (empty REPLY)
+            # Enter のみの場合は Yes 扱い（REPLY が空）
             if [[ -z "$REPLY" ]]; then
                 REPLY="y"
             fi
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                echo "Skipping Claude Code settings..."
+                echo "Claude Code の設定をスキップします..."
                 SKIP_SETTINGS=true
             fi
         fi
 
         if [ "$SKIP_SETTINGS" != "true" ]; then
-            # Replace placeholders and write settings
+            # プレースホルダーを置換して設定を書き込み
             sed -e "s|__OTEL_HELPER_PATH__|$HOME/claude-code-with-bedrock/otel-helper|g" \
                 -e "s|__CREDENTIAL_PROCESS_PATH__|$HOME/claude-code-with-bedrock/credential-process|g" \
                 "claude-settings/settings.json" > ~/.claude/settings.json
-            echo "✓ Claude Code settings configured"
+            echo "✓ Claude Code の設定を構成しました"
         fi
     fi
 fi
 
-# Copy OTEL helper executable if present
+# OTEL helper 実行ファイルが同梱されている場合はコピー
 if [ -f "$OTEL_BINARY" ]; then
     echo
-    echo "Installing OTEL helper..."
+    echo "OTEL helper をインストールしています..."
     cp "$OTEL_BINARY" ~/claude-code-with-bedrock/otel-helper
     chmod +x ~/claude-code-with-bedrock/otel-helper
-    echo "✓ OTEL helper installed"
+    echo "✓ OTEL helper をインストールしました"
 fi
 
-# Add debug info if OTEL helper was installed
+# OTEL helper がインストールされている場合、デバッグ情報を表示
 if [ -f ~/claude-code-with-bedrock/otel-helper ]; then
-    echo "The OTEL helper will extract user attributes from authentication tokens"
-    echo "and include them in metrics. To test the helper, run:"
+    echo "OTEL helper は認証トークンからユーザー属性を抽出し、"
+    echo "メトリクスに含めます。動作確認するには次を実行してください:"
     echo "  ~/claude-code-with-bedrock/otel-helper --test"
 fi
 
-# Update AWS config
+# AWS 設定を更新
 echo
-echo "Configuring AWS profiles..."
+echo "AWS プロファイルを設定しています..."
 mkdir -p ~/.aws
 
-# Read all profiles from config.json
+# config.json から全プロファイルを読み込み
 PROFILES=$(python3 -c "import json; profiles = list(json.load(open('config.json')).keys()); print(' '.join(profiles))")
 
 if [ -z "$PROFILES" ]; then
-    echo "❌ No profiles found in config.json"
+    echo "❌ config.json にプロファイルが見つかりません"
     exit 1
 fi
 
-echo "Found profiles: $PROFILES"
+echo "検出したプロファイル: $PROFILES"
 echo
 
-# Get region from package settings (for Bedrock calls, not infrastructure)
+# パッケージ設定からリージョンを取得（Bedrock 呼び出し用。インフラ用途ではありません）
 if [ -f "claude-settings/settings.json" ]; then
     DEFAULT_REGION=$(python3 -c "import json; print(json.load(open('claude-settings/settings.json'))[
     'env']['AWS_REGION'])" 2>/dev/null || echo "{profile.aws_region}")
@@ -1909,46 +1910,46 @@ else
     DEFAULT_REGION="{profile.aws_region}"
 fi
 
-# Configure each profile
+# 各プロファイルを設定
 for PROFILE_NAME in $PROFILES; do
-    echo "Configuring AWS profile: $PROFILE_NAME"
+    echo "AWS プロファイルを設定中: $PROFILE_NAME"
 
-    # Remove old profile if exists
+    # 旧プロファイルがあれば削除
     sed -i.bak "/\\[profile $PROFILE_NAME\\]/,/^$/d" ~/.aws/config 2>/dev/null || true
 
-    # Get profile-specific region from config.json
+    # config.json からプロファイル固有のリージョンを取得
     PROFILE_REGION=$(python3 -c "import json; print(json.load(open('config.json')).get('$PROFILE_NAME', \
     {{}}).get('aws_region', '$DEFAULT_REGION'))")
 
-    # Add new profile with --profile flag (cross-platform, no shell required)
+    # --profile フラグを使って新しいプロファイルを追記（クロスプラットフォーム、シェル不要）
     cat >> ~/.aws/config << EOF
 [profile $PROFILE_NAME]
 credential_process = $HOME/claude-code-with-bedrock/credential-process --profile $PROFILE_NAME
 region = $PROFILE_REGION
 EOF
-    echo "  ✓ Created AWS profile '$PROFILE_NAME'"
+    echo "  ✓ AWS プロファイル '$PROFILE_NAME' を作成しました"
 done
 
 echo
 echo "======================================"
-echo "✓ Installation complete!"
+echo "✓ インストールが完了しました！"
 echo "======================================"
 echo
-echo "Available profiles:"
+echo "利用可能なプロファイル:"
 for PROFILE_NAME in $PROFILES; do
     echo "  - $PROFILE_NAME"
 done
 echo
-echo "To use Claude Code authentication:"
+echo "Claude Code 認証を使用するには:"
 echo "  export AWS_PROFILE=<profile-name>"
 echo "  aws sts get-caller-identity"
 echo
-echo "Example:"
+echo "例:"
 FIRST_PROFILE=$(echo $PROFILES | awk '{{print $1}}')
 echo "  export AWS_PROFILE=$FIRST_PROFILE"
 echo "  aws sts get-caller-identity"
 echo
-echo "Note: Authentication will automatically open your browser when needed."
+echo "注: 必要に応じて、認証のためブラウザーが自動的に開きます。"
 echo
 """
 
@@ -1967,73 +1968,73 @@ echo
         """Create Windows batch installer script."""
 
         installer_content = f"""@echo off
-REM Claude Code Authentication Installer for Windows
-REM Organization: {profile.provider_domain}
-REM Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+REM Claude Code 認証インストーラー（Windows）
+REM 組織: {profile.provider_domain}
+REM 生成日時: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 echo ======================================
-echo Claude Code Authentication Installer
+echo Claude Code 認証インストーラー
 echo ======================================
 echo.
-echo Organization: {profile.provider_domain}
+echo 組織: {profile.provider_domain}
 echo.
 
-REM Check prerequisites
-echo Checking prerequisites...
+REM 前提条件の確認
+echo 前提条件を確認しています...
 
 where aws >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: AWS CLI is not installed
-    echo        Please install from https://aws.amazon.com/cli/
+    echo エラー: AWS CLI がインストールされていません
+    echo        https://aws.amazon.com/cli/ からインストールしてください
     pause
     exit /b 1
 )
 
-echo OK Prerequisites found
+echo OK 前提条件を確認しました
 echo.
 
-REM Create directory
-echo Installing authentication tools...
+REM ディレクトリ作成
+echo 認証ツールをインストールしています...
 if not exist "%USERPROFILE%\\claude-code-with-bedrock" mkdir "%USERPROFILE%\\claude-code-with-bedrock"
 
-REM Copy credential process executable with renamed target
-echo Copying credential process...
+REM credential process 実行ファイルをコピー（コピー先でリネーム）
+echo credential process をコピーしています...
 copy /Y "credential-process-windows.exe" "%USERPROFILE%\\claude-code-with-bedrock\\credential-process.exe" >nul
 if %errorlevel% neq 0 (
-    echo ERROR: Failed to copy credential-process-windows.exe
+    echo エラー: credential-process-windows.exe のコピーに失敗しました
     pause
     exit /b 1
 )
 
-REM Copy OTEL helper if it exists with renamed target
+REM OTEL helper が存在する場合はコピー（コピー先でリネーム）
 if exist "otel-helper-windows.exe" (
-    echo Copying OTEL helper...
+    echo OTEL helper をコピーしています...
     copy /Y "otel-helper-windows.exe" "%USERPROFILE%\\claude-code-with-bedrock\\otel-helper.exe" >nul
 )
 
-REM Copy configuration
-echo Copying configuration...
+REM 設定ファイルをコピー
+echo 設定ファイルをコピーしています...
 copy /Y "config.json" "%USERPROFILE%\\claude-code-with-bedrock\\" >nul
 
-REM Copy Claude Code settings if they exist
+REM Claude Code 設定が存在する場合はコピー
 if exist "claude-settings" (
-    echo Copying Claude Code telemetry settings...
+    echo Claude Code のテレメトリ設定をコピーしています...
     if not exist "%USERPROFILE%\\.claude" mkdir "%USERPROFILE%\\.claude"
 
-    REM Copy settings and replace placeholders
+    REM settings をコピーし、プレースホルダーを置換
     if exist "claude-settings\\settings.json" (
         set SKIP_SETTINGS=false
         if exist "%USERPROFILE%\\.claude\\settings.json" (
-            echo Existing Claude Code settings found
-            set /p OVERWRITE="Overwrite with new settings? (y/n): "
+            echo 既存の Claude Code 設定が見つかりました
+            set /p OVERWRITE="新しい設定で上書きしますか？ (y/n): "
             if /i not "%OVERWRITE%"=="y" (
-                echo Skipping Claude Code settings...
+                echo Claude Code の設定をスキップします...
                 set SKIP_SETTINGS=true
             )
         )
 
         if not "%SKIP_SETTINGS%"=="true" (
-            REM Use PowerShell to replace placeholders
+            REM PowerShell でプレースホルダーを置換
             powershell -Command ^
             "$otelPath = '%USERPROFILE%\\\\claude-code-with-bedrock\\\\otel-helper.exe' ^
             -replace '\\\\\\\\', '/'; ^
@@ -2043,63 +2044,63 @@ if exist "claude-settings" (
             -replace '__OTEL_HELPER_PATH__', $otelPath ^
             -replace '__CREDENTIAL_PROCESS_PATH__', $credPath | ^
             Set-Content '%USERPROFILE%\\\\.claude\\\\settings.json'"
-            echo OK Claude Code settings configured
+            echo OK Claude Code の設定を構成しました
         )
     )
 )
 
-REM Configure AWS profiles
+REM AWS プロファイルを設定
 echo.
-echo Configuring AWS profiles...
+echo AWS プロファイルを設定しています...
 
-REM Read profiles from config.json using PowerShell
+REM PowerShell で config.json からプロファイルを読み込み
 for /f %%p in ('powershell -Command ^
 "& {{$c=Get-Content config.json|ConvertFrom-Json;$c.PSObject.Properties.Name}}"') do (
-    echo Configuring AWS profile: %%p
+    echo AWS プロファイルを設定中: %%p
 
-    REM Get profile-specific region
+    REM プロファイル固有のリージョンを取得
     for /f %%r in ('powershell -Command ^
     "& {{$c=Get-Content config.json|ConvertFrom-Json;$c.'%%p'.aws_region}}"') do set PROFILE_REGION=%%r
 
 
-    REM Set credential process with --profile flag (cross-platform, no wrapper needed)
+    REM --profile フラグ付きで credential_process を設定（クロスプラットフォーム、ラッパー不要）
     aws configure set credential_process ^
     "%USERPROFILE%\\claude-code-with-bedrock\\credential-process.exe --profile %%p" --profile %%p
 
 
-    REM Set region
+    REM リージョンを設定
     if defined PROFILE_REGION (
         aws configure set region !PROFILE_REGION! --profile %%p
     ) else (
         aws configure set region {profile.aws_region} --profile %%p
     )
 
-    echo   OK Created AWS profile '%%p'
+    echo   OK AWS プロファイル '%%p' を作成しました
 )
 
 echo.
 echo ======================================
-echo Installation complete!
+echo インストールが完了しました！
 echo ======================================
 echo.
-echo Available profiles:
+echo 利用可能なプロファイル:
 for /f %%p in ('powershell -Command ^
 "$config = Get-Content config.json | ConvertFrom-Json; $config.PSObject.Properties.Name"') do (
     echo   - %%p
 )
 echo.
-echo To use Claude Code authentication:
+echo Claude Code 認証を使用するには:
 echo   set AWS_PROFILE=^<profile-name^>
 echo   aws sts get-caller-identity
 echo.
-echo Example:
+echo 例:
 for /f %%p in ('powershell -Command ^
 "$config = Get-Content config.json | ConvertFrom-Json; $config.PSObject.Properties.Name | Select-Object -First 1"') do (
     echo   set AWS_PROFILE=%%p
     echo   aws sts get-caller-identity
 )
 echo.
-echo Note: Authentication will automatically open your browser when needed.
+echo 注: 必要に応じて、認証のためブラウザーが自動的に開きます。
 echo.
 pause
 """
@@ -2113,24 +2114,27 @@ pause
 
     def _create_documentation(self, output_dir: Path, profile, timestamp: str):
         """Create user documentation."""
-        readme_content = f"""# Claude Code Authentication Setup
+        readme_content = f"""# Claude Code 認証セットアップ
 
-## Quick Start
+## クイックスタート
 
 ### macOS/Linux
 
-1. Extract the package:
+1. パッケージを展開します:
+
    ```bash
    unzip claude-code-package-*.zip
    cd claude-code-package
    ```
 
-2. Run the installer:
+2. インストーラーを実行します:
+
    ```bash
    ./install.sh
    ```
 
-3. Use the AWS profile:
+3. AWS プロファイルを使用します:
+
    ```bash
    export AWS_PROFILE=ClaudeCode
    aws sts get-caller-identity
@@ -2138,114 +2142,129 @@ pause
 
 ### Windows
 
-#### Step 1: Download the Package
+#### 手順 1: パッケージをダウンロード
+
 ```powershell
-# Use the Invoke-WebRequest command provided by your IT administrator
+# IT 管理者から提供された Invoke-WebRequest コマンドを使用してください
 Invoke-WebRequest -Uri "URL_PROVIDED" -OutFile "claude-code-package.zip"
 ```
 
-#### Step 2: Extract the Package
+#### 手順 2: パッケージを展開
 
-**Option A: Using Windows Explorer**
-1. Right-click on `claude-code-package.zip`
-2. Select "Extract All..."
-3. Choose a destination folder
-4. Click "Extract"
+**方法 A: Windows エクスプローラーを使用**
 
-**Option B: Using PowerShell**
+1. `claude-code-package.zip` を右クリック
+2. 「すべて展開...」を選択
+3. 展開先フォルダーを選択
+4. 「展開」をクリック
+
+**方法 B: PowerShell を使用**
+
 ```powershell
-# Extract to current directory
+# カレントディレクトリに展開
 Expand-Archive -Path "claude-code-package.zip" -DestinationPath "claude-code-package"
 
-# Navigate to the extracted folder
+# 展開したフォルダーへ移動
 cd claude-code-package
 ```
 
-**Option C: Using Command Prompt**
+**方法 C: コマンドプロンプトを使用**
+
 ```cmd
-# If you have tar available (Windows 10 1803+)
+# tar が利用可能な場合（Windows 10 1803+）
 tar -xf claude-code-package.zip
 
-# Or use PowerShell from Command Prompt
+# またはコマンドプロンプトから PowerShell を使用
 powershell -command "Expand-Archive -Path 'claude-code-package.zip' -DestinationPath 'claude-code-package'"
 
 cd claude-code-package
 ```
 
-#### Step 3: Run the Installer
+#### 手順 3: インストーラーを実行
+
 ```cmd
 install.bat
 ```
 
-The installer will:
-- Check for AWS CLI installation
-- Copy authentication tools to `%USERPROFILE%\\claude-code-with-bedrock`
-- Configure the AWS profile "ClaudeCode"
-- Test the authentication
+インストーラーは以下を実行します:
 
-#### Step 4: Use Claude Code
+- AWS CLI がインストールされているか確認
+- 認証ツールを `%USERPROFILE%\\claude-code-with-bedrock` にコピー
+- AWS プロファイル "ClaudeCode" を設定
+- 認証のテストを実行
+
+#### 手順 4: Claude Code を使用
+
 ```cmd
-# Set the AWS profile
+# AWS プロファイルを設定
 set AWS_PROFILE=ClaudeCode
 
-# Verify authentication works
+# 認証が機能することを確認
 aws sts get-caller-identity
 
-# Your browser will open automatically for authentication if needed
+# 必要に応じて、認証のためブラウザーが自動的に開きます
 ```
 
-For PowerShell users:
+PowerShell を使用する場合:
+
 ```powershell
 $env:AWS_PROFILE = "ClaudeCode"
 aws sts get-caller-identity
 ```
 
-## What This Does
+## このセットアップで行うこと
 
-- Installs the Claude Code authentication tools
-- Configures your AWS CLI to use {profile.provider_domain} for authentication
-- Sets up automatic credential refresh via your browser
+- Claude Code の認証ツールをインストールします
+- AWS CLI が認証に {profile.provider_domain} を使用するよう設定します
+- ブラウザー経由での自動的な認証情報更新を設定します
 
-## Requirements
+## 必要要件
 
-- Python 3.8 or later
+- Python 3.8 以上
 - AWS CLI v2
 - pip3
 
-## Troubleshooting
+## トラブルシューティング
 
-### macOS Keychain Access Popup
-On first use, macOS will ask for permission to access the keychain. This is normal and required for \
-secure credential storage. Click "Always Allow" to avoid repeated prompts.
+### macOS のキーチェーンアクセスのポップアップ
 
-### Authentication Issues
-If you encounter issues with authentication:
-- Ensure you're assigned to the Claude Code application in your identity provider
-- Check that port 8400 is available for the callback
-- Contact your IT administrator for help
+初回利用時、macOS はキーチェーンへのアクセス許可を求めます。これは正常な挙動であり、\
+認証情報を安全に保存するために必要です。繰り返し表示されないようにするには「常に許可」をクリックしてください。
 
-### Authentication Behavior
+### 認証に関する問題
 
-The system handles authentication automatically:
-- Your browser will open when authentication is needed
-- Credentials are cached securely to avoid repeated logins
-- Bad credentials are automatically cleared and re-authenticated
+認証で問題が発生する場合:
 
-To manually clear cached credentials (if needed):
+- アイデンティティプロバイダーで Claude Code アプリケーションに割り当てられていることを確認してください
+- コールバック用にポート 8400 が利用可能であることを確認してください
+- IT 管理者に連絡してサポートを受けてください
+
+### 認証の挙動
+
+システムは認証を自動的に処理します:
+
+- 認証が必要な場合、ブラウザーが開きます
+- 再ログインを避けるため、認証情報は安全にキャッシュされます
+- 不正な認証情報は自動的にクリアされ、再認証されます
+
+キャッシュされた認証情報を手動でクリアする（必要な場合）:
+
 ```bash
 ~/claude-code-with-bedrock/credential-process --clear-cache
 ```
 
-This will force re-authentication on your next AWS command.
+これにより、次回の AWS コマンド実行時に再認証が強制されます。
 
-### Browser doesn't open
-Check that you're not in an SSH session. The browser needs to open on your local machine.
+### ブラウザーが開かない
 
-## Support
+SSH セッション中でないことを確認してください。ブラウザーはローカル端末側で開く必要があります。
 
-Contact your IT administrator for help.
+## サポート
 
-Configuration Details:
+IT 管理者に連絡してサポートを受けてください。
+
+設定の詳細:
+
 - Organization: {profile.provider_domain}
 - Region: {profile.aws_region}
 - Package Version: {timestamp}"""
@@ -2254,26 +2273,28 @@ Configuration Details:
         if profile.monitoring_enabled and getattr(profile, "analytics_enabled", True):
             analytics_section = f"""
 
-## Analytics Dashboard
+## 分析ダッシュボード
 
-Your organization has enabled advanced analytics for Claude Code usage. You can access detailed metrics \
-and reports through AWS Athena.
+組織で Claude Code 利用状況の高度な分析が有効になっています。AWS Athena を通じて、詳細なメトリクス \
+およびレポートにアクセスできます。
 
-To view analytics:
-1. Open the AWS Console in region {profile.aws_region}
-2. Navigate to Athena
-3. Select the analytics workgroup and database
-4. Run pre-built queries or create custom reports
+分析を確認するには:
 
-Available metrics include:
-- Token usage by user
-- Cost allocation
-- Model usage patterns
-- Activity trends
+1. リージョン {profile.aws_region} の AWS コンソールを開きます
+2. Athena に移動します
+3. 分析用のワークグループとデータベースを選択します
+4. 既成のクエリを実行するか、カスタムレポートを作成します
+
+利用可能なメトリクス例:
+
+- ユーザー別のトークン使用量
+- コスト配賦
+- モデル利用パターン
+- アクティビティの傾向
 """
             readme_content += analytics_section
 
-        readme_content += "\n" ""
+        # readme_content += "\n"
 
         with open(output_dir / "README.md", "w") as f:
             f.write(readme_content)
@@ -2313,15 +2334,18 @@ Available metrics include:
             if hasattr(profile, "selected_model") and profile.selected_model:
                 settings["env"]["ANTHROPIC_MODEL"] = profile.selected_model
 
-                # Determine and set small/fast model based on selected model family
-                if "opus" in profile.selected_model:
-                    # For Opus, use Haiku as small/fast model
-                    model_id = profile.selected_model
-                    prefix = model_id.split(".anthropic")[0]  # Get us/eu/apac prefix
-                    settings["env"]["ANTHROPIC_SMALL_FAST_MODEL"] = f"{prefix}.anthropic.claude-3-5-haiku-20241022-v1:0"
-                else:
-                    # For other models, use same model as small/fast (or could use Haiku)
-                    settings["env"]["ANTHROPIC_SMALL_FAST_MODEL"] = profile.selected_model
+                # # Determine and set small/fast model based on selected model family
+                # if "opus" in profile.selected_model:
+                #     # For Opus, use Haiku as small/fast model
+                #     model_id = profile.selected_model
+                #     prefix = model_id.split(".anthropic")[0]  # Get us/eu/apac prefix
+                #     settings["env"]["ANTHROPIC_SMALL_FAST_MODEL"] = f"{prefix}.anthropic.claude-3-5-haiku-20241022-v1:0"
+                # else:
+                #     # For other models, use same model as small/fast (or could use Haiku)
+                #     settings["env"]["ANTHROPIC_SMALL_FAST_MODEL"] = profile.selected_model
+                settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "global.anthropic.claude-opus-4-6-v1"
+                settings["env"]["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+                settings["env"]["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
 
             # If monitoring is enabled, add telemetry configuration
             if profile.monitoring_enabled:
@@ -2380,6 +2404,15 @@ Available metrics include:
                         console.print("[yellow]Warning: No monitoring endpoint found in stack outputs[/yellow]")
                 else:
                     console.print("[yellow]Warning: Could not fetch monitoring stack outputs[/yellow]")
+
+            # オリジナル設定
+            settings["permissions"] = {
+                "deny": [
+                    "Read(./.git/**)",
+                    "Edit(./.git/**)",
+                    "Write(./.git/**)",
+                ]
+            }
 
             # Save settings.json
             settings_path = claude_dir / "settings.json"
