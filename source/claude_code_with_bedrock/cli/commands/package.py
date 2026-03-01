@@ -2131,14 +2131,7 @@ pause
 
 ### Windows
 
-#### 手順 1: パッケージをダウンロード
-
-```powershell
-# IT 管理者から提供された Invoke-WebRequest コマンドを使用してください
-Invoke-WebRequest -Uri "URL_PROVIDED" -OutFile "claude-code-package.zip"
-```
-
-#### 手順 2: パッケージを展開
+1: パッケージを展開します
 
 **方法 A: Windows エクスプローラーを使用**
 
@@ -2169,10 +2162,14 @@ powershell -command "Expand-Archive -Path 'claude-code-package.zip' -Destination
 cd claude-code-package
 ```
 
-#### 手順 3: インストーラーを実行
+2. インストーラーを実行
 
 ```cmd
 install.bat
+```
+
+```powershell
+start-process -FilePath "install.bat" -Verb runAs
 ```
 
 インストーラーは以下を実行します:
@@ -2182,7 +2179,7 @@ install.bat
 - AWS プロファイル "{profile.name}" を設定
 - 認証のテストを実行
 
-#### 手順 4: Claude Code を使用
+3. Claude Code を使用
 
 ```cmd
 # AWS プロファイルを設定
