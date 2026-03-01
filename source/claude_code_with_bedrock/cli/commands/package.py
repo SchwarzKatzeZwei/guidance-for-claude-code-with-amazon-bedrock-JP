@@ -1657,7 +1657,7 @@ RUN pyinstaller \
         profile,
         federation_identifier: str,
         federation_type: str = "cognito",
-        profile_name: str = "ClaudeCode",
+        profile_name: str = "gaic-dev-ap-northeast-1",
     ) -> Path:
         """Create the configuration file.
 
@@ -2136,7 +2136,7 @@ pause
 3. AWS プロファイルを使用します:
 
    ```bash
-   export AWS_PROFILE=ClaudeCode
+   export AWS_PROFILE={profile.name}
    aws sts get-caller-identity
    ```
 
@@ -2190,14 +2190,14 @@ install.bat
 
 - AWS CLI がインストールされているか確認
 - 認証ツールを `%USERPROFILE%\\claude-code-with-bedrock` にコピー
-- AWS プロファイル "ClaudeCode" を設定
+- AWS プロファイル "{profile.name}" を設定
 - 認証のテストを実行
 
 #### 手順 4: Claude Code を使用
 
 ```cmd
 # AWS プロファイルを設定
-set AWS_PROFILE=ClaudeCode
+set AWS_PROFILE={profile.name}
 
 # 認証が機能することを確認
 aws sts get-caller-identity
@@ -2208,7 +2208,7 @@ aws sts get-caller-identity
 PowerShell を使用する場合:
 
 ```powershell
-$env:AWS_PROFILE = "ClaudeCode"
+$env:AWS_PROFILE = "{profile.name}"
 aws sts get-caller-identity
 ```
 

@@ -88,10 +88,11 @@ Resources:
       Policies:
         PasswordPolicy:
           MinimumLength: 8
-          RequireUppercase: true
+          RequireUppercase: false
           RequireLowercase: true
           RequireNumbers: true
           RequireSymbols: true
+          
       # MFA optional for flexibility
       MfaConfiguration: 'OPTIONAL'
       EnabledMfas:
