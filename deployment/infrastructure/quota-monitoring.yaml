@@ -28,7 +28,7 @@ Parameters:
     Default: 366667
     Description: Default daily token limit per user (monthly/30 * 1.1) - 0 to disable daily limits
     MinValue: 0
-    MaxValue: 100000000
+    MaxValue: 225000000
 
   DailyEnforcementMode:
     Type: String
