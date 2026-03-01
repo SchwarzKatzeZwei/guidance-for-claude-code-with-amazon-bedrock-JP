@@ -1968,6 +1968,7 @@ echo
         """Create Windows batch installer script."""
 
         installer_content = f"""@echo off
+setlocal enabledelayedexpansion
 REM Claude Code 認証インストーラー（Windows）
 REM 組織: {profile.provider_domain}
 REM 生成日時: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
@@ -2027,23 +2028,15 @@ if exist "claude-settings" (
         if exist "%USERPROFILE%\\.claude\\settings.json" (
             echo 既存の Claude Code 設定が見つかりました
             set /p OVERWRITE="新しい設定で上書きしますか？ (y/n): "
-            if /i not "%OVERWRITE%"=="y" (
+            if /i not "!OVERWRITE!"=="y" (
                 echo Claude Code の設定をスキップします...
                 set SKIP_SETTINGS=true
             )
         )
 
-        if not "%SKIP_SETTINGS%"=="true" (
+        if not "!SKIP_SETTINGS!"=="true" (
             REM PowerShell でプレースホルダーを置換
-            powershell -Command ^
-            "$otelPath = '%USERPROFILE%\\\\claude-code-with-bedrock\\\\otel-helper.exe' ^
-            -replace '\\\\\\\\', '/'; ^
-            $credPath = '%USERPROFILE%\\\\claude-code-with-bedrock\\\\credential-process.exe' ^
-            -replace '\\\\\\\\', '/'; ^
-            (Get-Content 'claude-settings\\\\settings.json') ^
-            -replace '__OTEL_HELPER_PATH__', $otelPath ^
-            -replace '__CREDENTIAL_PROCESS_PATH__', $credPath | ^
-            Set-Content '%USERPROFILE%\\\\.claude\\\\settings.json'"
+            powershell -Command "$otelPath = ('%USERPROFILE%\claude-code-with-bedrock\otel-helper.exe') -replace '\\\\', '/'; $credPath = ('%USERPROFILE%\claude-code-with-bedrock\credential-process.exe') -replace '\\\\', '/'; (Get-Content 'claude-settings\settings.json') -replace '__OTEL_HELPER_PATH__', $otelPath -replace '__CREDENTIAL_PROCESS_PATH__', $credPath | Set-Content '%USERPROFILE%\.claude\settings.json'"
             echo OK Claude Code の設定を構成しました
         )
     )
@@ -2054,13 +2047,11 @@ echo.
 echo AWS プロファイルを設定しています...
 
 REM PowerShell で config.json からプロファイルを読み込み
-for /f %%p in ('powershell -Command ^
-"& {{$c=Get-Content config.json|ConvertFrom-Json;$c.PSObject.Properties.Name}}"') do (
+for /f %%p in ('powershell -Command "$c=Get-Content config.json|ConvertFrom-Json;$c.PSObject.Properties.Name"') do (
     echo AWS プロファイルを設定中: %%p
 
     REM プロファイル固有のリージョンを取得
-    for /f %%r in ('powershell -Command ^
-    "& {{$c=Get-Content config.json|ConvertFrom-Json;$c.'%%p'.aws_region}}"') do set PROFILE_REGION=%%r
+    for /f %%r in ('powershell -Command "$c=Get-Content config.json|ConvertFrom-Json;$c.'%%p'.aws_region"') do set PROFILE_REGION=%%r
 
 
     REM --profile フラグ付きで credential_process を設定（クロスプラットフォーム、ラッパー不要）
@@ -2084,8 +2075,7 @@ echo インストールが完了しました！
 echo ======================================
 echo.
 echo 利用可能なプロファイル:
-for /f %%p in ('powershell -Command ^
-"$config = Get-Content config.json | ConvertFrom-Json; $config.PSObject.Properties.Name"') do (
+for /f %%p in ('powershell -Command "$c=Get-Content config.json|ConvertFrom-Json;$c.PSObject.Properties.Name"') do (
     echo   - %%p
 )
 echo.
@@ -2094,8 +2084,7 @@ echo   set AWS_PROFILE=^<profile-name^>
 echo   aws sts get-caller-identity
 echo.
 echo 例:
-for /f %%p in ('powershell -Command ^
-"$config = Get-Content config.json | ConvertFrom-Json; $config.PSObject.Properties.Name | Select-Object -First 1"') do (
+for /f %%p in ('powershell -Command "$c=Get-Content config.json|ConvertFrom-Json;($c.PSObject.Properties.Name|Select-Object -First 1)"') do (
     echo   set AWS_PROFILE=%%p
     echo   aws sts get-caller-identity
 )
