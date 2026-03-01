@@ -2332,7 +2332,7 @@ IT 管理者に連絡してサポートを受けてください。
 
             # Add selected model as environment variable if available
             if hasattr(profile, "selected_model") and profile.selected_model:
-                settings["env"]["ANTHROPIC_MODEL"] = profile.selected_model
+                settings["env"]["ANTHROPIC_MODEL"] = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
 
                 # # Determine and set small/fast model based on selected model family
                 # if "opus" in profile.selected_model:
@@ -2343,8 +2343,8 @@ IT 管理者に連絡してサポートを受けてください。
                 # else:
                 #     # For other models, use same model as small/fast (or could use Haiku)
                 #     settings["env"]["ANTHROPIC_SMALL_FAST_MODEL"] = profile.selected_model
-                settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "global.anthropic.claude-opus-4-6-v1"
-                settings["env"]["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+                settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "global.anthropic.claude-sonnet-4-6"
+                settings["env"]["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "global.anthropic.claude-sonnet-4-6"
                 settings["env"]["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "global.anthropic.claude-haiku-4-5-20251001-v1:0"
 
             # If monitoring is enabled, add telemetry configuration
@@ -2385,8 +2385,7 @@ IT 管理者に連絡してサポートを受けてください。
                                 "OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
                                 "OTEL_EXPORTER_OTLP_ENDPOINT": endpoint,
                                 # Add basic OTEL resource attributes for multi-team support
-                                "OTEL_RESOURCE_ATTRIBUTES": "department=engineering,team.id=default, \
-                                cost_center=default,organization=default",
+                                "OTEL_RESOURCE_ATTRIBUTES": "department=engineering,team.id=default,cost_center=default,organization=default",
                             }
                         )
 
